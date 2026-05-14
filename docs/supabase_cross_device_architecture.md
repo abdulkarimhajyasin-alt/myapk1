@@ -64,20 +64,20 @@ Local-only or mostly local:
 
 ## Required Flutter Packages
 
-Add during implementation phase, not in this planning-only step:
+Phase 2 adds the Supabase Flutter client:
 
 ```yaml
 dependencies:
-  supabase_flutter: ^2.x.x
-  flutter_dotenv: ^5.x.x
-  crypto: ^3.x.x
-  uuid: ^4.x.x
+  supabase_flutter: ^2.12.4
 ```
 
-Recommended later for stronger offline support:
+Recommended later if the cloud repository needs stronger hashing, generated
+UUID helpers, or offline support:
 
 ```yaml
 dependencies:
+  crypto: ^3.x.x
+  uuid: ^4.x.x
   drift: ^2.x.x
   sqlite3_flutter_libs: ^0.5.x
   path_provider: ^2.x.x
@@ -85,12 +85,11 @@ dependencies:
 
 ## Required Environment Variables
 
-Use `--dart-define` or `.env` loaded by `flutter_dotenv`:
+Use `--dart-define`:
 
 ```text
 SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_ANON_KEY=your-anon-key
-APP_ENV=development
 ```
 
 Do not ship service-role keys in the Flutter app.
@@ -254,7 +253,7 @@ APP_DATA_MODE=supabase
 
 - Create Supabase project.
 - Apply SQL schema above.
-- Add `supabase_flutter`, `flutter_dotenv`, `crypto`, and `uuid`.
+- Add `supabase_flutter`.
 - Add `SupabaseConfig`.
 - Initialize Supabase in `main` before repository creation.
 - Keep `APP_DATA_MODE=local` as default until cloud repository passes tests.
@@ -341,3 +340,61 @@ Implement Phase 1 only:
 - Move active session methods out of `ExpenseNetworkRepository`.
 - Add mapper/DTO folders.
 - Keep current local repository behavior and tests passing.
+
+## Phase 2 Setup Instructions
+
+Phase 2 adds the Supabase client and schema foundation without activating cloud
+runtime behavior. The app continues to use `SharedPreferencesExpenseNetworkRepository`
+as the default data source.
+
+### Create a Supabase Project
+
+1. Create a new project in the Supabase dashboard.
+2. Open the SQL Editor.
+3. Paste and run the contents of `supabase/schema.sql`.
+4. Confirm these tables exist:
+   - `networks`
+   - `network_members`
+   - `expenses`
+   - `network_notifications`
+
+The schema enables Row Level Security on all tables but does not add public
+policies yet. Phase 3/4 must define membership-aware policies before the app
+uses these tables in production.
+
+### Flutter Build Environment Variables
+
+Pass the public Supabase project URL and anon key with Dart defines:
+
+```bash
+flutter run \
+  --dart-define=SUPABASE_URL=https://your-project.supabase.co \
+  --dart-define=SUPABASE_ANON_KEY=your-anon-key
+```
+
+For Android APK validation:
+
+```bash
+flutter build apk --debug \
+  --dart-define=SUPABASE_URL=https://your-project.supabase.co \
+  --dart-define=SUPABASE_ANON_KEY=your-anon-key
+```
+
+If these values are omitted, `SupabaseConfig.isConfigured` is false,
+`Supabase.initialize` is skipped, and the app runs in local mode.
+
+### Current Runtime Mode
+
+`RepositoryFactory` accepts `SupabaseConfig` so Phase 3 can switch repository
+selection cleanly. In Phase 2 it intentionally returns:
+
+- `SharedPreferencesExpenseNetworkRepository`
+- `SharedPreferencesSessionRepository`
+
+`SupabaseExpenseNetworkRepository` exists only as a dormant placeholder and
+throws `RepositoryException` with code `supabase_not_enabled` if called.
+
+### Secrets
+
+Only use the Supabase anon key in Flutter. Never put the service-role key in the
+mobile app, source code, GitHub Actions logs, or APK build inputs.

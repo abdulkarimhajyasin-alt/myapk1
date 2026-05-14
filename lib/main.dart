@@ -1,26 +1,36 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'l10n/app_localizations.dart';
 import 'screens/home_screen.dart';
 import 'screens/language_selection_screen.dart';
 import 'services/expense_network_repository.dart';
 import 'services/locale_preference_service.dart';
-import 'services/shared_preferences_expense_network_repository.dart';
-import 'services/shared_preferences_session_repository.dart';
+import 'services/repository_factory.dart';
 import 'services/session_repository.dart';
+import 'services/supabase_config.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  final repository = SharedPreferencesExpenseNetworkRepository();
-  await repository.init();
+  const supabaseConfig = SupabaseConfig.defaultConfig;
+  if (supabaseConfig.isConfigured) {
+    await Supabase.initialize(
+      url: supabaseConfig.url,
+      anonKey: supabaseConfig.anonKey,
+    );
+  }
+
   final preferences = await SharedPreferences.getInstance();
+  final repositories = await RepositoryFactory.create(
+    preferences: preferences,
+    supabaseConfig: supabaseConfig,
+  );
   final localeService = LocalePreferenceService(preferences);
-  final sessionRepository = SharedPreferencesSessionRepository(preferences);
   runApp(
     ExpenseNetworkApp(
-      repository: repository,
-      sessionRepository: sessionRepository,
+      repository: repositories.expenseNetworkRepository,
+      sessionRepository: repositories.sessionRepository,
       localeService: localeService,
     ),
   );
