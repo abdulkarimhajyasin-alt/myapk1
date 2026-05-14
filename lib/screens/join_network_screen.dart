@@ -1,8 +1,14 @@
 import 'package:flutter/material.dart';
 
+<<<<<<< HEAD
 import '../l10n/app_localizations.dart';
 import '../models/expense_network.dart';
 import '../services/expense_network_repository.dart';
+=======
+import '../models/expense_network.dart';
+import '../services/expense_network_repository.dart';
+import '../utils/app_strings.dart';
+>>>>>>> 4adbe7e14d3361fe062125d087de21cd412ba8bb
 import '../widgets/app_scaffold.dart';
 import '../widgets/form_error_text.dart';
 import 'network_dashboard_screen.dart';
@@ -45,10 +51,15 @@ class _JoinNetworkScreenState extends State<JoinNetworkScreen> {
         networkName: _networkNameController.text,
         password: _passwordController.text,
       );
+<<<<<<< HEAD
       if (!mounted) return;
       _openDashboard(network);
     } on RepositoryException catch (error) {
       if (!mounted) return;
+=======
+      _openDashboard(network);
+    } on RepositoryException catch (error) {
+>>>>>>> 4adbe7e14d3361fe062125d087de21cd412ba8bb
       setState(() => _error = error.message);
     } finally {
       if (mounted) setState(() => _isJoining = false);
@@ -69,10 +80,15 @@ class _JoinNetworkScreenState extends State<JoinNetworkScreen> {
 
   @override
   Widget build(BuildContext context) {
+<<<<<<< HEAD
     final l10n = context.l10n;
 
     return AppScaffold(
       title: l10n.joinNetwork,
+=======
+    return AppScaffold(
+      title: AppStrings.joinNetwork,
+>>>>>>> 4adbe7e14d3361fe062125d087de21cd412ba8bb
       child: Form(
         key: _formKey,
         child: Column(
@@ -81,21 +97,34 @@ class _JoinNetworkScreenState extends State<JoinNetworkScreen> {
             FormErrorText(_error),
             TextFormField(
               controller: _displayNameController,
+<<<<<<< HEAD
               decoration: InputDecoration(labelText: l10n.displayName),
+=======
+              decoration: const InputDecoration(labelText: AppStrings.displayName),
+>>>>>>> 4adbe7e14d3361fe062125d087de21cd412ba8bb
               textInputAction: TextInputAction.next,
               validator: _required,
             ),
             const SizedBox(height: 14),
             TextFormField(
               controller: _networkNameController,
+<<<<<<< HEAD
               decoration: InputDecoration(labelText: l10n.networkName),
+=======
+              decoration: const InputDecoration(labelText: AppStrings.networkName),
+>>>>>>> 4adbe7e14d3361fe062125d087de21cd412ba8bb
               textInputAction: TextInputAction.next,
               validator: _required,
             ),
             const SizedBox(height: 14),
             TextFormField(
               controller: _passwordController,
+<<<<<<< HEAD
               decoration: InputDecoration(labelText: l10n.networkPassword),
+=======
+              decoration:
+                  const InputDecoration(labelText: AppStrings.networkPassword),
+>>>>>>> 4adbe7e14d3361fe062125d087de21cd412ba8bb
               obscureText: true,
               validator: _required,
               onFieldSubmitted: (_) => _joinNetwork(),
@@ -103,7 +132,11 @@ class _JoinNetworkScreenState extends State<JoinNetworkScreen> {
             const SizedBox(height: 22),
             FilledButton(
               onPressed: _isJoining ? null : _joinNetwork,
+<<<<<<< HEAD
               child: Text(_isJoining ? l10n.joining : l10n.join),
+=======
+              child: Text(_isJoining ? AppStrings.joining : AppStrings.join),
+>>>>>>> 4adbe7e14d3361fe062125d087de21cd412ba8bb
             ),
           ],
         ),
@@ -113,7 +146,11 @@ class _JoinNetworkScreenState extends State<JoinNetworkScreen> {
 
   String? _required(String? value) {
     return value == null || value.trim().isEmpty
+<<<<<<< HEAD
         ? context.l10n.fieldRequired
+=======
+        ? AppStrings.fieldRequired
+>>>>>>> 4adbe7e14d3361fe062125d087de21cd412ba8bb
         : null;
   }
 }

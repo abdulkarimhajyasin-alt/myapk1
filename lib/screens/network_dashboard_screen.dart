@@ -1,8 +1,14 @@
 import 'package:flutter/material.dart';
 
+<<<<<<< HEAD
 import '../l10n/app_localizations.dart';
 import '../models/expense_network.dart';
 import '../services/expense_network_repository.dart';
+=======
+import '../models/expense_network.dart';
+import '../services/expense_network_repository.dart';
+import '../utils/app_strings.dart';
+>>>>>>> 4adbe7e14d3361fe062125d087de21cd412ba8bb
 import '../utils/money_utils.dart';
 import '../widgets/app_scaffold.dart';
 import 'add_expense_screen.dart';
@@ -44,7 +50,10 @@ class _NetworkDashboardScreenState extends State<NetworkDashboardScreen> {
         ),
       ),
     );
+<<<<<<< HEAD
     if (!mounted) return;
+=======
+>>>>>>> 4adbe7e14d3361fe062125d087de21cd412ba8bb
     if (updatedNetwork != null) {
       setState(() => _network = updatedNetwork);
     } else {
@@ -63,7 +72,10 @@ class _NetworkDashboardScreenState extends State<NetworkDashboardScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+<<<<<<< HEAD
     final l10n = context.l10n;
+=======
+>>>>>>> 4adbe7e14d3361fe062125d087de21cd412ba8bb
 
     return AppScaffold(
       title: _network.name,
@@ -80,7 +92,11 @@ class _NetworkDashboardScreenState extends State<NetworkDashboardScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
+<<<<<<< HEAD
                   l10n.totalExpenses,
+=======
+                  AppStrings.totalExpenses,
+>>>>>>> 4adbe7e14d3361fe062125d087de21cd412ba8bb
                   style: theme.textTheme.labelLarge?.copyWith(
                     color: theme.colorScheme.onPrimaryContainer,
                   ),
@@ -98,7 +114,11 @@ class _NetworkDashboardScreenState extends State<NetworkDashboardScreen> {
           ),
           const SizedBox(height: 24),
           Text(
+<<<<<<< HEAD
             l10n.members,
+=======
+            AppStrings.members,
+>>>>>>> 4adbe7e14d3361fe062125d087de21cd412ba8bb
             style: theme.textTheme.titleLarge?.copyWith(
               fontWeight: FontWeight.w800,
             ),
@@ -112,7 +132,11 @@ class _NetworkDashboardScreenState extends State<NetworkDashboardScreen> {
                   child: Text(_avatarText(member.name)),
                 ),
                 title: Text(member.name),
+<<<<<<< HEAD
                 subtitle: Text(l10n.totalPaid),
+=======
+                subtitle: Text('Total paid'),
+>>>>>>> 4adbe7e14d3361fe062125d087de21cd412ba8bb
                 trailing: Text(
                   MoneyUtils.formatCents(member.totalPaidCents),
                   style: theme.textTheme.titleMedium?.copyWith(
@@ -126,13 +150,21 @@ class _NetworkDashboardScreenState extends State<NetworkDashboardScreen> {
           FilledButton.icon(
             onPressed: _openAddExpense,
             icon: const Icon(Icons.add_card_rounded),
+<<<<<<< HEAD
             label: Text(l10n.addExpense),
+=======
+            label: const Text(AppStrings.addExpense),
+>>>>>>> 4adbe7e14d3361fe062125d087de21cd412ba8bb
           ),
           const SizedBox(height: 12),
           OutlinedButton.icon(
             onPressed: _openSettlement,
             icon: const Icon(Icons.receipt_long_rounded),
+<<<<<<< HEAD
             label: Text(l10n.expenseSettlement),
+=======
+            label: const Text(AppStrings.expenseSettlement),
+>>>>>>> 4adbe7e14d3361fe062125d087de21cd412ba8bb
           ),
         ],
       ),

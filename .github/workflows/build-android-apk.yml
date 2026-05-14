@@ -4,22 +4,43 @@ on:
   push:
     branches:
       - main
+<<<<<<< HEAD
   workflow_dispatch:
 
 jobs:
   build-android-apk:
     name: Build Android APK
+=======
+
+  workflow_dispatch:
+
+jobs:
+  build:
+>>>>>>> 4adbe7e14d3361fe062125d087de21cd412ba8bb
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+<<<<<<< HEAD
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: stable
           cache: true
+=======
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+>>>>>>> 4adbe7e14d3361fe062125d087de21cd412ba8bb
 
       - name: Install dependencies
         run: flutter pub get
@@ -33,6 +54,7 @@ jobs:
       - name: Run tests
         run: flutter test
 
+<<<<<<< HEAD
       - name: Build debug APK
         run: flutter build apk --debug
 
@@ -40,15 +62,32 @@ jobs:
         run: flutter build apk --release
 
       - name: Upload debug APK
+=======
+      - name: Build Debug APK
+        run: flutter build apk --debug
+
+      - name: Build Release APK
+        run: flutter build apk --release
+
+      - name: Upload Debug APK
+>>>>>>> 4adbe7e14d3361fe062125d087de21cd412ba8bb
         uses: actions/upload-artifact@v4
         with:
           name: expense-network-debug-apk
           path: build/app/outputs/flutter-apk/app-debug.apk
+<<<<<<< HEAD
           if-no-files-found: error
 
       - name: Upload release APK
+=======
+
+      - name: Upload Release APK
+>>>>>>> 4adbe7e14d3361fe062125d087de21cd412ba8bb
         uses: actions/upload-artifact@v4
         with:
           name: expense-network-release-apk
           path: build/app/outputs/flutter-apk/app-release.apk
+<<<<<<< HEAD
           if-no-files-found: error
+=======
+>>>>>>> 4adbe7e14d3361fe062125d087de21cd412ba8bb
