@@ -7,6 +7,14 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
+  test('DATA_MODE defaults to local', () {
+    const config = SupabaseConfig();
+
+    expect(config.dataMode, 'local');
+    expect(config.wantsSupabase, isFalse);
+    expect(config.shouldUseSupabase, isFalse);
+  });
+
   test('SupabaseConfig detects missing credentials', () {
     const config = SupabaseConfig(url: '', anonKey: '');
 
@@ -22,6 +30,22 @@ void main() {
 
     expect(config.isConfigured, isTrue);
     expect(config.shouldUseSupabase, isTrue);
+  });
+
+  test('Supabase mode requires both URL and anon key', () {
+    const missingUrl = SupabaseConfig(
+      url: '',
+      anonKey: 'public-anon-key',
+      dataMode: 'supabase',
+    );
+    const missingKey = SupabaseConfig(
+      url: 'https://example.supabase.co',
+      anonKey: '',
+      dataMode: 'supabase',
+    );
+
+    expect(missingUrl.shouldUseSupabase, isFalse);
+    expect(missingKey.shouldUseSupabase, isFalse);
   });
 
   test('local repositories remain default when Supabase is not configured',

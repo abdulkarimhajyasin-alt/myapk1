@@ -275,7 +275,24 @@ APP_DATA_MODE=supabase
 - Optionally add Supabase Realtime subscriptions for notification refresh.
 - Preserve current settlement formula by mapping cloud rows back to existing models.
 
-### Phase 5: iOS Build Readiness
+### Phase 5: Supabase Production Security and RLS Hardening
+
+- Remove the broad Phase 3/4 development policies.
+- Add production-oriented interim RLS policy names and helper checks.
+- Validate that expense rows reference members inside the same network.
+- Validate that notification rows reference members and expenses inside the
+  same network.
+- Restrict notification updates to read-state changes.
+- Document the remaining identity limitation until Supabase Auth is added.
+
+### Phase 6: Supabase Auth and Production Identity
+
+- Add Supabase Auth for each device/user.
+- Add authenticated user profiles.
+- Map `network_members.user_id` to `auth.users.id`.
+- Replace interim anon-client RLS with `auth.uid()` membership policies.
+
+### Phase 7: iOS Build Readiness
 
 - Add iOS platform files if missing.
 - Configure bundle identifier, display name, icons, and signing.
@@ -525,7 +542,7 @@ Still local in both modes:
 The following remain later-phase or production-readiness tasks:
 
 - local-to-cloud migration for existing SharedPreferences networks
-- production RLS hardening with real membership scoping
+- Auth-backed RLS hardening with real member identity scoping
 - Supabase Auth integration instead of app-only member passwords
 - Supabase Realtime subscriptions for live dashboard/notification refresh
 - iOS project/TestFlight readiness
@@ -538,3 +555,84 @@ flutter build apk --debug \
   --dart-define=SUPABASE_URL=https://your-project.supabase.co \
   --dart-define=SUPABASE_ANON_KEY=your-anon-key
 ```
+
+## Phase 5 Security Model
+
+Phase 5 replaces the temporary Phase 3/4 development policies in
+`supabase/schema.sql`. The removed policies were:
+
+- `phase3_dev_select_networks`
+- `phase3_dev_insert_networks`
+- `phase3_dev_update_networks`
+- `phase3_dev_select_members`
+- `phase3_dev_insert_members`
+- `phase4_dev_select_expenses`
+- `phase4_dev_insert_expenses`
+- `phase4_dev_select_notifications`
+- `phase4_dev_insert_notifications`
+- `phase4_dev_update_notifications`
+
+The new policies use `phase5_interim_*` names to make their status explicit.
+They are safer than the old broad policies because they no longer grant raw
+`using (true)` / `with check (true)` access. Instead, they validate row shape and
+network consistency:
+
+- network creation requires non-empty normalized names and password hash/salt
+  metadata
+- joining a network requires a real target network and non-empty member login
+  metadata
+- expense reads/inserts require the paid-by and added-by members to belong to
+  the expense network
+- notification reads/inserts require the recipient, actor, and linked expense to
+  match the notification network
+- notification updates are limited by trigger to `is_read` changes only
+
+### What Is Protected Now
+
+The Phase 5 SQL protects against malformed cross-network writes. An anon client
+cannot insert an expense for one network while pointing at members from another
+network, and it cannot create a notification addressed to a member outside the
+notification network. Duplicate member names remain protected by the existing
+unique constraint on `(network_id, normalized_name)`.
+
+The notification update trigger prevents clients from rewriting notification
+identity or content while marking notifications as read. The Flutter repository
+also continues to filter notification reads and mark-all updates by
+`network_id` and `recipient_member_id`.
+
+### Current Limitation Without Supabase Auth
+
+The app still uses app-level network/member passwords, not Supabase Auth. That
+means Postgres RLS does not yet have a trustworthy database identity such as
+`auth.uid()` for the person using the device. The anon key is public by design,
+so SQL policies can validate that rows are internally consistent, but they
+cannot fully prove that the caller is the member whose UUID appears in a query.
+
+Because of that limitation, Phase 5 is production-oriented hardening, not a
+public production launch security model. Before public production launch, the
+app must move member identity into Supabase Auth and replace the interim
+policies with authenticated membership checks.
+
+### Phase 6 Recommendation
+
+Phase 6 should add:
+
+- Supabase Auth using anonymous auth, email, phone, or another product decision
+- a user/profile table for authenticated app users
+- `network_members.user_id references auth.users(id)`
+- RLS policies that use `auth.uid()` to check network membership
+- notification policies where `recipient_member_id` belongs to the authenticated
+  user
+- expense insert policies where `added_by_member_id` belongs to the
+  authenticated user and the payer belongs to the same network
+
+### Production Launch Checklist
+
+- Supabase Auth enabled and required for cloud mode
+- every cloud member row mapped to `auth.users.id`
+- no `phase5_interim_*` policies left in production
+- no service-role key in Flutter, APK inputs, source code, or CI logs
+- RLS tests or SQL review for networks, members, expenses, and notifications
+- stronger password strategy or removal of app-level passwords
+- local-to-cloud migration designed and tested separately
+- realtime subscriptions reviewed under authenticated RLS

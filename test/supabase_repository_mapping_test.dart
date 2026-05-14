@@ -170,4 +170,16 @@ void main() {
 
     expect(error.code, 'duplicate_member');
   });
+
+  test('maps permission denied errors to RepositoryException', () {
+    final error = SupabaseExpenseNetworkRepository.mapSupabaseError(
+      Exception('new row violates row-level security policy 42501'),
+      fallbackCode: 'fallback',
+      fallbackMessage: 'Fallback',
+    );
+
+    expect(error, isA<RepositoryException>());
+    expect(error.code, 'supabase_permission_denied');
+    expect(error.message, 'Cloud permission denied.');
+  });
 }

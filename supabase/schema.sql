@@ -1,10 +1,10 @@
 -- Supabase schema foundation for Shared Housing Expenses.
--- Phase 2 creates the cloud data model only. The Flutter app still uses the
--- local SharedPreferences repository by default.
+-- The Flutter app still uses the local SharedPreferences repository by default.
 --
 -- Security note:
--- Row Level Security is enabled below, but policies are intentionally deferred
--- to Phase 3/4 when the authentication and membership model is activated.
+-- Row Level Security is enabled below. Phase 5 replaces the broad Phase 3/4
+-- development policies with practical interim policies for anon-client testing.
+-- Full production membership enforcement still requires Supabase Auth.
 -- Do not use a Supabase service-role key in the Flutter app.
 
 create extension if not exists pgcrypto;
@@ -134,81 +134,258 @@ create index if not exists expenses_added_by_member_id_idx
 create index if not exists network_notifications_recipient_read_created_idx
   on public.network_notifications (recipient_member_id, is_read, created_at desc);
 
+create index if not exists network_notifications_network_recipient_idx
+  on public.network_notifications (network_id, recipient_member_id);
+
 alter table public.networks enable row level security;
 alter table public.network_members enable row level security;
 alter table public.expenses enable row level security;
 alter table public.network_notifications enable row level security;
 
--- Temporary Phase 3/4 development policies.
--- These policies allow the Flutter anon client to test cloud create/join/member
--- login plus expense/history/notification sync before Supabase Auth and
--- membership-scoped RLS are introduced.
--- Replace these before production. They are intentionally limited to the
--- app tables and do not grant delete access.
+create or replace function public.phase5_member_belongs_to_network(
+  member_id uuid,
+  target_network_id uuid
+)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1
+    from public.network_members
+    where id = member_id
+      and network_id = target_network_id
+  );
+$$;
+
+create or replace function public.phase5_expense_members_match_network(
+  target_network_id uuid,
+  paid_member_id uuid,
+  added_member_id uuid
+)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select public.phase5_member_belongs_to_network(paid_member_id, target_network_id)
+    and public.phase5_member_belongs_to_network(added_member_id, target_network_id);
+$$;
+
+create or replace function public.phase5_notification_matches_network(
+  target_network_id uuid,
+  recipient_member_id uuid,
+  actor_member_id uuid,
+  target_expense_id uuid
+)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select public.phase5_member_belongs_to_network(recipient_member_id, target_network_id)
+    and (
+      actor_member_id is null
+      or public.phase5_member_belongs_to_network(actor_member_id, target_network_id)
+    )
+    and (
+      target_expense_id is null
+      or exists (
+        select 1
+        from public.expenses
+        where id = target_expense_id
+          and network_id = target_network_id
+      )
+    );
+$$;
+
+create or replace function public.phase5_prevent_notification_identity_update()
+returns trigger
+language plpgsql
+as $$
+begin
+  if new.id <> old.id
+    or new.network_id <> old.network_id
+    or new.recipient_member_id <> old.recipient_member_id
+    or coalesce(new.actor_member_id, '00000000-0000-0000-0000-000000000000'::uuid)
+      <> coalesce(old.actor_member_id, '00000000-0000-0000-0000-000000000000'::uuid)
+    or new.actor_member_name <> old.actor_member_name
+    or coalesce(new.expense_id, '00000000-0000-0000-0000-000000000000'::uuid)
+      <> coalesce(old.expense_id, '00000000-0000-0000-0000-000000000000'::uuid)
+    or new.amount_cents <> old.amount_cents
+    or new.currency_symbol <> old.currency_symbol
+    or coalesce(new.note_snippet, '') <> coalesce(old.note_snippet, '')
+    or new.created_at <> old.created_at
+  then
+    raise exception 'Only notification read state can be updated.';
+  end if;
+
+  return new;
+end $$;
+
+drop trigger if exists phase5_prevent_notification_identity_update
+  on public.network_notifications;
+create trigger phase5_prevent_notification_identity_update
+  before update on public.network_notifications
+  for each row
+  execute function public.phase5_prevent_notification_identity_update();
+
+-- Remove broad Phase 3/4 development policies before installing Phase 5.
 drop policy if exists phase3_dev_select_networks on public.networks;
-create policy phase3_dev_select_networks
-  on public.networks
-  for select
-  using (true);
-
 drop policy if exists phase3_dev_insert_networks on public.networks;
-create policy phase3_dev_insert_networks
-  on public.networks
-  for insert
-  with check (true);
-
 drop policy if exists phase3_dev_update_networks on public.networks;
-create policy phase3_dev_update_networks
+drop policy if exists phase3_dev_select_members on public.network_members;
+drop policy if exists phase3_dev_insert_members on public.network_members;
+drop policy if exists phase4_dev_select_expenses on public.expenses;
+drop policy if exists phase4_dev_insert_expenses on public.expenses;
+drop policy if exists phase4_dev_select_notifications on public.network_notifications;
+drop policy if exists phase4_dev_insert_notifications on public.network_notifications;
+drop policy if exists phase4_dev_update_notifications on public.network_notifications;
+
+drop policy if exists phase5_interim_lookup_networks on public.networks;
+create policy phase5_interim_lookup_networks
+  on public.networks
+  for select
+  using (
+    normalized_name is not null
+    and network_password_hash is not null
+    and network_password_salt is not null
+  );
+
+drop policy if exists phase5_interim_create_networks on public.networks;
+create policy phase5_interim_create_networks
+  on public.networks
+  for insert
+  with check (
+    length(trim(name)) > 0
+    and length(trim(normalized_name)) > 0
+    and network_password_hash is not null
+    and network_password_salt is not null
+  );
+
+-- Allows the create flow to attach the first inserted member as network owner.
+-- Later arbitrary network profile updates should move behind Auth-backed RPC.
+drop policy if exists phase5_interim_claim_new_network_owner on public.networks;
+create policy phase5_interim_claim_new_network_owner
   on public.networks
   for update
-  using (true)
-  with check (true);
+  using (created_by_member_id is null)
+  with check (
+    created_by_member_id is not null
+    and public.phase5_member_belongs_to_network(created_by_member_id, id)
+  );
 
-drop policy if exists phase3_dev_select_members on public.network_members;
-create policy phase3_dev_select_members
+drop policy if exists phase5_interim_read_members_for_login on public.network_members;
+create policy phase5_interim_read_members_for_login
   on public.network_members
   for select
-  using (true);
+  using (
+    network_id is not null
+    and password_hash is not null
+    and password_salt is not null
+  );
 
-drop policy if exists phase3_dev_insert_members on public.network_members;
-create policy phase3_dev_insert_members
+drop policy if exists phase5_interim_join_networks on public.network_members;
+create policy phase5_interim_join_networks
   on public.network_members
   for insert
-  with check (true);
+  with check (
+    exists (
+      select 1
+      from public.networks
+      where id = network_id
+    )
+    and length(trim(name)) > 0
+    and length(trim(normalized_name)) > 0
+    and password_hash is not null
+    and password_salt is not null
+  );
 
-drop policy if exists phase4_dev_select_expenses on public.expenses;
-create policy phase4_dev_select_expenses
+drop policy if exists phase5_interim_read_network_expenses on public.expenses;
+create policy phase5_interim_read_network_expenses
   on public.expenses
   for select
-  using (true);
+  using (
+    public.phase5_expense_members_match_network(
+      network_id,
+      paid_by_member_id,
+      added_by_member_id
+    )
+  );
 
-drop policy if exists phase4_dev_insert_expenses on public.expenses;
-create policy phase4_dev_insert_expenses
+drop policy if exists phase5_interim_insert_network_expenses on public.expenses;
+create policy phase5_interim_insert_network_expenses
   on public.expenses
   for insert
-  with check (true);
+  with check (
+    amount_cents > 0
+    and (note is null or char_length(note) <= 200)
+    and public.phase5_expense_members_match_network(
+      network_id,
+      paid_by_member_id,
+      added_by_member_id
+    )
+  );
 
-drop policy if exists phase4_dev_select_notifications on public.network_notifications;
-create policy phase4_dev_select_notifications
+drop policy if exists phase5_interim_read_addressed_notifications on public.network_notifications;
+create policy phase5_interim_read_addressed_notifications
   on public.network_notifications
   for select
-  using (true);
+  using (
+    public.phase5_notification_matches_network(
+      network_id,
+      recipient_member_id,
+      actor_member_id,
+      expense_id
+    )
+  );
 
-drop policy if exists phase4_dev_insert_notifications on public.network_notifications;
-create policy phase4_dev_insert_notifications
+drop policy if exists phase5_interim_insert_addressed_notifications on public.network_notifications;
+create policy phase5_interim_insert_addressed_notifications
   on public.network_notifications
   for insert
-  with check (true);
+  with check (
+    amount_cents > 0
+    and (note_snippet is null or char_length(note_snippet) <= 80)
+    and public.phase5_notification_matches_network(
+      network_id,
+      recipient_member_id,
+      actor_member_id,
+      expense_id
+    )
+  );
 
-drop policy if exists phase4_dev_update_notifications on public.network_notifications;
-create policy phase4_dev_update_notifications
+-- The trigger above prevents changing notification identity/content. Without
+-- Supabase Auth, RLS still cannot prove which human controls recipient_member_id.
+drop policy if exists phase5_interim_mark_addressed_notifications_read
+  on public.network_notifications;
+create policy phase5_interim_mark_addressed_notifications_read
   on public.network_notifications
   for update
-  using (true)
-  with check (true);
+  using (
+    public.phase5_notification_matches_network(
+      network_id,
+      recipient_member_id,
+      actor_member_id,
+      expense_id
+    )
+  )
+  with check (
+    is_read = true
+    and public.phase5_notification_matches_network(
+      network_id,
+      recipient_member_id,
+      actor_member_id,
+      expense_id
+    )
+  );
 
 comment on table public.networks is
-  'Shared housing expense networks. RLS policies are added in a later phase.';
+  'Shared housing expense networks. Phase 5 policies are interim until Supabase Auth links members to auth.users.';
 comment on table public.network_members is
   'Members inside a network with app-level password hash metadata.';
 comment on table public.expenses is
