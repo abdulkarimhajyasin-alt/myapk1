@@ -106,7 +106,7 @@ class _CreateNetworkScreenState extends State<CreateNetworkScreen> {
             ),
             const SizedBox(height: 14),
             DropdownButtonFormField<String>(
-              value: _selectedCurrency.code,
+              initialValue: _selectedCurrency.code,
               decoration: InputDecoration(labelText: l10n.networkCurrency),
               items: CurrencyCatalog.supportedCurrencies.map((currency) {
                 return DropdownMenuItem<String>(

@@ -12,7 +12,7 @@ class AppLocalizations {
     Locale('ar'),
   ];
 
-  static const localizationsDelegates = [
+  static const List<LocalizationsDelegate<dynamic>> localizationsDelegates = [
     AppLocalizationsDelegate(),
     GlobalMaterialLocalizations.delegate,
     GlobalWidgetsLocalizations.delegate,
