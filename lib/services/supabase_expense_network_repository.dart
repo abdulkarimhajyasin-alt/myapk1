@@ -1,5 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../models/expense.dart';
 import '../models/expense_network.dart';
 import '../models/member.dart';
 import '../models/network_notification.dart';
@@ -20,6 +21,8 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
   final SupabaseClient? _client;
 
   static const phaseNotImplementedCode = 'supabase_phase_not_implemented';
+  static const maxExpenseNoteLength = 200;
+  static const maxNotificationNoteSnippetLength = 80;
 
   @override
   Future<List<ExpenseNetwork>> getNetworks() async {
@@ -33,8 +36,7 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
       final networks = <ExpenseNetwork>[];
       for (final row in rows) {
         final networkRow = Map<String, dynamic>.from(row as Map);
-        final members = await _loadMemberRows(networkRow['id'] as String);
-        networks.add(networkFromRows(networkRow, members));
+        networks.add(await _networkFromHydratedRow(networkRow));
       }
       return networks;
     } catch (error) {
@@ -58,8 +60,7 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
 
       if (row == null) return null;
       final networkRow = Map<String, dynamic>.from(row);
-      final members = await _loadMemberRows(networkRow['id'] as String);
-      return networkFromRows(networkRow, members);
+      return _networkFromHydratedRow(networkRow);
     } catch (error) {
       throw mapSupabaseError(
         error,
@@ -82,8 +83,26 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
   Future<Member?> getMemberHistory({
     required String networkName,
     required String memberId,
-  }) {
-    return findMember(networkName: networkName, memberId: memberId);
+  }) async {
+    try {
+      final networkRow = await _loadNetworkRowByName(networkName);
+      if (networkRow == null) return null;
+
+      final members = await _loadMemberRows(networkRow['id'] as String);
+      final matches = members.where((member) => member['id'] == memberId);
+      if (matches.isEmpty) return null;
+
+      final expenses = await _loadMemberExpenseRows(memberId);
+      return memberFromRow(matches.first).copyWith(
+        expenses: expenses.map(expenseFromRow).toList(),
+      );
+    } catch (error) {
+      throw mapSupabaseError(
+        error,
+        fallbackCode: 'supabase_member_history_load_failed',
+        fallbackMessage: 'Cloud member history could not be loaded.',
+      );
+    }
   }
 
   @override
@@ -142,9 +161,8 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
           .select()
           .single();
 
-      return networkFromRows(
+      return _networkFromHydratedRow(
         Map<String, dynamic>.from(updatedNetworkRow),
-        [Map<String, dynamic>.from(memberRow)],
       );
     } catch (error) {
       throw mapSupabaseError(
@@ -191,8 +209,7 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
         'password_salt': memberSalt,
       });
 
-      final members = await _loadMemberRows(networkId);
-      return networkFromRows(networkRow, members);
+      return _networkFromHydratedRow(networkRow);
     } catch (error) {
       throw mapSupabaseError(
         error,
@@ -250,12 +267,32 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
       );
     }
 
-    return networkFromRows(networkRow, members);
+    return _networkFromHydratedRow(networkRow);
   }
 
   @override
-  Future<void> saveNetwork(ExpenseNetwork network) {
-    return _phaseNotImplemented();
+  Future<void> saveNetwork(ExpenseNetwork network) async {
+    try {
+      final client = _requireClient();
+      await client
+          .from('networks')
+          .update({
+            'name': network.name.trim(),
+            'normalized_name': normalizeName(network.name),
+            'currency_code': network.currencyCode,
+            'currency_symbol': network.currencySymbol,
+            'updated_at': DateTime.now().toUtc().toIso8601String(),
+          })
+          .eq('id', network.id);
+    } catch (error) {
+      throw mapSupabaseError(
+        error,
+        duplicateCode: 'duplicate_network',
+        duplicateMessage: 'A network with this name already exists.',
+        fallbackCode: 'supabase_save_network_failed',
+        fallbackMessage: 'Cloud network could not be saved.',
+      );
+    }
   }
 
   @override
@@ -265,36 +302,150 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
     required String addedByMemberId,
     required int amountCents,
     String? note,
-  }) {
-    return _phaseNotImplemented();
+  }) async {
+    if (amountCents <= 0) {
+      throw const RepositoryException(
+        'Expense amount must be greater than zero.',
+        code: 'invalid_amount',
+      );
+    }
+
+    final networkRow = await _loadNetworkRowByName(networkName);
+    if (networkRow == null) {
+      throw const RepositoryException(
+        'Network not found.',
+        code: 'network_not_found',
+      );
+    }
+
+    final networkId = networkRow['id'] as String;
+    final members = await _loadMemberRows(networkId);
+    final actorRows = members.where((member) => member['id'] == addedByMemberId);
+    if (actorRows.isEmpty) {
+      throw const RepositoryException(
+        'Member not found.',
+        code: 'member_not_found',
+      );
+    }
+
+    final normalizedPayerName = normalizeName(memberName);
+    final payerRows = members.where(
+      (member) => member['normalized_name'] == normalizedPayerName,
+    );
+    if (payerRows.isEmpty) {
+      throw const RepositoryException(
+        'Member not found.',
+        code: 'member_not_found',
+      );
+    }
+
+    final actor = memberFromRow(actorRows.first);
+    final payer = memberFromRow(payerRows.first);
+    final cleanedNote = sanitizeExpenseNote(note);
+
+    try {
+      final client = _requireClient();
+      final expenseRow = await client
+          .from('expenses')
+          .insert(
+            buildExpenseInsertPayload(
+              networkId: networkId,
+              paidByMemberId: payer.id,
+              paidByMemberName: payer.name,
+              addedByMemberId: actor.id,
+              addedByMemberName: actor.name,
+              amountCents: amountCents,
+              note: cleanedNote,
+            ),
+          )
+          .select()
+          .single();
+
+      await _createExpenseNotificationsSafely(
+        networkId: networkId,
+        members: members.map(memberFromRow).toList(),
+        actor: actor,
+        expenseId: expenseRow['id'] as String,
+        amountCents: amountCents,
+        currencySymbol: networkRow['currency_symbol'] as String? ?? r'$',
+        note: cleanedNote,
+      );
+
+      return _networkFromHydratedRow(networkRow);
+    } catch (error) {
+      throw mapSupabaseError(
+        error,
+        fallbackCode: 'supabase_add_expense_failed',
+        fallbackMessage: 'Cloud expense could not be added.',
+      );
+    }
   }
 
   @override
   Future<List<NetworkNotification>> getNotifications({
     required String networkId,
     required String memberId,
-  }) {
-    return _phaseNotImplemented();
+  }) async {
+    try {
+      final client = _requireClient();
+      final rows = await client
+          .from('network_notifications')
+          .select()
+          .eq('network_id', networkId)
+          .eq('recipient_member_id', memberId)
+          .order('created_at', ascending: false);
+      return rows
+          .map(
+            (row) => notificationFromRow(
+              Map<String, dynamic>.from(row as Map),
+            ),
+          )
+          .toList();
+    } catch (error) {
+      throw mapSupabaseError(
+        error,
+        fallbackCode: 'supabase_notifications_load_failed',
+        fallbackMessage: 'Cloud notifications could not be loaded.',
+      );
+    }
   }
 
   @override
-  Future<void> markNotificationRead(String notificationId) {
-    return _phaseNotImplemented();
+  Future<void> markNotificationRead(String notificationId) async {
+    try {
+      final client = _requireClient();
+      await client
+          .from('network_notifications')
+          .update({'is_read': true})
+          .eq('id', notificationId);
+    } catch (error) {
+      throw mapSupabaseError(
+        error,
+        fallbackCode: 'supabase_notification_update_failed',
+        fallbackMessage: 'Cloud notification could not be updated.',
+      );
+    }
   }
 
   @override
   Future<void> markAllNotificationsRead({
     required String networkId,
     required String memberId,
-  }) {
-    return _phaseNotImplemented();
-  }
-
-  Future<T> _phaseNotImplemented<T>() async {
-    throw const RepositoryException(
-      'This Supabase feature is planned for a later phase.',
-      code: phaseNotImplementedCode,
-    );
+  }) async {
+    try {
+      final client = _requireClient();
+      await client
+          .from('network_notifications')
+          .update({'is_read': true})
+          .eq('network_id', networkId)
+          .eq('recipient_member_id', memberId);
+    } catch (error) {
+      throw mapSupabaseError(
+        error,
+        fallbackCode: 'supabase_notifications_update_failed',
+        fallbackMessage: 'Cloud notifications could not be updated.',
+      );
+    }
   }
 
   Future<Map<String, dynamic>?> _loadNetworkRowByName(String networkName) async {
@@ -332,6 +483,86 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
         fallbackCode: 'supabase_members_load_failed',
         fallbackMessage: 'Cloud members could not be loaded.',
       );
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> _loadExpenseRows(String networkId) async {
+    try {
+      final client = _requireClient();
+      final rows = await client
+          .from('expenses')
+          .select()
+          .eq('network_id', networkId)
+          .order('created_at');
+      return rows
+          .map((row) => Map<String, dynamic>.from(row as Map))
+          .toList();
+    } catch (error) {
+      throw mapSupabaseError(
+        error,
+        fallbackCode: 'supabase_expenses_load_failed',
+        fallbackMessage: 'Cloud expenses could not be loaded.',
+      );
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> _loadMemberExpenseRows(
+    String memberId,
+  ) async {
+    try {
+      final client = _requireClient();
+      final rows = await client
+          .from('expenses')
+          .select()
+          .eq('paid_by_member_id', memberId)
+          .order('created_at');
+      return rows
+          .map((row) => Map<String, dynamic>.from(row as Map))
+          .toList();
+    } catch (error) {
+      throw mapSupabaseError(
+        error,
+        fallbackCode: 'supabase_member_expenses_load_failed',
+        fallbackMessage: 'Cloud member expenses could not be loaded.',
+      );
+    }
+  }
+
+  Future<ExpenseNetwork> _networkFromHydratedRow(
+    Map<String, dynamic> networkRow,
+  ) async {
+    final networkId = networkRow['id'] as String;
+    final members = await _loadMemberRows(networkId);
+    final expenses = await _loadExpenseRows(networkId);
+    return networkFromRows(networkRow, members, expenseRows: expenses);
+  }
+
+  Future<void> _createExpenseNotificationsSafely({
+    required String networkId,
+    required List<Member> members,
+    required Member actor,
+    required String expenseId,
+    required int amountCents,
+    required String currencySymbol,
+    String? note,
+  }) async {
+    final payloads = buildNotificationInsertPayloads(
+      networkId: networkId,
+      members: members,
+      actor: actor,
+      expenseId: expenseId,
+      amountCents: amountCents,
+      currencySymbol: currencySymbol,
+      note: note,
+    );
+    if (payloads.isEmpty) return;
+
+    try {
+      final client = _requireClient();
+      await client.from('network_notifications').insert(payloads);
+    } catch (_) {
+      // Notification delivery is best-effort. The expense row is the source of
+      // truth and must remain saved even if notification fan-out is incomplete.
     }
   }
 
@@ -375,17 +606,30 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
   static ExpenseNetwork networkFromRows(
     Map<String, dynamic> networkRow,
     List<Map<String, dynamic>> memberRows,
-  ) {
+    {
+    List<Map<String, dynamic>> expenseRows = const [],
+  }) {
     final currency = CurrencyCatalog.findByCode(
       networkRow['currency_code'] as String?,
     );
     final currencySymbol = networkRow['currency_symbol'] as String?;
+    final expensesByMemberId = <String, List<Expense>>{};
+    for (final expenseRow in expenseRows) {
+      final memberId = expenseRow['paid_by_member_id'] as String?;
+      if (memberId == null) continue;
+      expensesByMemberId
+          .putIfAbsent(memberId, () => <Expense>[])
+          .add(expenseFromRow(expenseRow));
+    }
 
     return ExpenseNetwork(
       id: networkRow['id'] as String,
       name: networkRow['name'] as String,
       password: networkRow['network_password_hash'] as String? ?? '',
-      members: memberRows.map(memberFromRow).toList(),
+      members: memberRows.map((row) {
+        final member = memberFromRow(row);
+        return member.copyWith(expenses: expensesByMemberId[member.id] ?? []);
+      }).toList(),
       createdAt: _parseTimestamp(networkRow['created_at']),
       currencyCode: currency.code,
       currencySymbol: currencySymbol?.trim().isNotEmpty == true
@@ -404,6 +648,88 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
     );
   }
 
+  static Expense expenseFromRow(Map<String, dynamic> row) {
+    return Expense(
+      id: row['id'] as String?,
+      amountCents: _parseInt(row['amount_cents']),
+      note: _emptyToNull(row['note'] as String?),
+      createdAt: _parseTimestamp(row['created_at']),
+      addedByMemberId: row['added_by_member_id'] as String? ?? '',
+      addedByMemberName: row['added_by_member_name'] as String? ?? '',
+    );
+  }
+
+  static NetworkNotification notificationFromRow(Map<String, dynamic> row) {
+    return NetworkNotification(
+      id: row['id'] as String?,
+      networkId: row['network_id'] as String,
+      recipientMemberId: row['recipient_member_id'] as String,
+      actorMemberName: row['actor_member_name'] as String,
+      expenseAmountCents: _parseInt(row['amount_cents']),
+      currencySymbol: row['currency_symbol'] as String? ?? r'$',
+      noteSnippet: _emptyToNull(row['note_snippet'] as String?),
+      createdAt: _parseTimestamp(row['created_at']),
+      isRead: row['is_read'] as bool? ?? false,
+    );
+  }
+
+  static Map<String, dynamic> buildExpenseInsertPayload({
+    required String networkId,
+    required String paidByMemberId,
+    required String paidByMemberName,
+    required String addedByMemberId,
+    required String addedByMemberName,
+    required int amountCents,
+    String? note,
+  }) {
+    return {
+      'network_id': networkId,
+      'paid_by_member_id': paidByMemberId,
+      'paid_by_member_name': paidByMemberName,
+      'added_by_member_id': addedByMemberId,
+      'added_by_member_name': addedByMemberName,
+      'amount_cents': amountCents,
+      'note': sanitizeExpenseNote(note),
+      'created_at': DateTime.now().toUtc().toIso8601String(),
+    };
+  }
+
+  static List<Map<String, dynamic>> buildNotificationInsertPayloads({
+    required String networkId,
+    required List<Member> members,
+    required Member actor,
+    required String expenseId,
+    required int amountCents,
+    required String currencySymbol,
+    String? note,
+  }) {
+    final snippet = _noteSnippet(note);
+    return members
+        .where((member) => member.id != actor.id)
+        .map(
+          (member) => {
+            'network_id': networkId,
+            'recipient_member_id': member.id,
+            'actor_member_id': actor.id,
+            'actor_member_name': actor.name,
+            'expense_id': expenseId,
+            'amount_cents': amountCents,
+            'currency_symbol': currencySymbol,
+            'note_snippet': snippet,
+            'is_read': false,
+            'created_at': DateTime.now().toUtc().toIso8601String(),
+          },
+        )
+        .toList();
+  }
+
+  static String? sanitizeExpenseNote(String? note) {
+    final trimmed = note?.trim();
+    if (trimmed == null || trimmed.isEmpty) return null;
+    if (trimmed.length <= maxExpenseNoteLength) return trimmed;
+    return trimmed.substring(0, maxExpenseNoteLength);
+  }
+
   static RepositoryException mapSupabaseError(
     Object error, {
     String? duplicateCode,
@@ -412,6 +738,8 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
     required String fallbackMessage,
   }) {
     final message = error.toString().toLowerCase();
+    if (error is RepositoryException) return error;
+
     final isDuplicate = message.contains('23505') ||
         message.contains('duplicate key') ||
         message.contains('unique constraint');
@@ -419,7 +747,27 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
       return RepositoryException(duplicateMessage, code: duplicateCode);
     }
 
-    if (error is RepositoryException) return error;
+    final isPermission = message.contains('42501') ||
+        message.contains('permission denied') ||
+        message.contains('row-level security') ||
+        message.contains('rls');
+    if (isPermission) {
+      return const RepositoryException(
+        'Cloud permission denied.',
+        code: 'supabase_permission_denied',
+      );
+    }
+
+    final isNotFound = message.contains('pgrst116') ||
+        message.contains('not found') ||
+        message.contains('0 rows');
+    if (isNotFound) {
+      return const RepositoryException(
+        'Cloud record was not found.',
+        code: 'supabase_not_found',
+      );
+    }
+
     return RepositoryException(fallbackMessage, code: fallbackCode);
   }
 
@@ -428,5 +776,24 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
       return DateTime.parse(value);
     }
     return DateTime.fromMillisecondsSinceEpoch(0);
+  }
+
+  static int _parseInt(Object? value) {
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    if (value is String) return int.tryParse(value) ?? 0;
+    return 0;
+  }
+
+  static String? _emptyToNull(String? value) {
+    final trimmed = value?.trim();
+    return trimmed == null || trimmed.isEmpty ? null : trimmed;
+  }
+
+  static String? _noteSnippet(String? note) {
+    final cleaned = sanitizeExpenseNote(note);
+    if (cleaned == null) return null;
+    if (cleaned.length <= maxNotificationNoteSnippetLength) return cleaned;
+    return cleaned.substring(0, maxNotificationNoteSnippetLength);
   }
 }

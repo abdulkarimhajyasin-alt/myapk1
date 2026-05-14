@@ -73,12 +73,18 @@ class _NetworkDashboardScreenState extends State<NetworkDashboardScreen> {
     );
   }
 
-  void _openHistory(Member member) {
+  Future<void> _openHistory(Member member) async {
+    final historyMember = await widget.repository.getMemberHistory(
+          networkName: _network.name,
+          memberId: member.id,
+        ) ??
+        member;
+    if (!mounted) return;
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => MemberExpenseHistoryScreen(
           network: _network,
-          member: member,
+          member: historyMember,
         ),
       ),
     );

@@ -60,6 +60,31 @@ create table if not exists public.expenses (
   created_at timestamptz not null default now()
 );
 
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_constraint
+    where conname = 'expenses_amount_cents_positive'
+  ) then
+    alter table public.expenses
+      add constraint expenses_amount_cents_positive
+      check (amount_cents > 0)
+      not valid;
+  end if;
+
+  if not exists (
+    select 1
+    from pg_constraint
+    where conname = 'expenses_note_length'
+  ) then
+    alter table public.expenses
+      add constraint expenses_note_length
+      check (note is null or char_length(note) <= 200)
+      not valid;
+  end if;
+end $$;
+
 create table if not exists public.network_notifications (
   id uuid primary key default gen_random_uuid(),
   network_id uuid not null references public.networks(id) on delete cascade,
@@ -73,6 +98,20 @@ create table if not exists public.network_notifications (
   is_read boolean not null default false,
   created_at timestamptz not null default now()
 );
+
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_constraint
+    where conname = 'network_notifications_note_snippet_length'
+  ) then
+    alter table public.network_notifications
+      add constraint network_notifications_note_snippet_length
+      check (note_snippet is null or char_length(note_snippet) <= 80)
+      not valid;
+  end if;
+end $$;
 
 create index if not exists networks_normalized_name_idx
   on public.networks (normalized_name);
@@ -100,11 +139,12 @@ alter table public.network_members enable row level security;
 alter table public.expenses enable row level security;
 alter table public.network_notifications enable row level security;
 
--- Temporary Phase 3 development policies.
+-- Temporary Phase 3/4 development policies.
 -- These policies allow the Flutter anon client to test cloud create/join/member
--- login before Supabase Auth and membership-scoped RLS are introduced.
+-- login plus expense/history/notification sync before Supabase Auth and
+-- membership-scoped RLS are introduced.
 -- Replace these before production. They are intentionally limited to the
--- Phase 3 tables and do not grant delete access.
+-- app tables and do not grant delete access.
 drop policy if exists phase3_dev_select_networks on public.networks;
 create policy phase3_dev_select_networks
   on public.networks
@@ -134,6 +174,37 @@ drop policy if exists phase3_dev_insert_members on public.network_members;
 create policy phase3_dev_insert_members
   on public.network_members
   for insert
+  with check (true);
+
+drop policy if exists phase4_dev_select_expenses on public.expenses;
+create policy phase4_dev_select_expenses
+  on public.expenses
+  for select
+  using (true);
+
+drop policy if exists phase4_dev_insert_expenses on public.expenses;
+create policy phase4_dev_insert_expenses
+  on public.expenses
+  for insert
+  with check (true);
+
+drop policy if exists phase4_dev_select_notifications on public.network_notifications;
+create policy phase4_dev_select_notifications
+  on public.network_notifications
+  for select
+  using (true);
+
+drop policy if exists phase4_dev_insert_notifications on public.network_notifications;
+create policy phase4_dev_insert_notifications
+  on public.network_notifications
+  for insert
+  with check (true);
+
+drop policy if exists phase4_dev_update_notifications on public.network_notifications;
+create policy phase4_dev_update_notifications
+  on public.network_notifications
+  for update
+  using (true)
   with check (true);
 
 comment on table public.networks is

@@ -438,3 +438,103 @@ membership-aware RLS before real production users.
 
 Only use the Supabase anon key in Flutter. Never put the service-role key in the
 mobile app, source code, GitHub Actions logs, or APK build inputs.
+
+## Phase 4 Supabase Expenses, History, and Notifications
+
+Phase 4 makes Supabase mode useful for shared Android/iPhone expense activity
+inside the same cloud-backed network while keeping local mode as the default.
+
+When `DATA_MODE=supabase` is active and Supabase URL/key dart-defines are
+provided, `SupabaseExpenseNetworkRepository` now supports:
+
+- cloud network create/join
+- My Account member password login
+- dashboard network loading with members and expenses
+- settlement display using the existing local formulas
+- add expense writes to `expenses`
+- member expense history from `expenses`
+- notification listing and read-state updates from `network_notifications`
+
+### Expense Sync Behavior
+
+Adding an expense in Supabase mode inserts one `expenses` row with:
+
+- `network_id`
+- `paid_by_member_id`
+- `paid_by_member_name`
+- `added_by_member_id`
+- `added_by_member_name`
+- `amount_cents`
+- `note`
+- `created_at`
+
+The repository trims notes and caps them to the app's 200 character limit before
+insert. Money remains stored as integer cents. Hydrated dashboard loading maps
+expense rows back into the existing `ExpenseNetwork -> Member -> Expense`
+structure, so totals and settlement calculations continue to use the same
+domain models and formulas.
+
+### Member History Behavior
+
+The current local behavior treats member history as expenses paid by the
+selected member, because local expenses are nested under the payer member.
+Supabase mode mirrors that behavior by loading rows where
+`paid_by_member_id = selected member id`, then mapping them to the existing
+history screen model. Each history item keeps amount, date/time, note, and
+added-by metadata.
+
+### Notification Sync Behavior
+
+After a cloud expense is inserted, the repository creates notification rows for
+every other member in the same network. The actor member is excluded. Rows store:
+
+- `network_id`
+- `recipient_member_id`
+- `actor_member_id`
+- `actor_member_name`
+- `expense_id`
+- `amount_cents`
+- `currency_symbol`
+- `note_snippet`
+- `is_read = false`
+- `created_at`
+
+Notification fan-out is best-effort. If the expense insert succeeds but one of
+the notification writes fails, the app keeps the expense as the source of truth
+and does not roll it back.
+
+### Current Cloud Mode Coverage
+
+Cloud-backed in Supabase mode:
+
+- networks
+- network members
+- expenses
+- member expense history
+- network notifications
+
+Still local in both modes:
+
+- selected locale
+- active session cache
+- optional future offline cache
+- existing SharedPreferences local networks when `DATA_MODE=local`
+
+### Deferred Work
+
+The following remain later-phase or production-readiness tasks:
+
+- local-to-cloud migration for existing SharedPreferences networks
+- production RLS hardening with real membership scoping
+- Supabase Auth integration instead of app-only member passwords
+- Supabase Realtime subscriptions for live dashboard/notification refresh
+- iOS project/TestFlight readiness
+
+### Phase 4 Build Command
+
+```bash
+flutter build apk --debug \
+  --dart-define=DATA_MODE=supabase \
+  --dart-define=SUPABASE_URL=https://your-project.supabase.co \
+  --dart-define=SUPABASE_ANON_KEY=your-anon-key
+```
