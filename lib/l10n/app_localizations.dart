@@ -29,6 +29,8 @@ class AppLocalizations {
       'displayName': 'User display name',
       'networkName': 'Network name',
       'networkPassword': 'Network password',
+      'networkCurrency': 'Network currency',
+      'currencyHelp': 'All expenses in this network will use this currency.',
       'create': 'Create',
       'join': 'Join',
       'creating': 'Creating...',
@@ -38,6 +40,7 @@ class AppLocalizations {
       'addExpense': 'Add Expense',
       'expenseSettlement': 'Expense Settlement',
       'amount': 'Amount',
+      'amountPreview': 'Preview',
       'noteOptional': 'Note / description (optional)',
       'saveExpense': 'Save Expense',
       'saving': 'Saving...',
@@ -72,6 +75,8 @@ class AppLocalizations {
       'displayName': 'اسم المستخدم الظاهر',
       'networkName': 'اسم الشبكة',
       'networkPassword': 'كلمة مرور الشبكة',
+      'networkCurrency': 'عملة الشبكة',
+      'currencyHelp': 'ستستخدم جميع المصاريف في هذه الشبكة هذه العملة.',
       'create': 'إنشاء',
       'join': 'انضمام',
       'creating': 'جارٍ الإنشاء...',
@@ -81,6 +86,7 @@ class AppLocalizations {
       'addExpense': 'إضافة مصروف',
       'expenseSettlement': 'تسوية المصاريف',
       'amount': 'المبلغ',
+      'amountPreview': 'معاينة',
       'noteOptional': 'ملاحظة / وصف (اختياري)',
       'saveExpense': 'حفظ المصروف',
       'saving': 'جارٍ الحفظ...',
@@ -128,6 +134,8 @@ class AppLocalizations {
   String get displayName => _text('displayName');
   String get networkName => _text('networkName');
   String get networkPassword => _text('networkPassword');
+  String get networkCurrency => _text('networkCurrency');
+  String get currencyHelp => _text('currencyHelp');
   String get create => _text('create');
   String get join => _text('join');
   String get creating => _text('creating');
@@ -137,6 +145,7 @@ class AppLocalizations {
   String get addExpense => _text('addExpense');
   String get expenseSettlement => _text('expenseSettlement');
   String get amount => _text('amount');
+  String get amountPreview => _text('amountPreview');
   String get noteOptional => _text('noteOptional');
   String get saveExpense => _text('saveExpense');
   String get saving => _text('saving');

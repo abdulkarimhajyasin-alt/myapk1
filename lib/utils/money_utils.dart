@@ -18,7 +18,14 @@ class MoneyUtils {
     return total > 0 ? total : null;
   }
 
-  static String formatCents(num cents) {
-    return (cents / 100).toStringAsFixed(2);
+  static String formatCents(
+    num cents, {
+    String currencySymbol = r'$',
+  }) {
+    final isNegative = cents < 0;
+    final absoluteAmount = cents.abs() / 100;
+    final formattedAmount = absoluteAmount.toStringAsFixed(2);
+    final sign = isNegative ? '-' : '';
+    return '$sign$currencySymbol $formattedAmount';
   }
 }

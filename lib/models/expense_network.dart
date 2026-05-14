@@ -1,5 +1,6 @@
 import 'expense.dart';
 import 'member.dart';
+import '../utils/currency_utils.dart';
 
 class ExpenseNetwork {
   const ExpenseNetwork({
@@ -7,12 +8,16 @@ class ExpenseNetwork {
     required this.password,
     required this.members,
     required this.createdAt,
+    this.currencyCode = 'USD',
+    this.currencySymbol = r'$',
   });
 
   final String name;
   final String password;
   final List<Member> members;
   final DateTime createdAt;
+  final String currencyCode;
+  final String currencySymbol;
 
   int get totalExpensesCents {
     return members.fold<int>(0, (total, member) => total + member.totalPaidCents);
@@ -23,12 +28,16 @@ class ExpenseNetwork {
     String? password,
     List<Member>? members,
     DateTime? createdAt,
+    String? currencyCode,
+    String? currencySymbol,
   }) {
     return ExpenseNetwork(
       name: name ?? this.name,
       password: password ?? this.password,
       members: members ?? this.members,
       createdAt: createdAt ?? this.createdAt,
+      currencyCode: currencyCode ?? this.currencyCode,
+      currencySymbol: currencySymbol ?? this.currencySymbol,
     );
   }
 
@@ -66,10 +75,18 @@ class ExpenseNetwork {
       'password': password,
       'members': members.map((member) => member.toJson()).toList(),
       'createdAt': createdAt.toIso8601String(),
+      'currencyCode': currencyCode,
+      'currencySymbol': currencySymbol,
     };
   }
 
   factory ExpenseNetwork.fromJson(Map<String, dynamic> json) {
+    final rawCurrencyCode = json['currencyCode'] as String?;
+    final currency = CurrencyCatalog.findByCode(rawCurrencyCode);
+    final currencySymbol = json['currencySymbol'] as String?;
+    final hasSupportedCurrencyCode =
+        CurrencyCatalog.isSupportedCode(rawCurrencyCode);
+
     return ExpenseNetwork(
       name: json['name'] as String,
       password: json['password'] as String,
@@ -77,6 +94,11 @@ class ExpenseNetwork {
           .map((member) => Member.fromJson(member as Map<String, dynamic>))
           .toList(),
       createdAt: DateTime.parse(json['createdAt'] as String),
+      currencyCode: currency.code,
+      currencySymbol: hasSupportedCurrencyCode &&
+              currencySymbol?.trim().isNotEmpty == true
+          ? currencySymbol!.trim()
+          : currency.symbol,
     );
   }
 }

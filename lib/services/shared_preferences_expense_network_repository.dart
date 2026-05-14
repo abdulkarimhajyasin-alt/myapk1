@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/expense_network.dart';
+import '../utils/currency_utils.dart';
 import 'expense_network_repository.dart';
 
 class SharedPreferencesExpenseNetworkRepository
@@ -37,17 +38,21 @@ class SharedPreferencesExpenseNetworkRepository
     required String displayName,
     required String networkName,
     required String password,
+    required String currencyCode,
   }) async {
     final networks = await getNetworks();
     if (_findByName(networks, networkName) != null) {
       throw const RepositoryException('A network with this name already exists.');
     }
 
+    final currency = CurrencyCatalog.findByCode(currencyCode);
     final network = ExpenseNetwork(
       name: networkName.trim(),
       password: password.trim(),
       members: const [],
       createdAt: DateTime.now(),
+      currencyCode: currency.code,
+      currencySymbol: currency.symbol,
     ).addMember(displayName.trim());
 
     await _saveNetworks([...networks, network]);

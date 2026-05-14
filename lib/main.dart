@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-<<<<<<< HEAD
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'l10n/app_localizations.dart';
@@ -8,19 +7,11 @@ import 'screens/language_selection_screen.dart';
 import 'services/expense_network_repository.dart';
 import 'services/locale_preference_service.dart';
 import 'services/shared_preferences_expense_network_repository.dart';
-=======
-
-import 'screens/home_screen.dart';
-import 'services/expense_network_repository.dart';
-import 'services/shared_preferences_expense_network_repository.dart';
-import 'utils/app_strings.dart';
->>>>>>> 4adbe7e14d3361fe062125d087de21cd412ba8bb
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final repository = SharedPreferencesExpenseNetworkRepository();
   await repository.init();
-<<<<<<< HEAD
   final preferences = await SharedPreferences.getInstance();
   final localeService = LocalePreferenceService(preferences);
   runApp(
@@ -74,30 +65,16 @@ class _ExpenseNetworkAppState extends State<ExpenseNetworkApp> {
       ),
     );
   }
-=======
-  runApp(ExpenseNetworkApp(repository: repository));
-}
-
-class ExpenseNetworkApp extends StatelessWidget {
-  const ExpenseNetworkApp({required this.repository, super.key});
-
-  final ExpenseNetworkRepository repository;
->>>>>>> 4adbe7e14d3361fe062125d087de21cd412ba8bb
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-<<<<<<< HEAD
       title: 'Expense Network',
       onGenerateTitle: (context) => context.l10n.appTitle,
       debugShowCheckedModeBanner: false,
       locale: _locale,
       supportedLocales: AppLocalizations.supportedLocales,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
-=======
-      title: AppStrings.appTitle,
-      debugShowCheckedModeBanner: false,
->>>>>>> 4adbe7e14d3361fe062125d087de21cd412ba8bb
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
           seedColor: const Color(0xFF2563EB),
@@ -120,7 +97,6 @@ class ExpenseNetworkApp extends StatelessWidget {
           ),
         ),
       ),
-<<<<<<< HEAD
       home: _hasCompletedLanguageSelection
           ? HomeScreen(
               repository: widget.repository,
@@ -130,9 +106,6 @@ class ExpenseNetworkApp extends StatelessWidget {
               selectedLocale: _locale,
               onLocaleSelected: _setLocale,
             ),
-=======
-      home: HomeScreen(repository: repository),
->>>>>>> 4adbe7e14d3361fe062125d087de21cd412ba8bb
     );
   }
 }

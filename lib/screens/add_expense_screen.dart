@@ -1,14 +1,8 @@
 import 'package:flutter/material.dart';
 
-<<<<<<< HEAD
 import '../l10n/app_localizations.dart';
 import '../models/expense_network.dart';
 import '../services/expense_network_repository.dart';
-=======
-import '../models/expense_network.dart';
-import '../services/expense_network_repository.dart';
-import '../utils/app_strings.dart';
->>>>>>> 4adbe7e14d3361fe062125d087de21cd412ba8bb
 import '../utils/money_utils.dart';
 import '../widgets/app_scaffold.dart';
 import '../widgets/form_error_text.dart';
@@ -62,10 +56,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
       );
       if (mounted) Navigator.of(context).pop(network);
     } on RepositoryException catch (error) {
-<<<<<<< HEAD
       if (!mounted) return;
-=======
->>>>>>> 4adbe7e14d3361fe062125d087de21cd412ba8bb
       setState(() => _error = error.message);
     } finally {
       if (mounted) setState(() => _isSaving = false);
@@ -74,15 +65,10 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
 
   @override
   Widget build(BuildContext context) {
-<<<<<<< HEAD
     final l10n = context.l10n;
 
     return AppScaffold(
       title: l10n.addExpense,
-=======
-    return AppScaffold(
-      title: AppStrings.addExpense,
->>>>>>> 4adbe7e14d3361fe062125d087de21cd412ba8bb
       child: Form(
         key: _formKey,
         child: Column(
@@ -90,11 +76,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
           children: [
             FormErrorText(_error),
             Text(
-<<<<<<< HEAD
               l10n.addingExpenseFor(widget.currentMemberName),
-=======
-              'Adding expense for ${widget.currentMemberName}',
->>>>>>> 4adbe7e14d3361fe062125d087de21cd412ba8bb
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w700,
                   ),
@@ -102,41 +84,47 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
             const SizedBox(height: 18),
             TextFormField(
               controller: _amountController,
-<<<<<<< HEAD
               decoration: InputDecoration(labelText: l10n.amount),
-=======
-              decoration: const InputDecoration(labelText: AppStrings.amount),
->>>>>>> 4adbe7e14d3361fe062125d087de21cd412ba8bb
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
               textInputAction: TextInputAction.next,
               validator: (value) {
                 return MoneyUtils.parseToCents(value ?? '') == null
-<<<<<<< HEAD
                     ? l10n.invalidAmount
-=======
-                    ? AppStrings.invalidAmount
->>>>>>> 4adbe7e14d3361fe062125d087de21cd412ba8bb
                     : null;
+              },
+            ),
+            ValueListenableBuilder<TextEditingValue>(
+              valueListenable: _amountController,
+              builder: (context, value, _) {
+                final cents = MoneyUtils.parseToCents(value.text);
+                if (cents == null) return const SizedBox.shrink();
+
+                return Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Text(
+                    '${l10n.amountPreview}: '
+                    '${MoneyUtils.formatCents(
+                      cents,
+                      currencySymbol: widget.network.currencySymbol,
+                    )}',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          fontWeight: FontWeight.w600,
+                        ),
+                  ),
+                );
               },
             ),
             const SizedBox(height: 14),
             TextFormField(
               controller: _noteController,
-<<<<<<< HEAD
               decoration: InputDecoration(labelText: l10n.noteOptional),
-=======
-              decoration: const InputDecoration(labelText: AppStrings.noteOptional),
->>>>>>> 4adbe7e14d3361fe062125d087de21cd412ba8bb
               maxLines: 3,
             ),
             const SizedBox(height: 22),
             FilledButton(
               onPressed: _isSaving ? null : _saveExpense,
-<<<<<<< HEAD
               child: Text(_isSaving ? l10n.saving : l10n.saveExpense),
-=======
-              child: Text(_isSaving ? AppStrings.saving : AppStrings.saveExpense),
->>>>>>> 4adbe7e14d3361fe062125d087de21cd412ba8bb
             ),
           ],
         ),

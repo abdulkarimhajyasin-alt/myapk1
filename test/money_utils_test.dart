@@ -15,4 +15,10 @@ void main() {
     expect(MoneyUtils.parseToCents('-5'), isNull);
     expect(MoneyUtils.parseToCents('10.999'), isNull);
   });
+
+  test('formats money with currency symbols and negative values', () {
+    expect(MoneyUtils.formatCents(2055, currencySymbol: '€'), '€ 20.55');
+    expect(MoneyUtils.formatCents(-2055, currencySymbol: '€'), '-€ 20.55');
+    expect(MoneyUtils.formatCents(123456, currencySymbol: 'ر.س'), 'ر.س 1234.56');
+  });
 }

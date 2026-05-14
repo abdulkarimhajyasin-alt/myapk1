@@ -7,6 +7,7 @@ abstract class ExpenseNetworkRepository {
     required String displayName,
     required String networkName,
     required String password,
+    required String currencyCode,
   });
   Future<ExpenseNetwork> joinNetwork({
     required String displayName,

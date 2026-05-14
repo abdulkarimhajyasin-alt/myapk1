@@ -9,11 +9,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-<<<<<<< HEAD
   flutter_localizations:
     sdk: flutter
-=======
->>>>>>> 4adbe7e14d3361fe062125d087de21cd412ba8bb
   shared_preferences: ^2.3.3
 
 dev_dependencies:
