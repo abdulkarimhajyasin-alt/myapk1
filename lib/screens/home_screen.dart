@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../l10n/app_localizations.dart';
 import '../services/expense_network_repository.dart';
+import '../services/session_repository.dart';
 import '../widgets/app_footer.dart';
 import 'create_network_screen.dart';
 import 'join_network_screen.dart';
@@ -10,11 +11,13 @@ import 'my_account_screen.dart';
 class HomeScreen extends StatelessWidget {
   const HomeScreen({
     required this.repository,
+    required this.sessionRepository,
     required this.onChangeLanguage,
     super.key,
   });
 
   final ExpenseNetworkRepository repository;
+  final SessionRepository sessionRepository;
   final ValueChanged<BuildContext> onChangeLanguage;
 
   @override
@@ -82,6 +85,7 @@ class HomeScreen extends StatelessWidget {
                                   MaterialPageRoute(
                                     builder: (_) => CreateNetworkScreen(
                                       repository: repository,
+                                      sessionRepository: sessionRepository,
                                     ),
                                   ),
                                 );
@@ -96,6 +100,7 @@ class HomeScreen extends StatelessWidget {
                                   MaterialPageRoute(
                                     builder: (_) => JoinNetworkScreen(
                                       repository: repository,
+                                      sessionRepository: sessionRepository,
                                     ),
                                   ),
                                 );
@@ -108,8 +113,10 @@ class HomeScreen extends StatelessWidget {
                               onPressed: () {
                                 Navigator.of(context).push(
                                   MaterialPageRoute(
-                                    builder: (_) =>
-                                        MyAccountScreen(repository: repository),
+                                    builder: (_) => MyAccountScreen(
+                                      repository: repository,
+                                      sessionRepository: sessionRepository,
+                                    ),
                                   ),
                                 );
                               },

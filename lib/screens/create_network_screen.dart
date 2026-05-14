@@ -3,15 +3,21 @@ import 'package:flutter/material.dart';
 import '../l10n/app_localizations.dart';
 import '../models/expense_network.dart';
 import '../services/expense_network_repository.dart';
+import '../services/session_repository.dart';
 import '../utils/currency_utils.dart';
 import '../widgets/app_scaffold.dart';
 import '../widgets/form_error_text.dart';
 import 'network_dashboard_screen.dart';
 
 class CreateNetworkScreen extends StatefulWidget {
-  const CreateNetworkScreen({required this.repository, super.key});
+  const CreateNetworkScreen({
+    required this.repository,
+    required this.sessionRepository,
+    super.key,
+  });
 
   final ExpenseNetworkRepository repository;
+  final SessionRepository sessionRepository;
 
   @override
   State<CreateNetworkScreen> createState() => _CreateNetworkScreenState();
@@ -52,6 +58,11 @@ class _CreateNetworkScreenState extends State<CreateNetworkScreen> {
         currencyCode: _selectedCurrency.code,
       );
       if (!mounted) return;
+      await widget.sessionRepository.saveActiveSession(
+        networkName: network.name,
+        memberId: network.members.first.id,
+      );
+      if (!mounted) return;
       _openDashboard(network);
     } on RepositoryException catch (error) {
       if (!mounted) return;
@@ -66,6 +77,7 @@ class _CreateNetworkScreenState extends State<CreateNetworkScreen> {
       MaterialPageRoute(
         builder: (_) => NetworkDashboardScreen(
           repository: widget.repository,
+          sessionRepository: widget.sessionRepository,
           network: network,
           currentMemberId: network.members.first.id,
         ),

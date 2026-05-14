@@ -3,14 +3,20 @@ import 'package:flutter/material.dart';
 import '../l10n/app_localizations.dart';
 import '../models/expense_network.dart';
 import '../services/expense_network_repository.dart';
+import '../services/session_repository.dart';
 import '../widgets/app_scaffold.dart';
 import '../widgets/form_error_text.dart';
 import 'network_dashboard_screen.dart';
 
 class JoinNetworkScreen extends StatefulWidget {
-  const JoinNetworkScreen({required this.repository, super.key});
+  const JoinNetworkScreen({
+    required this.repository,
+    required this.sessionRepository,
+    super.key,
+  });
 
   final ExpenseNetworkRepository repository;
+  final SessionRepository sessionRepository;
 
   @override
   State<JoinNetworkScreen> createState() => _JoinNetworkScreenState();
@@ -49,6 +55,11 @@ class _JoinNetworkScreenState extends State<JoinNetworkScreen> {
         memberPassword: _memberPasswordController.text,
       );
       if (!mounted) return;
+      await widget.sessionRepository.saveActiveSession(
+        networkName: network.name,
+        memberId: network.members.last.id,
+      );
+      if (!mounted) return;
       _openDashboard(network);
     } on RepositoryException catch (error) {
       if (!mounted) return;
@@ -63,6 +74,7 @@ class _JoinNetworkScreenState extends State<JoinNetworkScreen> {
       MaterialPageRoute(
         builder: (_) => NetworkDashboardScreen(
           repository: widget.repository,
+          sessionRepository: widget.sessionRepository,
           network: network,
           currentMemberId: network.members.last.id,
         ),

@@ -4,6 +4,7 @@ import '../l10n/app_localizations.dart';
 import '../models/expense_network.dart';
 import '../models/member.dart';
 import '../services/expense_network_repository.dart';
+import '../services/session_repository.dart';
 import '../widgets/app_scaffold.dart';
 import '../widgets/form_error_text.dart';
 import 'network_dashboard_screen.dart';
@@ -11,10 +12,12 @@ import 'network_dashboard_screen.dart';
 class MyAccountScreen extends StatefulWidget {
   const MyAccountScreen({
     required this.repository,
+    required this.sessionRepository,
     super.key,
   });
 
   final ExpenseNetworkRepository repository;
+  final SessionRepository sessionRepository;
 
   @override
   State<MyAccountScreen> createState() => _MyAccountScreenState();
@@ -44,7 +47,7 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
 
   Future<void> _loadNetworks() async {
     final networks = await widget.repository.getNetworks();
-    final session = await widget.repository.getActiveSession();
+    final session = await widget.sessionRepository.getActiveSession();
     ExpenseNetwork? selectedNetwork;
     Member? selectedMember;
 
@@ -87,10 +90,16 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
         memberPassword: _passwordController.text,
       );
       if (!mounted) return;
+      await widget.sessionRepository.saveActiveSession(
+        networkName: authenticatedNetwork.name,
+        memberId: member.id,
+      );
+      if (!mounted) return;
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
           builder: (_) => NetworkDashboardScreen(
             repository: widget.repository,
+            sessionRepository: widget.sessionRepository,
             network: authenticatedNetwork,
             currentMemberId: member.id,
           ),

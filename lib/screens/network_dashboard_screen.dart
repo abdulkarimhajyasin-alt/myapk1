@@ -4,6 +4,7 @@ import '../l10n/app_localizations.dart';
 import '../models/expense_network.dart';
 import '../models/member.dart';
 import '../services/expense_network_repository.dart';
+import '../services/session_repository.dart';
 import '../utils/money_utils.dart';
 import '../widgets/app_scaffold.dart';
 import 'add_expense_screen.dart';
@@ -14,12 +15,14 @@ import 'notifications_screen.dart';
 class NetworkDashboardScreen extends StatefulWidget {
   const NetworkDashboardScreen({
     required this.repository,
+    required this.sessionRepository,
     required this.network,
     required this.currentMemberId,
     super.key,
   });
 
   final ExpenseNetworkRepository repository;
+  final SessionRepository sessionRepository;
   final ExpenseNetwork network;
   final String currentMemberId;
 
@@ -104,7 +107,7 @@ class _NetworkDashboardScreenState extends State<NetworkDashboardScreen> {
   }
 
   Future<void> _logout() async {
-    await widget.repository.clearActiveSession();
+    await widget.sessionRepository.clearActiveSession();
     if (!mounted) return;
     Navigator.of(context).popUntil((route) => route.isFirst);
   }

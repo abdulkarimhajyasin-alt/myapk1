@@ -7,6 +7,8 @@ import 'screens/language_selection_screen.dart';
 import 'services/expense_network_repository.dart';
 import 'services/locale_preference_service.dart';
 import 'services/shared_preferences_expense_network_repository.dart';
+import 'services/shared_preferences_session_repository.dart';
+import 'services/session_repository.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -14,9 +16,11 @@ Future<void> main() async {
   await repository.init();
   final preferences = await SharedPreferences.getInstance();
   final localeService = LocalePreferenceService(preferences);
+  final sessionRepository = SharedPreferencesSessionRepository(preferences);
   runApp(
     ExpenseNetworkApp(
       repository: repository,
+      sessionRepository: sessionRepository,
       localeService: localeService,
     ),
   );
@@ -25,11 +29,13 @@ Future<void> main() async {
 class ExpenseNetworkApp extends StatefulWidget {
   const ExpenseNetworkApp({
     required this.repository,
+    required this.sessionRepository,
     required this.localeService,
     super.key,
   });
 
   final ExpenseNetworkRepository repository;
+  final SessionRepository sessionRepository;
   final LocalePreferenceService localeService;
 
   @override
@@ -100,6 +106,7 @@ class _ExpenseNetworkAppState extends State<ExpenseNetworkApp> {
       home: _hasCompletedLanguageSelection
           ? HomeScreen(
               repository: widget.repository,
+              sessionRepository: widget.sessionRepository,
               onChangeLanguage: _openLanguageSettings,
             )
           : LanguageSelectionScreen(

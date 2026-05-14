@@ -52,5 +52,18 @@ void main() {
     expect(monaNotifications, hasLength(1));
     expect(monaNotifications.single.actorMemberName, 'Ali');
     expect(monaNotifications.single.noteSnippet, 'Coffee');
+
+    final history = await repository.getMemberHistory(
+      networkName: 'Trip',
+      memberId: ali.id,
+    );
+    expect(history?.expenses, hasLength(1));
+
+    await repository.markNotificationRead(monaNotifications.single.id);
+    final readNotifications = await repository.getNotifications(
+      networkId: updated.id,
+      memberId: mona.id,
+    );
+    expect(readNotifications.single.isRead, isTrue);
   });
 }

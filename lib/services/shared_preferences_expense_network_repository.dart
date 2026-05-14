@@ -9,14 +9,10 @@ import '../utils/currency_utils.dart';
 import '../utils/id_utils.dart';
 import '../utils/password_hash_utils.dart';
 import 'expense_network_repository.dart';
+import 'shared_preferences_storage_keys.dart';
 
 class SharedPreferencesExpenseNetworkRepository
     implements ExpenseNetworkRepository {
-  static const _storageKey = 'expense_networks_v1';
-  static const _notificationsKey = 'expense_network_notifications_v1';
-  static const _activeNetworkNameKey = 'active_network_name';
-  static const _activeMemberIdKey = 'active_member_id';
-
   late final SharedPreferences _preferences;
 
   Future<void> init() async {
@@ -25,13 +21,29 @@ class SharedPreferencesExpenseNetworkRepository
 
   @override
   Future<List<ExpenseNetwork>> getNetworks() async {
-    final raw = _preferences.getString(_storageKey);
+    final raw = _preferences.getString(SharedPreferencesStorageKeys.networks);
     if (raw == null || raw.isEmpty) return [];
 
-    final decoded = jsonDecode(raw) as List<dynamic>;
-    return decoded
-        .map((network) => ExpenseNetwork.fromJson(network as Map<String, dynamic>))
-        .toList();
+    try {
+      final decoded = jsonDecode(raw) as List<dynamic>;
+      return decoded
+          .map(
+            (network) => ExpenseNetwork.fromJson(
+              network as Map<String, dynamic>,
+            ),
+          )
+          .toList();
+    } on FormatException catch (_) {
+      throw const RepositoryException(
+        'Stored network data could not be loaded.',
+        code: 'network_data_parse_failed',
+      );
+    } on TypeError catch (_) {
+      throw const RepositoryException(
+        'Stored network data could not be loaded.',
+        code: 'network_data_parse_failed',
+      );
+    }
   }
 
   @override
@@ -47,6 +59,14 @@ class SharedPreferencesExpenseNetworkRepository
   }) async {
     final network = await findNetwork(networkName);
     return network?.findMemberById(memberId);
+  }
+
+  @override
+  Future<Member?> getMemberHistory({
+    required String networkName,
+    required String memberId,
+  }) {
+    return findMember(networkName: networkName, memberId: memberId);
   }
 
   @override
@@ -78,7 +98,6 @@ class SharedPreferencesExpenseNetworkRepository
     );
 
     await _saveNetworks([...networks, network]);
-    await saveActiveSession(networkName: network.name, memberId: member.id);
     return network;
   }
 
@@ -110,39 +129,20 @@ class SharedPreferencesExpenseNetworkRepository
     );
     final updatedNetwork = network.addMember(member);
     await _replaceNetwork(networks, updatedNetwork);
-    await saveActiveSession(
-      networkName: updatedNetwork.name,
-      memberId: member.id,
-    );
     return updatedNetwork;
   }
 
   @override
-  Future<AccountSession?> getActiveSession() async {
-    final networkName = _preferences.getString(_activeNetworkNameKey);
-    final memberId = _preferences.getString(_activeMemberIdKey);
-    if (networkName == null ||
-        networkName.trim().isEmpty ||
-        memberId == null ||
-        memberId.trim().isEmpty) {
-      return null;
+  Future<void> saveNetwork(ExpenseNetwork network) async {
+    final networks = await getNetworks();
+    final hasNetwork = networks.any(
+      (existingNetwork) => _isSameNetwork(existingNetwork, network),
+    );
+    if (hasNetwork) {
+      await _replaceNetwork(networks, network);
+      return;
     }
-    return AccountSession(networkName: networkName, memberId: memberId);
-  }
-
-  @override
-  Future<void> saveActiveSession({
-    required String networkName,
-    required String memberId,
-  }) async {
-    await _preferences.setString(_activeNetworkNameKey, networkName);
-    await _preferences.setString(_activeMemberIdKey, memberId);
-  }
-
-  @override
-  Future<void> clearActiveSession() async {
-    await _preferences.remove(_activeNetworkNameKey);
-    await _preferences.remove(_activeMemberIdKey);
+    await _saveNetworks([...networks, network]);
   }
 
   @override
@@ -170,7 +170,6 @@ class SharedPreferencesExpenseNetworkRepository
     if (!isValid) {
       throw const RepositoryException('Member password is incorrect.');
     }
-    await saveActiveSession(networkName: network.name, memberId: member.id);
     return network;
   }
 
@@ -281,18 +280,26 @@ class SharedPreferencesExpenseNetworkRepository
     ExpenseNetwork updatedNetwork,
   ) async {
     final updatedNetworks = networks.map((network) {
-      return network.name.toLowerCase() == updatedNetwork.name.toLowerCase()
+      return _isSameNetwork(network, updatedNetwork)
           ? updatedNetwork
           : network;
     }).toList();
     await _saveNetworks(updatedNetworks);
   }
 
+  bool _isSameNetwork(
+    ExpenseNetwork network,
+    ExpenseNetwork updatedNetwork,
+  ) {
+    return network.id == updatedNetwork.id ||
+        network.name.toLowerCase() == updatedNetwork.name.toLowerCase();
+  }
+
   Future<void> _saveNetworks(List<ExpenseNetwork> networks) async {
     final encoded = jsonEncode(
       networks.map((network) => network.toJson()).toList(),
     );
-    await _preferences.setString(_storageKey, encoded);
+    await _preferences.setString(SharedPreferencesStorageKeys.networks, encoded);
   }
 
   Future<void> _createExpenseNotifications({
@@ -326,16 +333,31 @@ class SharedPreferencesExpenseNetworkRepository
   }
 
   Future<List<NetworkNotification>> _getAllNotifications() async {
-    final raw = _preferences.getString(_notificationsKey);
+    final raw = _preferences.getString(
+      SharedPreferencesStorageKeys.notifications,
+    );
     if (raw == null || raw.isEmpty) return [];
 
-    final decoded = jsonDecode(raw) as List<dynamic>;
-    return decoded
-        .map(
-          (notification) =>
-              NetworkNotification.fromJson(notification as Map<String, dynamic>),
-        )
-        .toList();
+    try {
+      final decoded = jsonDecode(raw) as List<dynamic>;
+      return decoded
+          .map(
+            (notification) => NetworkNotification.fromJson(
+              notification as Map<String, dynamic>,
+            ),
+          )
+          .toList();
+    } on FormatException catch (_) {
+      throw const RepositoryException(
+        'Stored notification data could not be loaded.',
+        code: 'notification_data_parse_failed',
+      );
+    } on TypeError catch (_) {
+      throw const RepositoryException(
+        'Stored notification data could not be loaded.',
+        code: 'notification_data_parse_failed',
+      );
+    }
   }
 
   Future<void> _saveNotifications(
@@ -344,6 +366,9 @@ class SharedPreferencesExpenseNetworkRepository
     final encoded = jsonEncode(
       notifications.map((notification) => notification.toJson()).toList(),
     );
-    await _preferences.setString(_notificationsKey, encoded);
+    await _preferences.setString(
+      SharedPreferencesStorageKeys.notifications,
+      encoded,
+    );
   }
 }
