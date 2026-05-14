@@ -29,6 +29,7 @@ class AppLocalizations {
       'displayName': 'User display name',
       'networkName': 'Network name',
       'networkPassword': 'Network password',
+      'memberPassword': 'Personal account password',
       'networkCurrency': 'Network currency',
       'currencyHelp': 'All expenses in this network will use this currency.',
       'create': 'Create',
@@ -51,6 +52,8 @@ class AppLocalizations {
       'noSettlementNeeded': 'Everyone is settled.',
       'fieldRequired': 'This field is required.',
       'invalidAmount': 'Enter a valid positive amount.',
+      'passwordTooShort': 'Password must be at least 4 characters.',
+      'noteTooLong': 'Note must be 200 characters or fewer.',
       'paid': 'Paid',
       'shouldPay': 'Should pay',
       'balance': 'Balance',
@@ -65,6 +68,23 @@ class AppLocalizations {
       'continueAction': 'Continue',
       'changeLanguage': 'Change language',
       'language': 'Language',
+      'myAccount': 'My Account',
+      'enterAccount': 'Enter account',
+      'selectNetwork': 'Select network',
+      'selectMember': 'Select member',
+      'accountPassword': 'Account password',
+      'noNetworksYet': 'Create or join a network first.',
+      'continueToAccount': 'Continue to account',
+      'expenseHistory': 'Expense history',
+      'noExpensesYet': 'No expenses yet.',
+      'noExpensesSubtitle': 'This member has not added any expenses.',
+      'note': 'Note',
+      'addedBy': 'Added by',
+      'notifications': 'Notifications',
+      'noNotifications': 'No notifications yet.',
+      'markAllRead': 'Mark all read',
+      'newExpenseNotification': '{actor} added {amount}',
+      'logout': 'Log out',
     },
     'ar': {
       'appTitle': 'شبكة المصاريف',
@@ -75,6 +95,7 @@ class AppLocalizations {
       'displayName': 'اسم المستخدم الظاهر',
       'networkName': 'اسم الشبكة',
       'networkPassword': 'كلمة مرور الشبكة',
+      'memberPassword': 'كلمة مرور الحساب الشخصي',
       'networkCurrency': 'عملة الشبكة',
       'currencyHelp': 'ستستخدم جميع المصاريف في هذه الشبكة هذه العملة.',
       'create': 'إنشاء',
@@ -97,6 +118,8 @@ class AppLocalizations {
       'noSettlementNeeded': 'الجميع متعادلون.',
       'fieldRequired': 'هذا الحقل مطلوب.',
       'invalidAmount': 'أدخل مبلغًا صحيحًا أكبر من صفر.',
+      'passwordTooShort': 'يجب أن تكون كلمة المرور 4 أحرف على الأقل.',
+      'noteTooLong': 'يجب ألا تتجاوز الملاحظة 200 حرف.',
       'paid': 'دفع',
       'shouldPay': 'المستحق عليه',
       'balance': 'الرصيد',
@@ -111,6 +134,23 @@ class AppLocalizations {
       'continueAction': 'متابعة',
       'changeLanguage': 'تغيير اللغة',
       'language': 'اللغة',
+      'myAccount': 'حسابي',
+      'enterAccount': 'الدخول إلى الحساب',
+      'selectNetwork': 'اختر الشبكة',
+      'selectMember': 'اختر العضو',
+      'accountPassword': 'كلمة مرور الحساب',
+      'noNetworksYet': 'أنشئ شبكة أو انضم إلى شبكة أولًا.',
+      'continueToAccount': 'متابعة إلى الحساب',
+      'expenseHistory': 'سجل المصاريف',
+      'noExpensesYet': 'لا توجد مصاريف بعد.',
+      'noExpensesSubtitle': 'لم يضف هذا العضو أي مصاريف.',
+      'note': 'ملاحظة',
+      'addedBy': 'أضافها',
+      'notifications': 'الإشعارات',
+      'noNotifications': 'لا توجد إشعارات بعد.',
+      'markAllRead': 'تعليم الكل كمقروء',
+      'newExpenseNotification': 'أضاف {actor} {amount}',
+      'logout': 'تسجيل الخروج',
     },
   };
 
@@ -134,6 +174,7 @@ class AppLocalizations {
   String get displayName => _text('displayName');
   String get networkName => _text('networkName');
   String get networkPassword => _text('networkPassword');
+  String get memberPassword => _text('memberPassword');
   String get networkCurrency => _text('networkCurrency');
   String get currencyHelp => _text('currencyHelp');
   String get create => _text('create');
@@ -156,6 +197,8 @@ class AppLocalizations {
   String get noSettlementNeeded => _text('noSettlementNeeded');
   String get fieldRequired => _text('fieldRequired');
   String get invalidAmount => _text('invalidAmount');
+  String get passwordTooShort => _text('passwordTooShort');
+  String get noteTooLong => _text('noteTooLong');
   String get paid => _text('paid');
   String get shouldPay => _text('shouldPay');
   String get balance => _text('balance');
@@ -168,6 +211,22 @@ class AppLocalizations {
   String get continueAction => _text('continueAction');
   String get changeLanguage => _text('changeLanguage');
   String get language => _text('language');
+  String get myAccount => _text('myAccount');
+  String get enterAccount => _text('enterAccount');
+  String get selectNetwork => _text('selectNetwork');
+  String get selectMember => _text('selectMember');
+  String get accountPassword => _text('accountPassword');
+  String get noNetworksYet => _text('noNetworksYet');
+  String get continueToAccount => _text('continueToAccount');
+  String get expenseHistory => _text('expenseHistory');
+  String get noExpensesYet => _text('noExpensesYet');
+  String get noExpensesSubtitle => _text('noExpensesSubtitle');
+  String get note => _text('note');
+  String get addedBy => _text('addedBy');
+  String get notifications => _text('notifications');
+  String get noNotifications => _text('noNotifications');
+  String get markAllRead => _text('markAllRead');
+  String get logout => _text('logout');
 
   String addingExpenseFor(String memberName) {
     return _text('addingExpenseFor').replaceAll('{member}', memberName);
@@ -182,6 +241,15 @@ class AppLocalizations {
       return '$fromMember $pays $amount $to $toMember';
     }
     return '$fromMember $pays $amount $to $toMember';
+  }
+
+  String newExpenseNotification({
+    required String actor,
+    required String amount,
+  }) {
+    return _text('newExpenseNotification')
+        .replaceAll('{actor}', actor)
+        .replaceAll('{amount}', amount);
   }
 }
 

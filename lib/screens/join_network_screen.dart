@@ -21,6 +21,7 @@ class _JoinNetworkScreenState extends State<JoinNetworkScreen> {
   final _displayNameController = TextEditingController();
   final _networkNameController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _memberPasswordController = TextEditingController();
   String? _error;
   bool _isJoining = false;
 
@@ -29,6 +30,7 @@ class _JoinNetworkScreenState extends State<JoinNetworkScreen> {
     _displayNameController.dispose();
     _networkNameController.dispose();
     _passwordController.dispose();
+    _memberPasswordController.dispose();
     super.dispose();
   }
 
@@ -44,6 +46,7 @@ class _JoinNetworkScreenState extends State<JoinNetworkScreen> {
         displayName: _displayNameController.text,
         networkName: _networkNameController.text,
         password: _passwordController.text,
+        memberPassword: _memberPasswordController.text,
       );
       if (!mounted) return;
       _openDashboard(network);
@@ -61,7 +64,7 @@ class _JoinNetworkScreenState extends State<JoinNetworkScreen> {
         builder: (_) => NetworkDashboardScreen(
           repository: widget.repository,
           network: network,
-          currentMemberName: _displayNameController.text.trim(),
+          currentMemberId: network.members.last.id,
         ),
       ),
     );
@@ -100,6 +103,13 @@ class _JoinNetworkScreenState extends State<JoinNetworkScreen> {
               validator: _required,
               onFieldSubmitted: (_) => _joinNetwork(),
             ),
+            const SizedBox(height: 14),
+            TextFormField(
+              controller: _memberPasswordController,
+              decoration: InputDecoration(labelText: l10n.memberPassword),
+              obscureText: true,
+              validator: _passwordValidator,
+            ),
             const SizedBox(height: 22),
             FilledButton(
               onPressed: _isJoining ? null : _joinNetwork,
@@ -115,5 +125,15 @@ class _JoinNetworkScreenState extends State<JoinNetworkScreen> {
     return value == null || value.trim().isEmpty
         ? context.l10n.fieldRequired
         : null;
+  }
+
+  String? _passwordValidator(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return context.l10n.fieldRequired;
+    }
+    if (value.trim().length < 4) {
+      return context.l10n.passwordTooShort;
+    }
+    return null;
   }
 }

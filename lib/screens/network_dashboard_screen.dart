@@ -2,23 +2,26 @@ import 'package:flutter/material.dart';
 
 import '../l10n/app_localizations.dart';
 import '../models/expense_network.dart';
+import '../models/member.dart';
 import '../services/expense_network_repository.dart';
 import '../utils/money_utils.dart';
 import '../widgets/app_scaffold.dart';
 import 'add_expense_screen.dart';
 import 'expense_settlement_screen.dart';
+import 'member_expense_history_screen.dart';
+import 'notifications_screen.dart';
 
 class NetworkDashboardScreen extends StatefulWidget {
   const NetworkDashboardScreen({
     required this.repository,
     required this.network,
-    required this.currentMemberName,
+    required this.currentMemberId,
     super.key,
   });
 
   final ExpenseNetworkRepository repository;
   final ExpenseNetwork network;
-  final String currentMemberName;
+  final String currentMemberId;
 
   @override
   State<NetworkDashboardScreen> createState() => _NetworkDashboardScreenState();
@@ -26,6 +29,13 @@ class NetworkDashboardScreen extends StatefulWidget {
 
 class _NetworkDashboardScreenState extends State<NetworkDashboardScreen> {
   late ExpenseNetwork _network = widget.network;
+
+  Member get _currentMember {
+    return _network.findMemberById(widget.currentMemberId) ??
+        (_network.members.isEmpty
+            ? Member(name: '')
+            : _network.members.first);
+  }
 
   Future<void> _refreshNetwork() async {
     final latest = await widget.repository.findNetwork(_network.name);
@@ -40,7 +50,7 @@ class _NetworkDashboardScreenState extends State<NetworkDashboardScreen> {
         builder: (_) => AddExpenseScreen(
           repository: widget.repository,
           network: _network,
-          currentMemberName: widget.currentMemberName,
+          currentMemberId: widget.currentMemberId,
         ),
       ),
     );
@@ -60,6 +70,45 @@ class _NetworkDashboardScreenState extends State<NetworkDashboardScreen> {
     );
   }
 
+  void _openHistory(Member member) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => MemberExpenseHistoryScreen(
+          network: _network,
+          member: member,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openNotifications() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => NotificationsScreen(
+          repository: widget.repository,
+          networkId: _network.id,
+          memberId: widget.currentMemberId,
+        ),
+      ),
+    );
+    if (!mounted) return;
+    setState(() {});
+  }
+
+  Future<int> _unreadCount() async {
+    final notifications = await widget.repository.getNotifications(
+      networkId: _network.id,
+      memberId: widget.currentMemberId,
+    );
+    return notifications.where((notification) => !notification.isRead).length;
+  }
+
+  Future<void> _logout() async {
+    await widget.repository.clearActiveSession();
+    if (!mounted) return;
+    Navigator.of(context).popUntil((route) => route.isFirst);
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -67,9 +116,52 @@ class _NetworkDashboardScreenState extends State<NetworkDashboardScreen> {
 
     return AppScaffold(
       title: _network.name,
+      actions: [
+        FutureBuilder<int>(
+          future: _unreadCount(),
+          builder: (context, snapshot) {
+            final count = snapshot.data ?? 0;
+            return Stack(
+              alignment: Alignment.center,
+              children: [
+                IconButton(
+                  tooltip: l10n.notifications,
+                  onPressed: _openNotifications,
+                  icon: const Icon(Icons.notifications_rounded),
+                ),
+                if (count > 0)
+                  PositionedDirectional(
+                    top: 8,
+                    end: 8,
+                    child: CircleAvatar(
+                      radius: 8,
+                      child: Text(
+                        count > 9 ? '9+' : '$count',
+                        style: const TextStyle(fontSize: 9),
+                      ),
+                    ),
+                  ),
+              ],
+            );
+          },
+        ),
+        IconButton(
+          tooltip: l10n.logout,
+          onPressed: _logout,
+          icon: const Icon(Icons.logout_rounded),
+        ),
+      ],
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          Text(
+            _currentMember.name,
+            style: theme.textTheme.titleMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 12),
           Container(
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
@@ -111,6 +203,7 @@ class _NetworkDashboardScreenState extends State<NetworkDashboardScreen> {
             (member) => Card(
               margin: const EdgeInsets.only(bottom: 10),
               child: ListTile(
+                onTap: () => _openHistory(member),
                 leading: CircleAvatar(
                   child: Text(_avatarText(member.name)),
                 ),

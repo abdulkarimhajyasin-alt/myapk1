@@ -12,6 +12,7 @@ void main() {
       displayName: 'Ali',
       networkName: 'Trip',
       password: 'secret',
+      memberPassword: '1234',
       currencyCode: 'SAR',
     );
     final storedNetwork = await repository.findNetwork('Trip');

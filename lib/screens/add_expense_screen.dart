@@ -11,13 +11,13 @@ class AddExpenseScreen extends StatefulWidget {
   const AddExpenseScreen({
     required this.repository,
     required this.network,
-    required this.currentMemberName,
+    required this.currentMemberId,
     super.key,
   });
 
   final ExpenseNetworkRepository repository;
   final ExpenseNetwork network;
-  final String currentMemberName;
+  final String currentMemberId;
 
   @override
   State<AddExpenseScreen> createState() => _AddExpenseScreenState();
@@ -50,7 +50,8 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
     try {
       final network = await widget.repository.addExpense(
         networkName: widget.network.name,
-        memberName: widget.currentMemberName,
+        memberName: _currentMemberName,
+        addedByMemberId: widget.currentMemberId,
         amountCents: cents,
         note: _noteController.text,
       );
@@ -76,7 +77,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
           children: [
             FormErrorText(_error),
             Text(
-              l10n.addingExpenseFor(widget.currentMemberName),
+              l10n.addingExpenseFor(_currentMemberName),
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w700,
                   ),
@@ -120,6 +121,12 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
               controller: _noteController,
               decoration: InputDecoration(labelText: l10n.noteOptional),
               maxLines: 3,
+              maxLength: 200,
+              validator: (value) {
+                return (value?.trim().length ?? 0) > 200
+                    ? l10n.noteTooLong
+                    : null;
+              },
             ),
             const SizedBox(height: 22),
             FilledButton(
@@ -130,5 +137,9 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
         ),
       ),
     );
+  }
+
+  String get _currentMemberName {
+    return widget.network.findMemberById(widget.currentMemberId)?.name ?? '';
   }
 }

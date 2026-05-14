@@ -22,6 +22,7 @@ class _CreateNetworkScreenState extends State<CreateNetworkScreen> {
   final _displayNameController = TextEditingController();
   final _networkNameController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _memberPasswordController = TextEditingController();
   NetworkCurrency _selectedCurrency = CurrencyCatalog.defaultCurrency;
   String? _error;
   bool _isSaving = false;
@@ -31,6 +32,7 @@ class _CreateNetworkScreenState extends State<CreateNetworkScreen> {
     _displayNameController.dispose();
     _networkNameController.dispose();
     _passwordController.dispose();
+    _memberPasswordController.dispose();
     super.dispose();
   }
 
@@ -46,6 +48,7 @@ class _CreateNetworkScreenState extends State<CreateNetworkScreen> {
         displayName: _displayNameController.text,
         networkName: _networkNameController.text,
         password: _passwordController.text,
+        memberPassword: _memberPasswordController.text,
         currencyCode: _selectedCurrency.code,
       );
       if (!mounted) return;
@@ -64,7 +67,7 @@ class _CreateNetworkScreenState extends State<CreateNetworkScreen> {
         builder: (_) => NetworkDashboardScreen(
           repository: widget.repository,
           network: network,
-          currentMemberName: _displayNameController.text.trim(),
+          currentMemberId: network.members.first.id,
         ),
       ),
     );
@@ -105,6 +108,14 @@ class _CreateNetworkScreenState extends State<CreateNetworkScreen> {
               onFieldSubmitted: (_) => _createNetwork(),
             ),
             const SizedBox(height: 14),
+            TextFormField(
+              controller: _memberPasswordController,
+              decoration: InputDecoration(labelText: l10n.memberPassword),
+              obscureText: true,
+              textInputAction: TextInputAction.next,
+              validator: _passwordValidator,
+            ),
+            const SizedBox(height: 14),
             DropdownButtonFormField<String>(
               initialValue: _selectedCurrency.code,
               decoration: InputDecoration(labelText: l10n.networkCurrency),
@@ -143,5 +154,15 @@ class _CreateNetworkScreenState extends State<CreateNetworkScreen> {
     return value == null || value.trim().isEmpty
         ? context.l10n.fieldRequired
         : null;
+  }
+
+  String? _passwordValidator(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return context.l10n.fieldRequired;
+    }
+    if (value.trim().length < 4) {
+      return context.l10n.passwordTooShort;
+    }
+    return null;
   }
 }

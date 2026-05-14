@@ -4,6 +4,7 @@ import '../l10n/app_localizations.dart';
 import '../services/expense_network_repository.dart';
 import 'create_network_screen.dart';
 import 'join_network_screen.dart';
+import 'my_account_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({
@@ -93,6 +94,19 @@ class HomeScreen extends StatelessWidget {
                         },
                         icon: const Icon(Icons.login_rounded),
                         label: Text(l10n.joinNetwork),
+                      ),
+                      const SizedBox(height: 12),
+                      OutlinedButton.icon(
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  MyAccountScreen(repository: repository),
+                            ),
+                          );
+                        },
+                        icon: const Icon(Icons.person_rounded),
+                        label: Text(l10n.myAccount),
                       ),
                     ],
                   ),
