@@ -1,4 +1,4 @@
-# Expense Network
+# Shared Housing Expenses
 
 A Flutter mobile app for private expense-sharing networks. The first version is Android APK-first and uses local persistent storage through `shared_preferences`, with repository interfaces that can later be backed by Firebase or Supabase.
 

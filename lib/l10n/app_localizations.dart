@@ -21,7 +21,7 @@ class AppLocalizations {
 
   static const _localizedValues = {
     'en': {
-      'appTitle': 'Expense Network',
+      'appTitle': 'Shared Housing Expenses',
       'homeSubtitle':
           'Create or join a private group and settle shared costs clearly.',
       'createNetwork': 'Create Network',
@@ -85,9 +85,10 @@ class AppLocalizations {
       'markAllRead': 'Mark all read',
       'newExpenseNotification': '{actor} added {amount}',
       'logout': 'Log out',
+      'footerText': '© 2026 عبد الكريم حاج ياسين. جميع الحقوق محفوظة.',
     },
     'ar': {
-      'appTitle': 'شبكة المصاريف',
+      'appTitle': 'مصروف السكن الجماعي',
       'homeSubtitle':
           'أنشئ مجموعة خاصة أو انضم إليها لتقسيم المصاريف وتسويتها بوضوح.',
       'createNetwork': 'إنشاء شبكة',
@@ -151,6 +152,7 @@ class AppLocalizations {
       'markAllRead': 'تعليم الكل كمقروء',
       'newExpenseNotification': 'أضاف {actor} {amount}',
       'logout': 'تسجيل الخروج',
+      'footerText': '© 2026 عبد الكريم حاج ياسين. جميع الحقوق محفوظة.',
     },
   };
 
@@ -227,6 +229,7 @@ class AppLocalizations {
   String get noNotifications => _text('noNotifications');
   String get markAllRead => _text('markAllRead');
   String get logout => _text('logout');
+  String get footerText => _text('footerText');
 
   String addingExpenseFor(String memberName) {
     return _text('addingExpenseFor').replaceAll('{member}', memberName);

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../l10n/app_localizations.dart';
+import '../widgets/app_footer.dart';
 
 class LanguageSelectionScreen extends StatefulWidget {
   const LanguageSelectionScreen({
@@ -36,58 +37,56 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final theme = Theme.of(context);
-    final content = SafeArea(
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 520),
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.language_rounded,
-                  size: 70,
-                  color: theme.colorScheme.primary,
+    final content = Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 520),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.language_rounded,
+                size: 70,
+                color: theme.colorScheme.primary,
+              ),
+              const SizedBox(height: 22),
+              Text(
+                l10n.chooseLanguage,
+                textAlign: TextAlign.center,
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.w800,
                 ),
-                const SizedBox(height: 22),
-                Text(
-                  l10n.chooseLanguage,
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                l10n.chooseLanguageSubtitle,
+                textAlign: TextAlign.center,
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
                 ),
-                const SizedBox(height: 10),
-                Text(
-                  l10n.chooseLanguageSubtitle,
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.bodyLarge?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                const SizedBox(height: 30),
-                _LanguageOption(
-                  title: l10n.english,
-                  locale: const Locale('en'),
-                  selectedLocale: _selectedLocale,
-                  onSelected: _selectLocale,
-                ),
-                const SizedBox(height: 12),
-                _LanguageOption(
-                  title: l10n.arabic,
-                  locale: const Locale('ar'),
-                  selectedLocale: _selectedLocale,
-                  onSelected: _selectLocale,
-                ),
-                const SizedBox(height: 24),
-                FilledButton(
-                  onPressed: _continue,
-                  child: Text(l10n.continueAction),
-                ),
-              ],
-            ),
+              ),
+              const SizedBox(height: 30),
+              _LanguageOption(
+                title: l10n.english,
+                locale: const Locale('en'),
+                selectedLocale: _selectedLocale,
+                onSelected: _selectLocale,
+              ),
+              const SizedBox(height: 12),
+              _LanguageOption(
+                title: l10n.arabic,
+                locale: const Locale('ar'),
+                selectedLocale: _selectedLocale,
+                onSelected: _selectLocale,
+              ),
+              const SizedBox(height: 24),
+              FilledButton(
+                onPressed: _continue,
+                child: Text(l10n.continueAction),
+              ),
+            ],
           ),
         ),
       ),
@@ -99,7 +98,14 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> {
               title: Text(l10n.language),
             )
           : null,
-      body: content,
+      body: SafeArea(
+        child: Column(
+          children: [
+            Expanded(child: content),
+            const AppFooter(),
+          ],
+        ),
+      ),
     );
   }
 }

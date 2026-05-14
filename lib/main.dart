@@ -69,7 +69,7 @@ class _ExpenseNetworkAppState extends State<ExpenseNetworkApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Expense Network',
+      title: 'Shared Housing Expenses',
       onGenerateTitle: (context) => context.l10n.appTitle,
       debugShowCheckedModeBanner: false,
       locale: _locale,

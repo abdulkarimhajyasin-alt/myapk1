@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'app_footer.dart';
+
 class AppScaffold extends StatelessWidget {
   const AppScaffold({
     required this.title,
@@ -20,14 +22,21 @@ class AppScaffold extends StatelessWidget {
         actions: actions,
       ),
       body: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 560),
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
-              child: child,
+        child: Column(
+          children: [
+            Expanded(
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 560),
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(20),
+                    child: child,
+                  ),
+                ),
+              ),
             ),
-          ),
+            const AppFooter(),
+          ],
         ),
       ),
     );
