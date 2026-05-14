@@ -391,8 +391,48 @@ selection cleanly. In Phase 2 it intentionally returns:
 - `SharedPreferencesExpenseNetworkRepository`
 - `SharedPreferencesSessionRepository`
 
-`SupabaseExpenseNetworkRepository` exists only as a dormant placeholder and
-throws `RepositoryException` with code `supabase_not_enabled` if called.
+`SupabaseExpenseNetworkRepository` started as a dormant placeholder in Phase 2.
+Phase 3 activates it only when `DATA_MODE=supabase` and Supabase credentials are
+provided.
+
+## Phase 3 Supabase Create/Join Mode
+
+Local mode remains the default. Supabase mode activates only when all three Dart
+defines are present:
+
+```bash
+flutter build apk --debug \
+  --dart-define=DATA_MODE=supabase \
+  --dart-define=SUPABASE_URL=https://your-project.supabase.co \
+  --dart-define=SUPABASE_ANON_KEY=your-anon-key
+```
+
+If `DATA_MODE` is omitted or set to `local`, the app uses the existing
+`SharedPreferencesExpenseNetworkRepository`. If `DATA_MODE=supabase` is set but
+the Supabase URL or anon key is missing, the factory falls back to local mode so
+the app does not crash on startup.
+
+Phase 3 cloud support includes:
+
+- listing and loading cloud networks
+- creating a cloud network
+- adding the creator as the first `network_members` row
+- joining an existing cloud network by normalized network name and password
+- duplicate network/member handling through `RepositoryException`
+- member personal password login for the My Account flow
+
+Phase 3 does not sync these yet:
+
+- expenses
+- member expense history backed by cloud expense rows
+- network notifications
+- local-to-cloud migration
+- production Supabase Auth and membership-scoped RLS
+
+Those remain Phase 4/production-hardening work. The current SQL file includes
+temporary Phase 3 development policies for `networks` and `network_members` so
+the anon Flutter client can test create/join. Replace them with authenticated,
+membership-aware RLS before real production users.
 
 ### Secrets
 

@@ -100,6 +100,42 @@ alter table public.network_members enable row level security;
 alter table public.expenses enable row level security;
 alter table public.network_notifications enable row level security;
 
+-- Temporary Phase 3 development policies.
+-- These policies allow the Flutter anon client to test cloud create/join/member
+-- login before Supabase Auth and membership-scoped RLS are introduced.
+-- Replace these before production. They are intentionally limited to the
+-- Phase 3 tables and do not grant delete access.
+drop policy if exists phase3_dev_select_networks on public.networks;
+create policy phase3_dev_select_networks
+  on public.networks
+  for select
+  using (true);
+
+drop policy if exists phase3_dev_insert_networks on public.networks;
+create policy phase3_dev_insert_networks
+  on public.networks
+  for insert
+  with check (true);
+
+drop policy if exists phase3_dev_update_networks on public.networks;
+create policy phase3_dev_update_networks
+  on public.networks
+  for update
+  using (true)
+  with check (true);
+
+drop policy if exists phase3_dev_select_members on public.network_members;
+create policy phase3_dev_select_members
+  on public.network_members
+  for select
+  using (true);
+
+drop policy if exists phase3_dev_insert_members on public.network_members;
+create policy phase3_dev_insert_members
+  on public.network_members
+  for insert
+  with check (true);
+
 comment on table public.networks is
   'Shared housing expense networks. RLS policies are added in a later phase.';
 comment on table public.network_members is

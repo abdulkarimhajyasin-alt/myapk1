@@ -2,6 +2,7 @@ import 'package:expense_network/services/repository_factory.dart';
 import 'package:expense_network/services/shared_preferences_expense_network_repository.dart';
 import 'package:expense_network/services/shared_preferences_session_repository.dart';
 import 'package:expense_network/services/supabase_config.dart';
+import 'package:expense_network/services/supabase_expense_network_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -16,9 +17,11 @@ void main() {
     const config = SupabaseConfig(
       url: 'https://example.supabase.co',
       anonKey: 'public-anon-key',
+      dataMode: 'supabase',
     );
 
     expect(config.isConfigured, isTrue);
+    expect(config.shouldUseSupabase, isTrue);
   });
 
   test('local repositories remain default when Supabase is not configured',
@@ -51,7 +54,44 @@ void main() {
       supabaseConfig: const SupabaseConfig(
         url: 'https://example.supabase.co',
         anonKey: 'public-anon-key',
+        dataMode: 'local',
       ),
+    );
+
+    expect(
+      repositories.expenseNetworkRepository,
+      isA<SharedPreferencesExpenseNetworkRepository>(),
+    );
+  });
+
+  test('Supabase repository is selected only when mode and config allow it',
+      () async {
+    SharedPreferences.setMockInitialValues({});
+    final preferences = await SharedPreferences.getInstance();
+    const supabaseRepository = SupabaseExpenseNetworkRepository.test();
+
+    final repositories = await RepositoryFactory.create(
+      preferences: preferences,
+      supabaseConfig: const SupabaseConfig(
+        url: 'https://example.supabase.co',
+        anonKey: 'public-anon-key',
+        dataMode: 'supabase',
+      ),
+      supabaseRepository: supabaseRepository,
+    );
+
+    expect(repositories.expenseNetworkRepository, same(supabaseRepository));
+  });
+
+  test('missing Supabase config falls back to local even in Supabase mode',
+      () async {
+    SharedPreferences.setMockInitialValues({});
+    final preferences = await SharedPreferences.getInstance();
+
+    final repositories = await RepositoryFactory.create(
+      preferences: preferences,
+      supabaseConfig: const SupabaseConfig(dataMode: 'supabase'),
+      supabaseRepository: const SupabaseExpenseNetworkRepository.test(),
     );
 
     expect(

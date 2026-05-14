@@ -14,7 +14,7 @@ import 'services/supabase_config.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   const supabaseConfig = SupabaseConfig.defaultConfig;
-  if (supabaseConfig.isConfigured) {
+  if (supabaseConfig.shouldUseSupabase) {
     await Supabase.initialize(
       url: supabaseConfig.url,
       anonKey: supabaseConfig.anonKey,

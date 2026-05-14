@@ -5,6 +5,7 @@ import 'session_repository.dart';
 import 'shared_preferences_expense_network_repository.dart';
 import 'shared_preferences_session_repository.dart';
 import 'supabase_config.dart';
+import 'supabase_expense_network_repository.dart';
 
 class AppRepositoryBundle {
   const AppRepositoryBundle({
@@ -22,11 +23,14 @@ class RepositoryFactory {
   static Future<AppRepositoryBundle> create({
     required SharedPreferences preferences,
     SupabaseConfig supabaseConfig = SupabaseConfig.defaultConfig,
+    ExpenseNetworkRepository? supabaseRepository,
   }) async {
-    if (supabaseConfig.isConfigured) {
-      // Phase 2 initializes Supabase only. Runtime data remains local until the
-      // Supabase repository is implemented and selected in a later phase.
-      return _createLocal(preferences);
+    if (supabaseConfig.shouldUseSupabase) {
+      return AppRepositoryBundle(
+        expenseNetworkRepository:
+            supabaseRepository ?? SupabaseExpenseNetworkRepository.active(),
+        sessionRepository: SharedPreferencesSessionRepository(preferences),
+      );
     }
 
     return _createLocal(preferences);
