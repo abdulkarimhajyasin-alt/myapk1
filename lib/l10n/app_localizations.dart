@@ -84,8 +84,22 @@ class AppLocalizations {
       'noNotifications': 'No notifications yet.',
       'markAllRead': 'Mark all read',
       'newExpenseNotification': '{actor} added {amount}',
+      'localMode': 'Local mode',
+      'cloudTestMode': 'Cloud test mode',
+      'errorNoInternet':
+          'Cloud mode needs an internet connection. Check your connection and try again.',
+      'errorDuplicateNetwork': 'A network with this name already exists.',
+      'errorDuplicateMember':
+          'This member name is already used in the network.',
+      'errorWrongNetworkPassword': 'Network name or password is incorrect.',
+      'errorWrongPersonalPassword': 'Personal password is incorrect.',
+      'errorSupabasePermission':
+          'Cloud access was denied. Check Supabase RLS policies and test credentials.',
+      'errorSupabaseNotConfigured':
+          'Cloud test mode is not configured for this build.',
       'logout': 'Log out',
-      'footerText': '© 2026 عبد الكريم حاج ياسين. جميع الحقوق محفوظة.',
+      'footerText':
+          '© 2026 عبد الكريم حاج ياسين. جميع الحقوق محفوظة.',
     },
     'ar': {
       'appTitle': 'مصروف السكن الجماعي',
@@ -151,8 +165,21 @@ class AppLocalizations {
       'noNotifications': 'لا توجد إشعارات بعد.',
       'markAllRead': 'تعليم الكل كمقروء',
       'newExpenseNotification': 'أضاف {actor} {amount}',
+      'localMode': 'الوضع المحلي',
+      'cloudTestMode': 'وضع الاختبار السحابي',
+      'errorNoInternet':
+          'يحتاج الوضع السحابي إلى اتصال بالإنترنت. تحقق من الاتصال وحاول مرة أخرى.',
+      'errorDuplicateNetwork': 'توجد شبكة بهذا الاسم بالفعل.',
+      'errorDuplicateMember': 'اسم العضو مستخدم بالفعل في هذه الشبكة.',
+      'errorWrongNetworkPassword': 'اسم الشبكة أو كلمة مرور الشبكة غير صحيحة.',
+      'errorWrongPersonalPassword': 'كلمة مرور الحساب الشخصي غير صحيحة.',
+      'errorSupabasePermission':
+          'تم رفض الوصول السحابي. تحقق من سياسات Supabase RLS وبيانات الاختبار.',
+      'errorSupabaseNotConfigured':
+          'وضع الاختبار السحابي غير مهيأ في هذا الإصدار.',
       'logout': 'تسجيل الخروج',
-      'footerText': '© 2026 عبد الكريم حاج ياسين. جميع الحقوق محفوظة.',
+      'footerText':
+          '© 2026 عبد الكريم حاج ياسين. جميع الحقوق محفوظة.',
     },
   };
 
@@ -228,6 +255,15 @@ class AppLocalizations {
   String get notifications => _text('notifications');
   String get noNotifications => _text('noNotifications');
   String get markAllRead => _text('markAllRead');
+  String get localMode => _text('localMode');
+  String get cloudTestMode => _text('cloudTestMode');
+  String get errorNoInternet => _text('errorNoInternet');
+  String get errorDuplicateNetwork => _text('errorDuplicateNetwork');
+  String get errorDuplicateMember => _text('errorDuplicateMember');
+  String get errorWrongNetworkPassword => _text('errorWrongNetworkPassword');
+  String get errorWrongPersonalPassword => _text('errorWrongPersonalPassword');
+  String get errorSupabasePermission => _text('errorSupabasePermission');
+  String get errorSupabaseNotConfigured => _text('errorSupabaseNotConfigured');
   String get logout => _text('logout');
   String get footerText => _text('footerText');
 
@@ -240,9 +276,6 @@ class AppLocalizations {
     required String amount,
     required String toMember,
   }) {
-    if (locale.languageCode == 'ar') {
-      return '$fromMember $pays $amount $to $toMember';
-    }
     return '$fromMember $pays $amount $to $toMember';
   }
 

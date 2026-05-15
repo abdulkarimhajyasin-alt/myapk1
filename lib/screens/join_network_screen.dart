@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../l10n/app_localizations.dart';
 import '../models/expense_network.dart';
 import '../services/expense_network_repository.dart';
+import '../services/repository_error_messages.dart';
 import '../services/session_repository.dart';
 import '../widgets/app_scaffold.dart';
 import '../widgets/form_error_text.dart';
@@ -63,7 +64,10 @@ class _JoinNetworkScreenState extends State<JoinNetworkScreen> {
       _openDashboard(network);
     } on RepositoryException catch (error) {
       if (!mounted) return;
-      setState(() => _error = error.message);
+      setState(() => _error = RepositoryErrorMessages.fromException(
+            context,
+            error,
+          ));
     } finally {
       if (mounted) setState(() => _isJoining = false);
     }
@@ -125,7 +129,9 @@ class _JoinNetworkScreenState extends State<JoinNetworkScreen> {
             const SizedBox(height: 22),
             FilledButton(
               onPressed: _isJoining ? null : _joinNetwork,
-              child: Text(_isJoining ? l10n.joining : l10n.join),
+              child: _isJoining
+                  ? _LoadingLabel(label: l10n.joining)
+                  : Text(l10n.join),
             ),
           ],
         ),
@@ -147,5 +153,26 @@ class _JoinNetworkScreenState extends State<JoinNetworkScreen> {
       return context.l10n.passwordTooShort;
     }
     return null;
+  }
+}
+
+class _LoadingLabel extends StatelessWidget {
+  const _LoadingLabel({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const SizedBox.square(
+          dimension: 18,
+          child: CircularProgressIndicator(strokeWidth: 2),
+        ),
+        const SizedBox(width: 10),
+        Text(label),
+      ],
+    );
   }
 }

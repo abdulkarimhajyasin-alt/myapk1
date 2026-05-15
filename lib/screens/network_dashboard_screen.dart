@@ -7,6 +7,7 @@ import '../services/expense_network_repository.dart';
 import '../services/session_repository.dart';
 import '../utils/money_utils.dart';
 import '../widgets/app_scaffold.dart';
+import '../widgets/mode_indicator.dart';
 import 'add_expense_screen.dart';
 import 'expense_settlement_screen.dart';
 import 'member_expense_history_screen.dart';
@@ -170,6 +171,8 @@ class _NetworkDashboardScreenState extends State<NetworkDashboardScreen> {
               fontWeight: FontWeight.w700,
             ),
           ),
+          const SizedBox(height: 10),
+          const ModeIndicator(),
           const SizedBox(height: 12),
           Container(
             padding: const EdgeInsets.all(18),

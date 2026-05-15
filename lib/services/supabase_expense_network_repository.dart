@@ -740,6 +740,23 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
     final message = error.toString().toLowerCase();
     if (error is RepositoryException) return error;
 
+    final isNetworkUnavailable = message.contains('socketexception') ||
+        message.contains('failed host lookup') ||
+        message.contains('network is unreachable') ||
+        message.contains('network request failed') ||
+        message.contains('connection refused') ||
+        message.contains('connection failed') ||
+        message.contains('timed out') ||
+        message.contains('os error') ||
+        message.contains('clientexception') ||
+        message.contains('xmlhttprequest error');
+    if (isNetworkUnavailable) {
+      return const RepositoryException(
+        'Cloud mode needs an internet connection.',
+        code: 'supabase_network_unavailable',
+      );
+    }
+
     final isDuplicate = message.contains('23505') ||
         message.contains('duplicate key') ||
         message.contains('unique constraint');

@@ -4,6 +4,7 @@ import '../l10n/app_localizations.dart';
 import '../models/expense_network.dart';
 import '../models/member.dart';
 import '../services/expense_network_repository.dart';
+import '../services/repository_error_messages.dart';
 import '../services/session_repository.dart';
 import '../widgets/app_scaffold.dart';
 import '../widgets/form_error_text.dart';
@@ -46,30 +47,38 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
   }
 
   Future<void> _loadNetworks() async {
-    final networks = await widget.repository.getNetworks();
-    final session = await widget.sessionRepository.getActiveSession();
-    ExpenseNetwork? selectedNetwork;
-    Member? selectedMember;
+    try {
+      final networks = await widget.repository.getNetworks();
+      final session = await widget.sessionRepository.getActiveSession();
+      ExpenseNetwork? selectedNetwork;
+      Member? selectedMember;
 
-    if (session != null) {
-      selectedNetwork = _firstNetworkWhere(
-        networks,
-        (network) => network.name == session.networkName,
-      );
-      selectedMember = selectedNetwork?.findMemberById(session.memberId);
+      if (session != null) {
+        selectedNetwork = _firstNetworkWhere(
+          networks,
+          (network) => network.name == session.networkName,
+        );
+        selectedMember = selectedNetwork?.findMemberById(session.memberId);
+      }
+      selectedNetwork ??= networks.isEmpty ? null : networks.first;
+      selectedMember ??= selectedNetwork?.members.isEmpty == true
+          ? null
+          : selectedNetwork?.members.first;
+
+      if (!mounted) return;
+      setState(() {
+        _networks = networks;
+        _selectedNetwork = selectedNetwork;
+        _selectedMember = selectedMember;
+        _isLoading = false;
+      });
+    } on RepositoryException catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _error = RepositoryErrorMessages.fromException(context, error);
+        _isLoading = false;
+      });
     }
-    selectedNetwork ??= networks.isEmpty ? null : networks.first;
-    selectedMember ??= selectedNetwork?.members.isEmpty == true
-        ? null
-        : selectedNetwork?.members.first;
-
-    if (!mounted) return;
-    setState(() {
-      _networks = networks;
-      _selectedNetwork = selectedNetwork;
-      _selectedMember = selectedMember;
-      _isLoading = false;
-    });
   }
 
   Future<void> _enterAccount() async {
@@ -107,7 +116,10 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
       );
     } on RepositoryException catch (error) {
       if (!mounted) return;
-      setState(() => _error = error.message);
+      setState(() => _error = RepositoryErrorMessages.fromException(
+            context,
+            error,
+          ));
     } finally {
       if (mounted) setState(() => _isEntering = false);
     }
@@ -116,78 +128,84 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final Widget content;
+
+    if (_isLoading) {
+      content = const Center(child: CircularProgressIndicator());
+    } else if (_error != null && _networks.isEmpty) {
+      content = FormErrorText(_error);
+    } else if (_networks.isEmpty) {
+      content = Text(l10n.noNetworksYet);
+    } else {
+      content = Form(
+        key: _formKey,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            FormErrorText(_error),
+            DropdownButtonFormField<String>(
+              initialValue: _selectedNetwork?.id,
+              decoration: InputDecoration(labelText: l10n.selectNetwork),
+              items: _networks.map((network) {
+                return DropdownMenuItem<String>(
+                  value: network.id,
+                  child: Text(network.name),
+                );
+              }).toList(),
+              onChanged: (value) {
+                final network = _firstNetworkWhere(
+                  _networks,
+                  (network) => network.id == value,
+                );
+                setState(() {
+                  _selectedNetwork = network;
+                  _selectedMember = network?.members.isEmpty == true
+                      ? null
+                      : network?.members.first;
+                });
+              },
+            ),
+            const SizedBox(height: 14),
+            DropdownButtonFormField<String>(
+              key: ValueKey(_selectedNetwork?.id),
+              initialValue: _selectedMember?.id,
+              decoration: InputDecoration(labelText: l10n.selectMember),
+              items: (_selectedNetwork?.members ?? const []).map((member) {
+                return DropdownMenuItem<String>(
+                  value: member.id,
+                  child: Text(member.name),
+                );
+              }).toList(),
+              onChanged: (value) {
+                setState(() {
+                  _selectedMember =
+                      _selectedNetwork?.findMemberById(value ?? '');
+                });
+              },
+            ),
+            const SizedBox(height: 14),
+            TextFormField(
+              controller: _passwordController,
+              decoration: InputDecoration(labelText: l10n.accountPassword),
+              obscureText: true,
+              validator: _required,
+              onFieldSubmitted: (_) => _enterAccount(),
+            ),
+            const SizedBox(height: 22),
+            FilledButton(
+              onPressed: _isEntering ? null : _enterAccount,
+              child: Text(
+                _isEntering ? l10n.joining : l10n.continueToAccount,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
 
     return AppScaffold(
       title: l10n.myAccount,
-      child: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _networks.isEmpty
-              ? Text(l10n.noNetworksYet)
-              : Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      FormErrorText(_error),
-                      DropdownButtonFormField<String>(
-                        initialValue: _selectedNetwork?.id,
-                        decoration: InputDecoration(labelText: l10n.selectNetwork),
-                        items: _networks.map((network) {
-                          return DropdownMenuItem<String>(
-                            value: network.id,
-                            child: Text(network.name),
-                          );
-                        }).toList(),
-                        onChanged: (value) {
-                          final network = _firstNetworkWhere(
-                            _networks,
-                            (network) => network.id == value,
-                          );
-                          setState(() {
-                            _selectedNetwork = network;
-                            _selectedMember = network?.members.isEmpty == true
-                                ? null
-                                : network?.members.first;
-                          });
-                        },
-                      ),
-                      const SizedBox(height: 14),
-                      DropdownButtonFormField<String>(
-                        key: ValueKey(_selectedNetwork?.id),
-                        initialValue: _selectedMember?.id,
-                        decoration: InputDecoration(labelText: l10n.selectMember),
-                        items: (_selectedNetwork?.members ?? const [])
-                            .map((member) {
-                          return DropdownMenuItem<String>(
-                            value: member.id,
-                            child: Text(member.name),
-                          );
-                        }).toList(),
-                        onChanged: (value) {
-                          setState(() {
-                            _selectedMember =
-                                _selectedNetwork?.findMemberById(value ?? '');
-                          });
-                        },
-                      ),
-                      const SizedBox(height: 14),
-                      TextFormField(
-                        controller: _passwordController,
-                        decoration: InputDecoration(labelText: l10n.accountPassword),
-                        obscureText: true,
-                        validator: _required,
-                        onFieldSubmitted: (_) => _enterAccount(),
-                      ),
-                      const SizedBox(height: 22),
-                      FilledButton(
-                        onPressed: _isEntering ? null : _enterAccount,
-                        child: Text(
-                          _isEntering ? l10n.joining : l10n.continueToAccount,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+      child: content,
     );
   }
 

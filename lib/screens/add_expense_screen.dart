@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../l10n/app_localizations.dart';
 import '../models/expense_network.dart';
 import '../services/expense_network_repository.dart';
+import '../services/repository_error_messages.dart';
 import '../utils/money_utils.dart';
 import '../widgets/app_scaffold.dart';
 import '../widgets/form_error_text.dart';
@@ -58,7 +59,10 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
       if (mounted) Navigator.of(context).pop(network);
     } on RepositoryException catch (error) {
       if (!mounted) return;
-      setState(() => _error = error.message);
+      setState(() => _error = RepositoryErrorMessages.fromException(
+            context,
+            error,
+          ));
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
@@ -131,7 +135,9 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
             const SizedBox(height: 22),
             FilledButton(
               onPressed: _isSaving ? null : _saveExpense,
-              child: Text(_isSaving ? l10n.saving : l10n.saveExpense),
+              child: _isSaving
+                  ? _LoadingLabel(label: l10n.saving)
+                  : Text(l10n.saveExpense),
             ),
           ],
         ),
@@ -141,5 +147,26 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
 
   String get _currentMemberName {
     return widget.network.findMemberById(widget.currentMemberId)?.name ?? '';
+  }
+}
+
+class _LoadingLabel extends StatelessWidget {
+  const _LoadingLabel({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const SizedBox.square(
+          dimension: 18,
+          child: CircularProgressIndicator(strokeWidth: 2),
+        ),
+        const SizedBox(width: 10),
+        Text(label),
+      ],
+    );
   }
 }

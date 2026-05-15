@@ -33,18 +33,48 @@ jobs:
       - name: Run tests
         run: flutter test
 
-      - name: Build debug APK
-        run: flutter build apk --debug
+      - name: Build local debug APK
+        run: |
+          flutter build apk --debug \
+            --dart-define=DATA_MODE=local
+          mkdir -p build/artifacts
+          cp build/app/outputs/flutter-apk/app-debug.apk \
+            build/artifacts/shared-housing-local-debug.apk
 
-      - name: Build release APK
-        run: flutter build apk --release
-
-      - name: Upload debug APK
+      - name: Upload local debug APK
         uses: actions/upload-artifact@v4
         with:
-          name: expense-network-debug-apk
-          path: build/app/outputs/flutter-apk/app-debug.apk
+          name: shared-housing-local-debug-apk
+          path: build/artifacts/shared-housing-local-debug.apk
           if-no-files-found: error
+
+      - name: Build Supabase debug APK
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ]; then
+            echo "::warning title=Supabase APK skipped::Set repository secrets SUPABASE_URL and SUPABASE_ANON_KEY to build the cloud test APK."
+            exit 0
+          fi
+
+          flutter build apk --debug \
+            --dart-define=DATA_MODE=supabase \
+            --dart-define=SUPABASE_URL="$SUPABASE_URL" \
+            --dart-define=SUPABASE_ANON_KEY="$SUPABASE_ANON_KEY"
+          mkdir -p build/artifacts
+          cp build/app/outputs/flutter-apk/app-debug.apk \
+            build/artifacts/shared-housing-supabase-debug.apk
+
+      - name: Upload Supabase debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: shared-housing-supabase-debug-apk
+          path: build/artifacts/shared-housing-supabase-debug.apk
+          if-no-files-found: warn
+
+      - name: Build release APK
+        run: flutter build apk --release --dart-define=DATA_MODE=local
 
       - name: Upload release APK
         uses: actions/upload-artifact@v4

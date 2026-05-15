@@ -28,4 +28,15 @@ void main() {
     expect(mainSource, contains('anonKey: supabaseConfig.anonKey'));
     expect(mainSource, isNot(contains('public-anon-key')));
   });
+
+  test('GitHub workflow references secrets without hardcoding values', () {
+    final workflow =
+        File('.github/workflows/build-android-apk.yml').readAsStringSync();
+
+    expect(workflow, contains('secrets.SUPABASE_URL'));
+    expect(workflow, contains('secrets.SUPABASE_ANON_KEY'));
+    expect(workflow, isNot(contains('https://')));
+    expect(workflow.toLowerCase(), isNot(contains('service_role')));
+    expect(workflow.toLowerCase(), isNot(contains('service-role')));
+  });
 }

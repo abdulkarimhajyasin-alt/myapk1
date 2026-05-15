@@ -4,6 +4,7 @@ import '../l10n/app_localizations.dart';
 import '../services/expense_network_repository.dart';
 import '../services/session_repository.dart';
 import '../widgets/app_footer.dart';
+import '../widgets/mode_indicator.dart';
 import 'create_network_screen.dart';
 import 'join_network_screen.dart';
 import 'my_account_screen.dart';
@@ -78,6 +79,8 @@ class HomeScreen extends StatelessWidget {
                                             .onSurfaceVariant,
                                       ),
                             ),
+                            const SizedBox(height: 16),
+                            const ModeIndicator(),
                             const SizedBox(height: 36),
                             FilledButton.icon(
                               onPressed: () {

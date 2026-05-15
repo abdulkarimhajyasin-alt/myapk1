@@ -182,4 +182,16 @@ void main() {
     expect(error.code, 'supabase_permission_denied');
     expect(error.message, 'Cloud permission denied.');
   });
+
+  test('maps network failures to RepositoryException', () {
+    final error = SupabaseExpenseNetworkRepository.mapSupabaseError(
+      Exception('SocketException: Failed host lookup'),
+      duplicateCode: null,
+      duplicateMessage: null,
+      fallbackCode: 'fallback',
+      fallbackMessage: 'Fallback message.',
+    );
+
+    expect(error.code, 'supabase_network_unavailable');
+  });
 }

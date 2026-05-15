@@ -79,7 +79,10 @@ class SharedPreferencesExpenseNetworkRepository
   }) async {
     final networks = await getNetworks();
     if (_findByName(networks, networkName) != null) {
-      throw const RepositoryException('A network with this name already exists.');
+      throw const RepositoryException(
+        'A network with this name already exists.',
+        code: 'duplicate_network',
+      );
     }
 
     final currency = CurrencyCatalog.findByCode(currencyCode);
@@ -111,7 +114,10 @@ class SharedPreferencesExpenseNetworkRepository
     final networks = await getNetworks();
     final network = _findByName(networks, networkName);
     if (network == null || network.password != password.trim()) {
-      throw const RepositoryException('Network name or password is incorrect.');
+      throw const RepositoryException(
+        'Network name or password is incorrect.',
+        code: 'network_invalid_credentials',
+      );
     }
 
     final memberExists = network.members.any(
@@ -120,6 +126,7 @@ class SharedPreferencesExpenseNetworkRepository
     if (memberExists) {
       throw const RepositoryException(
         'This member name is already used in the network.',
+        code: 'duplicate_member',
       );
     }
 
@@ -168,7 +175,10 @@ class SharedPreferencesExpenseNetworkRepository
       passwordHash: member.passwordHash!,
     );
     if (!isValid) {
-      throw const RepositoryException('Member password is incorrect.');
+      throw const RepositoryException(
+        'Member password is incorrect.',
+        code: 'member_invalid_password',
+      );
     }
     return network;
   }

@@ -14,8 +14,11 @@ flutter run
 ```bash
 flutter clean
 flutter pub get
-flutter build apk --release
+flutter build apk --release --dart-define=DATA_MODE=local
 ```
+
+For Android local and Supabase test APK workflows, see
+[`docs/android_testing.md`](docs/android_testing.md).
 
 ## Build iOS
 
