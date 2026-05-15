@@ -12,6 +12,9 @@ migration:
     - platform: android
       create_revision: unknown
       base_revision: unknown
+    - platform: ios
+      create_revision: unknown
+      base_revision: unknown
 
   unmanaged_files:
     - "lib/main.dart"

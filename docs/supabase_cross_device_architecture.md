@@ -342,6 +342,45 @@ Safe migration approach:
 - Ensure Supabase config works on iOS.
 - Decide whether GitHub Actions will build iOS on macOS runner or Android-only CI remains separate.
 
+## Phase 7 iOS Build Readiness
+
+The repository now includes the Flutter iOS platform project under `ios/`.
+
+Configured:
+
+- Bundle identifier: `com.expensenetwork.app`
+- Display name: `مصروف السكن الجماعي`
+- Deployment target: iOS 12.0
+- Launcher icons generated from `assets/icons/app_icon.png`
+- Supabase configuration through the existing Flutter `--dart-define` values:
+  `DATA_MODE`, `SUPABASE_URL`, and `SUPABASE_ANON_KEY`
+
+Local validation on macOS:
+
+```bash
+flutter clean
+flutter pub get
+dart run flutter_launcher_icons
+flutter build ios --release --no-codesign
+```
+
+Supabase cloud-mode validation on macOS:
+
+```bash
+flutter build ios --release --no-codesign \
+  --dart-define=DATA_MODE=supabase \
+  --dart-define=SUPABASE_URL=https://your-project.supabase.co \
+  --dart-define=SUPABASE_ANON_KEY=your-anon-key
+```
+
+Signing is intentionally not hard-coded in source control. Before TestFlight or
+App Store distribution, open `ios/Runner.xcworkspace` in Xcode, select the
+Runner target, and set the Apple development team/provisioning profile.
+
+CI remains Android-first on push. A manual macOS workflow is available at
+`.github/workflows/validate-ios.yml` for no-codesign iOS validation when runner
+usage is intentional.
+
 ## What Stays Local
 
 - `selected_locale`
