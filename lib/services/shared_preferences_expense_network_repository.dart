@@ -540,7 +540,8 @@ class SharedPreferencesExpenseNetworkRepository
     ExpenseNetwork network,
     ExpenseCycle updatedCycle,
   ) {
-    final cycles = network.cycles ?? [network.activeCycle];
+    final cycles =
+        network.cycles.isEmpty ? [network.activeCycle] : network.cycles;
     var found = false;
     final updated = cycles.map((cycle) {
       if (cycle.id != updatedCycle.id) return cycle;

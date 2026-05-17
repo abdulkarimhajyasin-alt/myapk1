@@ -16,7 +16,8 @@ class ExpenseNetwork {
     this.currencySymbol = r'$',
     List<ExpenseCycle>? cycles,
     this.resetRequests = const [],
-  }) : id = id ?? IdUtils.legacyId('network', name);
+  })  : id = id ?? IdUtils.legacyId('network', name),
+        cycles = cycles ?? const [];
 
   final String id;
   final String name;
@@ -25,16 +26,16 @@ class ExpenseNetwork {
   final DateTime createdAt;
   final String currencyCode;
   final String currencySymbol;
-  final List<ExpenseCycle>? cycles;
+  final List<ExpenseCycle> cycles;
   final List<ExpenseResetRequest> resetRequests;
 
   ExpenseCycle get activeCycle {
-    final existing = cycles?.where(
+    final existing = cycles.where(
       (cycle) =>
           cycle.status == ExpenseCycleStatus.active ||
           cycle.status == ExpenseCycleStatus.pendingReset,
     );
-    if (existing != null && existing.isNotEmpty) return existing.last;
+    if (existing.isNotEmpty) return existing.last;
     return ExpenseCycle(
       id: IdUtils.legacyId('cycle', id),
       networkId: id,
@@ -133,7 +134,7 @@ class ExpenseNetwork {
       'createdAt': createdAt.toIso8601String(),
       'currencyCode': currencyCode,
       'currencySymbol': currencySymbol,
-      'cycles': (cycles ?? [activeCycle]).map((cycle) => cycle.toJson()).toList(),
+      'cycles': cycles.map((cycle) => cycle.toJson()).toList(),
       'resetRequests':
           resetRequests.map((request) => request.toJson()).toList(),
     };
@@ -160,8 +161,8 @@ class ExpenseNetwork {
               currencySymbol?.trim().isNotEmpty == true
           ? currencySymbol!.trim()
           : currency.symbol,
-      cycles: (json['cycles'] as List<dynamic>?)
-          ?.map((cycle) => ExpenseCycle.fromJson(cycle as Map<String, dynamic>))
+      cycles: (json['cycles'] as List<dynamic>? ?? [])
+          .map((cycle) => ExpenseCycle.fromJson(cycle as Map<String, dynamic>))
           .toList(),
       resetRequests: (json['resetRequests'] as List<dynamic>? ?? [])
           .map(
