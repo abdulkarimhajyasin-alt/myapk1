@@ -98,6 +98,10 @@ class AppLocalizations {
       'errorSupabaseNotConfigured':
           'Cloud test mode is not configured for this build.',
       'logout': 'Log out',
+      'karamixLabsButtonLabel': 'Karamix Labs',
+      'karamixLabsButtonTooltip': 'Open Karamix Labs website',
+      'karamixLabsLaunchError':
+          'Could not open the Karamix Labs website. Please try again later.',
       'footerText':
           '© 2026 عبد الكريم حاج ياسين. جميع الحقوق محفوظة.',
     },
@@ -178,6 +182,10 @@ class AppLocalizations {
       'errorSupabaseNotConfigured':
           'وضع الاختبار السحابي غير مهيأ في هذا الإصدار.',
       'logout': 'تسجيل الخروج',
+      'karamixLabsButtonLabel': 'Karamix Labs',
+      'karamixLabsButtonTooltip': 'فتح موقع Karamix Labs',
+      'karamixLabsLaunchError':
+          'تعذر فتح موقع Karamix Labs. يرجى المحاولة لاحقا.',
       'footerText':
           '© 2026 عبد الكريم حاج ياسين. جميع الحقوق محفوظة.',
     },
@@ -265,6 +273,9 @@ class AppLocalizations {
   String get errorSupabasePermission => _text('errorSupabasePermission');
   String get errorSupabaseNotConfigured => _text('errorSupabaseNotConfigured');
   String get logout => _text('logout');
+  String get karamixLabsButtonLabel => _text('karamixLabsButtonLabel');
+  String get karamixLabsButtonTooltip => _text('karamixLabsButtonTooltip');
+  String get karamixLabsLaunchError => _text('karamixLabsLaunchError');
   String get footerText => _text('footerText');
 
   String addingExpenseFor(String memberName) {

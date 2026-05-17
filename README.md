@@ -2,6 +2,10 @@
 
 A Flutter mobile app for private expense-sharing networks. The first version is Android APK-first and uses local persistent storage through `shared_preferences`, with repository interfaces that can later be backed by Firebase or Supabase.
 
+The app includes a global footer shortcut to the Karamix Labs company website.
+It opens `https://karamixlabs.com` in the external browser through
+`url_launcher`.
+
 ## Run
 
 ```bash
