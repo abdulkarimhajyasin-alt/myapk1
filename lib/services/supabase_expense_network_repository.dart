@@ -1,7 +1,9 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/expense.dart';
+import '../models/expense_cycle.dart';
 import '../models/expense_network.dart';
+import '../models/expense_reset_request.dart';
 import '../models/member.dart';
 import '../models/network_notification.dart';
 import '../utils/currency_utils.dart';
@@ -160,6 +162,13 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
           .eq('id', networkId)
           .select()
           .single();
+
+      await client.from('expense_cycles').insert({
+        'network_id': networkId,
+        'cycle_number': 1,
+        'status': 'active',
+        'started_at': DateTime.now().toUtc().toIso8601String(),
+      });
 
       return _networkFromHydratedRow(
         Map<String, dynamic>.from(updatedNetworkRow),
@@ -342,6 +351,7 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
     final actor = memberFromRow(actorRows.first);
     final payer = memberFromRow(payerRows.first);
     final cleanedNote = sanitizeExpenseNote(note);
+    final cycle = await _ensureActiveCycle(networkId);
 
     try {
       final client = _requireClient();
@@ -356,6 +366,7 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
               addedByMemberName: actor.name,
               amountCents: amountCents,
               note: cleanedNote,
+              cycleId: cycle.id,
             ),
           )
           .select()
@@ -448,6 +459,199 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
     }
   }
 
+  @override
+  Future<ExpenseResetRequest?> getActiveResetRequest({
+    required String networkId,
+  }) async {
+    try {
+      final requests = await _loadResetRequests(networkId);
+      final pending = requests.where((request) => request.isPending);
+      return pending.isEmpty ? null : pending.last;
+    } catch (error) {
+      throw mapSupabaseError(
+        error,
+        fallbackCode: 'supabase_reset_request_load_failed',
+        fallbackMessage: 'Cloud reset request could not be loaded.',
+      );
+    }
+  }
+
+  @override
+  Future<ExpenseNetwork> createResetRequest({
+    required String networkName,
+    required String requestedByMemberId,
+  }) async {
+    final networkRow = await _loadNetworkRowByName(networkName);
+    if (networkRow == null) {
+      throw const RepositoryException(
+        'Network not found.',
+        code: 'network_not_found',
+      );
+    }
+    final networkId = networkRow['id'] as String;
+    final members = await _loadMemberRows(networkId);
+    final requesterRows = members.where(
+      (member) => member['id'] == requestedByMemberId,
+    );
+    if (requesterRows.isEmpty) {
+      throw const RepositoryException(
+        'Member not found.',
+        code: 'member_not_found',
+      );
+    }
+    final existing = await getActiveResetRequest(networkId: networkId);
+    if (existing != null) {
+      throw const RepositoryException(
+        'A reset request is already pending.',
+        code: 'reset_request_already_pending',
+      );
+    }
+
+    final requester = memberFromRow(requesterRows.first);
+    final cycle = await _ensureActiveCycle(networkId);
+    final now = DateTime.now().toUtc().toIso8601String();
+
+    try {
+      final client = _requireClient();
+      final requestRow = await client
+          .from('expense_reset_requests')
+          .insert({
+            'network_id': networkId,
+            'cycle_id': cycle.id,
+            'requested_by_member_id': requester.id,
+            'requested_by_member_name': requester.name,
+            'status': 'pending',
+            'required_member_ids':
+                members.map((member) => member['id'] as String).toList(),
+            'required_member_names':
+                members.map((member) => member['name'] as String).toList(),
+            'created_at': now,
+          })
+          .select()
+          .single();
+      final resetRequestId = requestRow['id'] as String;
+      await client.from('expense_reset_approvals').insert({
+        'reset_request_id': resetRequestId,
+        'network_id': networkId,
+        'member_id': requester.id,
+        'member_name': requester.name,
+        'approved_at': now,
+      });
+      await client
+          .from('expense_cycles')
+          .update({
+            'status': 'pending_reset',
+            'requested_by_member_id': requester.id,
+            'requested_by_member_name': requester.name,
+          })
+          .eq('id', cycle.id);
+      await _createResetNotificationsSafely(
+        networkId: networkId,
+        members: members.map(memberFromRow).toList(),
+        requester: requester,
+        resetRequestId: resetRequestId,
+        currencySymbol: networkRow['currency_symbol'] as String? ?? r'$',
+      );
+      final completed = await _completeResetIfReady(
+        networkId: networkId,
+        resetRequestId: resetRequestId,
+      );
+      if (completed) {
+        await _createCycleStartedNotificationsSafely(
+          networkId: networkId,
+          members: members.map(memberFromRow).toList(),
+          resetRequestId: resetRequestId,
+          currencySymbol: networkRow['currency_symbol'] as String? ?? r'$',
+          actorMemberName: networkRow['name'] as String,
+        );
+      }
+      return _networkFromHydratedRow(networkRow);
+    } catch (error) {
+      throw mapSupabaseError(
+        error,
+        duplicateCode: 'reset_request_already_pending',
+        duplicateMessage: 'A reset request is already pending.',
+        fallbackCode: 'supabase_reset_request_create_failed',
+        fallbackMessage: 'Cloud reset request could not be created.',
+      );
+    }
+  }
+
+  @override
+  Future<ExpenseNetwork> approveResetRequest({
+    required String networkName,
+    required String resetRequestId,
+    required String memberId,
+  }) async {
+    final networkRow = await _loadNetworkRowByName(networkName);
+    if (networkRow == null) {
+      throw const RepositoryException(
+        'Network not found.',
+        code: 'network_not_found',
+      );
+    }
+    final networkId = networkRow['id'] as String;
+    final members = await _loadMemberRows(networkId);
+    final memberRows = members.where((member) => member['id'] == memberId);
+    if (memberRows.isEmpty) {
+      throw const RepositoryException(
+        'Member not found.',
+        code: 'member_not_found',
+      );
+    }
+
+    final member = memberFromRow(memberRows.first);
+    try {
+      final client = _requireClient();
+      final requests = await _loadResetRequests(networkId);
+      final requestRows = requests.where(
+        (request) => request.id == resetRequestId,
+      );
+      if (requestRows.isEmpty || !requestRows.first.isPending) {
+        throw const RepositoryException(
+          'Reset request is not pending.',
+          code: 'reset_request_not_pending',
+        );
+      }
+      if (!requestRows.first.requiredMemberIds.contains(member.id)) {
+        throw const RepositoryException(
+          'This member is not required for this reset request.',
+          code: 'reset_approval_not_required',
+        );
+      }
+      await client.from('expense_reset_approvals').upsert(
+        {
+          'reset_request_id': resetRequestId,
+          'network_id': networkId,
+          'member_id': member.id,
+          'member_name': member.name,
+          'approved_at': DateTime.now().toUtc().toIso8601String(),
+        },
+        onConflict: 'reset_request_id,member_id',
+      );
+      final completed = await _completeResetIfReady(
+        networkId: networkId,
+        resetRequestId: resetRequestId,
+      );
+      if (completed) {
+        await _createCycleStartedNotificationsSafely(
+          networkId: networkId,
+          members: members.map(memberFromRow).toList(),
+          resetRequestId: resetRequestId,
+          currencySymbol: networkRow['currency_symbol'] as String? ?? r'$',
+          actorMemberName: networkRow['name'] as String,
+        );
+      }
+      return _networkFromHydratedRow(networkRow);
+    } catch (error) {
+      throw mapSupabaseError(
+        error,
+        fallbackCode: 'supabase_reset_approval_failed',
+        fallbackMessage: 'Cloud reset approval could not be saved.',
+      );
+    }
+  }
+
   Future<Map<String, dynamic>?> _loadNetworkRowByName(String networkName) async {
     try {
       final client = _requireClient();
@@ -528,13 +732,70 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
     }
   }
 
+  Future<List<Map<String, dynamic>>> _loadCycleRows(String networkId) async {
+    try {
+      final client = _requireClient();
+      final rows = await client
+          .from('expense_cycles')
+          .select()
+          .eq('network_id', networkId)
+          .order('cycle_number');
+      return rows
+          .map((row) => Map<String, dynamic>.from(row as Map))
+          .toList();
+    } catch (error) {
+      throw mapSupabaseError(
+        error,
+        fallbackCode: 'supabase_cycles_load_failed',
+        fallbackMessage: 'Cloud expense cycles could not be loaded.',
+      );
+    }
+  }
+
+  Future<List<ExpenseResetRequest>> _loadResetRequests(String networkId) async {
+    final client = _requireClient();
+    final rows = await client
+        .from('expense_reset_requests')
+        .select()
+        .eq('network_id', networkId)
+        .order('created_at');
+    final approvalRows = await client
+        .from('expense_reset_approvals')
+        .select()
+        .eq('network_id', networkId)
+        .order('approved_at');
+    final approvals = approvalRows
+        .map((row) => Map<String, dynamic>.from(row as Map))
+        .toList();
+
+    return rows.map((row) {
+      final requestRow = Map<String, dynamic>.from(row as Map);
+      return resetRequestFromRows(
+        requestRow,
+        approvals
+            .where(
+              (approval) => approval['reset_request_id'] == requestRow['id'],
+            )
+            .toList(),
+      );
+    }).toList();
+  }
+
   Future<ExpenseNetwork> _networkFromHydratedRow(
     Map<String, dynamic> networkRow,
   ) async {
     final networkId = networkRow['id'] as String;
     final members = await _loadMemberRows(networkId);
     final expenses = await _loadExpenseRows(networkId);
-    return networkFromRows(networkRow, members, expenseRows: expenses);
+    final cycles = await _loadCycleRows(networkId);
+    final resetRequests = await _loadResetRequests(networkId);
+    return networkFromRows(
+      networkRow,
+      members,
+      expenseRows: expenses,
+      cycleRows: cycles,
+      resetRequests: resetRequests,
+    );
   }
 
   Future<void> _createExpenseNotificationsSafely({
@@ -564,6 +825,109 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
       // Notification delivery is best-effort. The expense row is the source of
       // truth and must remain saved even if notification fan-out is incomplete.
     }
+  }
+
+  Future<void> _createResetNotificationsSafely({
+    required String networkId,
+    required List<Member> members,
+    required Member requester,
+    required String resetRequestId,
+    required String currencySymbol,
+  }) async {
+    final payloads = buildResetNotificationInsertPayloads(
+      networkId: networkId,
+      members: members,
+      requester: requester,
+      resetRequestId: resetRequestId,
+      currencySymbol: currencySymbol,
+    );
+    if (payloads.isEmpty) return;
+
+    try {
+      final client = _requireClient();
+      await client.from('network_notifications').insert(payloads);
+    } catch (_) {}
+  }
+
+  Future<void> _createCycleStartedNotificationsSafely({
+    required String networkId,
+    required List<Member> members,
+    required String resetRequestId,
+    required String currencySymbol,
+    required String actorMemberName,
+  }) async {
+    final payloads = buildCycleStartedNotificationInsertPayloads(
+      networkId: networkId,
+      members: members,
+      resetRequestId: resetRequestId,
+      currencySymbol: currencySymbol,
+      actorMemberName: actorMemberName,
+    );
+    if (payloads.isEmpty) return;
+
+    try {
+      final client = _requireClient();
+      await client.from('network_notifications').insert(payloads);
+    } catch (_) {}
+  }
+
+  Future<ExpenseCycle> _ensureActiveCycle(String networkId) async {
+    final cycles = await _loadCycleRows(networkId);
+    final activeRows = cycles.where(
+      (row) => row['status'] == 'active' || row['status'] == 'pending_reset',
+    );
+    if (activeRows.isNotEmpty) return cycleFromRow(activeRows.last);
+
+    final client = _requireClient();
+    final row = await client
+        .from('expense_cycles')
+        .insert({
+          'network_id': networkId,
+          'cycle_number': cycles.length + 1,
+          'status': 'active',
+          'started_at': DateTime.now().toUtc().toIso8601String(),
+        })
+        .select()
+        .single();
+    return cycleFromRow(Map<String, dynamic>.from(row));
+  }
+
+  Future<bool> _completeResetIfReady({
+    required String networkId,
+    required String resetRequestId,
+  }) async {
+    final requests = await _loadResetRequests(networkId);
+    final matches = requests.where((request) => request.id == resetRequestId);
+    if (matches.isEmpty) return false;
+    final request = matches.first;
+    if (!request.isPending || !request.hasUnanimousApproval) return false;
+
+    final client = _requireClient();
+    final now = DateTime.now().toUtc().toIso8601String();
+    await client
+        .from('expenses')
+        .update({
+          'cycle_id': request.cycleId,
+          'archived_at': now,
+        })
+        .eq('network_id', networkId)
+        .or('cycle_id.eq.${request.cycleId},cycle_id.is.null')
+        .filter('archived_at', 'is', null);
+    await client
+        .from('expense_cycles')
+        .update({'status': 'closed', 'closed_at': now})
+        .eq('id', request.cycleId);
+    await client.from('expense_cycles').insert({
+      'network_id': networkId,
+      'cycle_number': (await _loadCycleRows(networkId)).length + 1,
+      'status': 'active',
+      'started_at': now,
+    });
+    await client
+        .from('expense_reset_requests')
+        .update({'status': 'completed', 'completed_at': now})
+        .eq('id', resetRequestId);
+    return true;
   }
 
   void _verifyNetworkPassword(
@@ -608,6 +972,8 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
     List<Map<String, dynamic>> memberRows,
     {
     List<Map<String, dynamic>> expenseRows = const [],
+    List<Map<String, dynamic>> cycleRows = const [],
+    List<ExpenseResetRequest> resetRequests = const [],
   }) {
     final currency = CurrencyCatalog.findByCode(
       networkRow['currency_code'] as String?,
@@ -635,6 +1001,8 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
       currencySymbol: currencySymbol?.trim().isNotEmpty == true
           ? currencySymbol!.trim()
           : currency.symbol,
+      cycles: cycleRows.map(cycleFromRow).toList(),
+      resetRequests: resetRequests,
     );
   }
 
@@ -656,6 +1024,46 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
       createdAt: _parseTimestamp(row['created_at']),
       addedByMemberId: row['added_by_member_id'] as String? ?? '',
       addedByMemberName: row['added_by_member_name'] as String? ?? '',
+      cycleId: row['cycle_id'] as String?,
+      archivedAt: _parseNullableTimestamp(row['archived_at']),
+    );
+  }
+
+  static ExpenseCycle cycleFromRow(Map<String, dynamic> row) {
+    return ExpenseCycle(
+      id: row['id'] as String?,
+      networkId: row['network_id'] as String,
+      cycleNumber: _parseInt(row['cycle_number']),
+      startedAt: _parseTimestamp(row['started_at']),
+      closedAt: _parseNullableTimestamp(row['closed_at']),
+      status: _cycleStatusFromDb(row['status'] as String?),
+      requestedByMemberId: row['requested_by_member_id'] as String?,
+      requestedByMemberName: row['requested_by_member_name'] as String?,
+    );
+  }
+
+  static ExpenseResetRequest resetRequestFromRows(
+    Map<String, dynamic> row,
+    List<Map<String, dynamic>> approvalRows,
+  ) {
+    return ExpenseResetRequest(
+      id: row['id'] as String?,
+      networkId: row['network_id'] as String,
+      cycleId: row['cycle_id'] as String,
+      requestedByMemberId: row['requested_by_member_id'] as String,
+      requestedByMemberName: row['requested_by_member_name'] as String,
+      createdAt: _parseTimestamp(row['created_at']),
+      requiredMemberIds: _stringList(row['required_member_ids']),
+      requiredMemberNames: _stringList(row['required_member_names']),
+      status: _resetStatusFromDb(row['status'] as String?),
+      completedAt: _parseNullableTimestamp(row['completed_at']),
+      approvals: approvalRows.map((approval) {
+        return ExpenseResetApproval(
+          memberId: approval['member_id'] as String,
+          memberName: approval['member_name'] as String,
+          approvedAt: _parseTimestamp(approval['approved_at']),
+        );
+      }).toList(),
     );
   }
 
@@ -668,6 +1076,8 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
       expenseAmountCents: _parseInt(row['amount_cents']),
       currencySymbol: row['currency_symbol'] as String? ?? r'$',
       noteSnippet: _emptyToNull(row['note_snippet'] as String?),
+      kind: NetworkNotificationKind.fromName(row['kind'] as String?),
+      resetRequestId: row['reset_request_id'] as String?,
       createdAt: _parseTimestamp(row['created_at']),
       isRead: row['is_read'] as bool? ?? false,
     );
@@ -681,6 +1091,7 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
     required String addedByMemberName,
     required int amountCents,
     String? note,
+    String? cycleId,
   }) {
     return {
       'network_id': networkId,
@@ -690,6 +1101,7 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
       'added_by_member_name': addedByMemberName,
       'amount_cents': amountCents,
       'note': sanitizeExpenseNote(note),
+      'cycle_id': cycleId,
       'created_at': DateTime.now().toUtc().toIso8601String(),
     };
   }
@@ -716,6 +1128,63 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
             'amount_cents': amountCents,
             'currency_symbol': currencySymbol,
             'note_snippet': snippet,
+            'kind': NetworkNotificationKind.expense.name,
+            'reset_request_id': null,
+            'is_read': false,
+            'created_at': DateTime.now().toUtc().toIso8601String(),
+          },
+        )
+        .toList();
+  }
+
+  static List<Map<String, dynamic>> buildResetNotificationInsertPayloads({
+    required String networkId,
+    required List<Member> members,
+    required Member requester,
+    required String resetRequestId,
+    required String currencySymbol,
+  }) {
+    return members
+        .where((member) => member.id != requester.id)
+        .map(
+          (member) => {
+            'network_id': networkId,
+            'recipient_member_id': member.id,
+            'actor_member_id': requester.id,
+            'actor_member_name': requester.name,
+            'expense_id': null,
+            'amount_cents': 0,
+            'currency_symbol': currencySymbol,
+            'note_snippet': null,
+            'kind': NetworkNotificationKind.resetRequest.name,
+            'reset_request_id': resetRequestId,
+            'is_read': false,
+            'created_at': DateTime.now().toUtc().toIso8601String(),
+          },
+        )
+        .toList();
+  }
+
+  static List<Map<String, dynamic>> buildCycleStartedNotificationInsertPayloads({
+    required String networkId,
+    required List<Member> members,
+    required String resetRequestId,
+    required String currencySymbol,
+    required String actorMemberName,
+  }) {
+    return members
+        .map(
+          (member) => {
+            'network_id': networkId,
+            'recipient_member_id': member.id,
+            'actor_member_id': null,
+            'actor_member_name': actorMemberName,
+            'expense_id': null,
+            'amount_cents': 0,
+            'currency_symbol': currencySymbol,
+            'note_snippet': null,
+            'kind': NetworkNotificationKind.cycleStarted.name,
+            'reset_request_id': resetRequestId,
             'is_read': false,
             'created_at': DateTime.now().toUtc().toIso8601String(),
           },
@@ -795,6 +1264,11 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
     return DateTime.fromMillisecondsSinceEpoch(0);
   }
 
+  static DateTime? _parseNullableTimestamp(Object? value) {
+    if (value is String && value.isNotEmpty) return DateTime.parse(value);
+    return null;
+  }
+
   static int _parseInt(Object? value) {
     if (value is int) return value;
     if (value is num) return value.toInt();
@@ -812,5 +1286,34 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
     if (cleaned == null) return null;
     if (cleaned.length <= maxNotificationNoteSnippetLength) return cleaned;
     return cleaned.substring(0, maxNotificationNoteSnippetLength);
+  }
+
+  static List<String> _stringList(Object? value) {
+    if (value is List) return value.map((item) => item as String).toList();
+    return [];
+  }
+
+  static ExpenseCycleStatus _cycleStatusFromDb(String? value) {
+    switch (value) {
+      case 'pending_reset':
+        return ExpenseCycleStatus.pendingReset;
+      case 'closed':
+        return ExpenseCycleStatus.closed;
+      case 'active':
+      default:
+        return ExpenseCycleStatus.active;
+    }
+  }
+
+  static ExpenseResetStatus _resetStatusFromDb(String? value) {
+    switch (value) {
+      case 'completed':
+        return ExpenseResetStatus.completed;
+      case 'cancelled':
+        return ExpenseResetStatus.cancelled;
+      case 'pending':
+      default:
+        return ExpenseResetStatus.pending;
+    }
   }
 }

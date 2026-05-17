@@ -51,17 +51,39 @@ end $$;
 create table if not exists public.expenses (
   id uuid primary key default gen_random_uuid(),
   network_id uuid not null references public.networks(id) on delete cascade,
+  cycle_id uuid,
   paid_by_member_id uuid not null references public.network_members(id),
   paid_by_member_name text not null,
   added_by_member_id uuid not null references public.network_members(id),
   added_by_member_name text not null,
   amount_cents bigint not null,
   note text,
+  archived_at timestamptz,
   created_at timestamptz not null default now()
 );
 
 do $$
 begin
+  if not exists (
+    select 1
+    from information_schema.columns
+    where table_schema = 'public'
+      and table_name = 'expenses'
+      and column_name = 'cycle_id'
+  ) then
+    alter table public.expenses add column cycle_id uuid;
+  end if;
+
+  if not exists (
+    select 1
+    from information_schema.columns
+    where table_schema = 'public'
+      and table_name = 'expenses'
+      and column_name = 'archived_at'
+  ) then
+    alter table public.expenses add column archived_at timestamptz;
+  end if;
+
   if not exists (
     select 1
     from pg_constraint
@@ -85,6 +107,90 @@ begin
   end if;
 end $$;
 
+create table if not exists public.expense_cycles (
+  id uuid primary key default gen_random_uuid(),
+  network_id uuid not null references public.networks(id) on delete cascade,
+  cycle_number integer not null,
+  started_at timestamptz not null default now(),
+  closed_at timestamptz,
+  status text not null default 'active',
+  requested_by_member_id uuid references public.network_members(id) on delete set null,
+  requested_by_member_name text,
+  unique (network_id, cycle_number)
+);
+
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_constraint
+    where conname = 'expense_cycles_status_valid'
+  ) then
+    alter table public.expense_cycles
+      add constraint expense_cycles_status_valid
+      check (status in ('active', 'pending_reset', 'closed'))
+      not valid;
+  end if;
+
+  if not exists (
+    select 1
+    from pg_constraint
+    where conname = 'expenses_cycle_id_fkey'
+  ) then
+    alter table public.expenses
+      add constraint expenses_cycle_id_fkey
+      foreign key (cycle_id)
+      references public.expense_cycles(id)
+      on delete set null;
+  end if;
+end $$;
+
+insert into public.expense_cycles (network_id, cycle_number, started_at, status)
+select networks.id, 1, networks.created_at, 'active'
+from public.networks
+where not exists (
+  select 1
+  from public.expense_cycles
+  where expense_cycles.network_id = networks.id
+);
+
+create table if not exists public.expense_reset_requests (
+  id uuid primary key default gen_random_uuid(),
+  network_id uuid not null references public.networks(id) on delete cascade,
+  cycle_id uuid not null references public.expense_cycles(id) on delete cascade,
+  requested_by_member_id uuid not null references public.network_members(id),
+  requested_by_member_name text not null,
+  status text not null default 'pending',
+  required_member_ids uuid[] not null default '{}',
+  required_member_names text[] not null default '{}',
+  created_at timestamptz not null default now(),
+  completed_at timestamptz
+);
+
+create table if not exists public.expense_reset_approvals (
+  id uuid primary key default gen_random_uuid(),
+  reset_request_id uuid not null references public.expense_reset_requests(id) on delete cascade,
+  network_id uuid not null references public.networks(id) on delete cascade,
+  member_id uuid not null references public.network_members(id) on delete cascade,
+  member_name text not null,
+  approved_at timestamptz not null default now(),
+  unique (reset_request_id, member_id)
+);
+
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_constraint
+    where conname = 'expense_reset_requests_status_valid'
+  ) then
+    alter table public.expense_reset_requests
+      add constraint expense_reset_requests_status_valid
+      check (status in ('pending', 'completed', 'cancelled'))
+      not valid;
+  end if;
+end $$;
+
 create table if not exists public.network_notifications (
   id uuid primary key default gen_random_uuid(),
   network_id uuid not null references public.networks(id) on delete cascade,
@@ -95,6 +201,8 @@ create table if not exists public.network_notifications (
   amount_cents bigint not null,
   currency_symbol text not null,
   note_snippet text,
+  kind text not null default 'expense',
+  reset_request_id uuid references public.expense_reset_requests(id) on delete cascade,
   is_read boolean not null default false,
   created_at timestamptz not null default now()
 );
@@ -103,12 +211,45 @@ do $$
 begin
   if not exists (
     select 1
+    from information_schema.columns
+    where table_schema = 'public'
+      and table_name = 'network_notifications'
+      and column_name = 'kind'
+  ) then
+    alter table public.network_notifications
+      add column kind text not null default 'expense';
+  end if;
+
+  if not exists (
+    select 1
+    from information_schema.columns
+    where table_schema = 'public'
+      and table_name = 'network_notifications'
+      and column_name = 'reset_request_id'
+  ) then
+    alter table public.network_notifications
+      add column reset_request_id uuid references public.expense_reset_requests(id) on delete cascade;
+  end if;
+
+  if not exists (
+    select 1
     from pg_constraint
     where conname = 'network_notifications_note_snippet_length'
   ) then
     alter table public.network_notifications
       add constraint network_notifications_note_snippet_length
       check (note_snippet is null or char_length(note_snippet) <= 80)
+      not valid;
+  end if;
+
+  if not exists (
+    select 1
+    from pg_constraint
+    where conname = 'network_notifications_kind_valid'
+  ) then
+    alter table public.network_notifications
+      add constraint network_notifications_kind_valid
+      check (kind in ('expense', 'resetRequest', 'cycleStarted'))
       not valid;
   end if;
 end $$;
@@ -131,6 +272,29 @@ create index if not exists expenses_paid_by_member_id_idx
 create index if not exists expenses_added_by_member_id_idx
   on public.expenses (added_by_member_id);
 
+create index if not exists expenses_cycle_id_idx
+  on public.expenses (cycle_id);
+
+create index if not exists expenses_active_network_idx
+  on public.expenses (network_id, archived_at);
+
+create index if not exists expense_cycles_network_status_idx
+  on public.expense_cycles (network_id, status);
+
+create unique index if not exists expense_cycles_one_active_idx
+  on public.expense_cycles (network_id)
+  where status = 'active';
+
+create index if not exists expense_reset_requests_network_status_idx
+  on public.expense_reset_requests (network_id, status, created_at desc);
+
+create unique index if not exists expense_reset_requests_one_pending_idx
+  on public.expense_reset_requests (network_id)
+  where status = 'pending';
+
+create index if not exists expense_reset_approvals_request_idx
+  on public.expense_reset_approvals (reset_request_id, member_id);
+
 create index if not exists network_notifications_recipient_read_created_idx
   on public.network_notifications (recipient_member_id, is_read, created_at desc);
 
@@ -140,6 +304,9 @@ create index if not exists network_notifications_network_recipient_idx
 alter table public.networks enable row level security;
 alter table public.network_members enable row level security;
 alter table public.expenses enable row level security;
+alter table public.expense_cycles enable row level security;
+alter table public.expense_reset_requests enable row level security;
+alter table public.expense_reset_approvals enable row level security;
 alter table public.network_notifications enable row level security;
 
 create or replace function public.phase5_member_belongs_to_network(
@@ -179,7 +346,8 @@ create or replace function public.phase5_notification_matches_network(
   target_network_id uuid,
   recipient_member_id uuid,
   actor_member_id uuid,
-  target_expense_id uuid
+  target_expense_id uuid,
+  target_reset_request_id uuid
 )
 returns boolean
 language sql
@@ -200,7 +368,79 @@ as $$
         where id = target_expense_id
           and network_id = target_network_id
       )
+    )
+    and (
+      target_reset_request_id is null
+      or exists (
+        select 1
+        from public.expense_reset_requests
+        where id = target_reset_request_id
+          and network_id = target_network_id
+      )
     );
+$$;
+
+create or replace function public.phase5_cycle_member_belongs_to_network(
+  target_network_id uuid,
+  requester_member_id uuid
+)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select requester_member_id is null
+    or public.phase5_member_belongs_to_network(
+      requester_member_id,
+      target_network_id
+    );
+$$;
+
+create or replace function public.phase5_reset_request_matches_network(
+  target_network_id uuid,
+  target_cycle_id uuid,
+  requester_member_id uuid
+)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1
+    from public.expense_cycles
+    where id = target_cycle_id
+      and network_id = target_network_id
+  )
+  and public.phase5_member_belongs_to_network(
+    requester_member_id,
+    target_network_id
+  );
+$$;
+
+create or replace function public.phase5_reset_approval_matches_network(
+  target_network_id uuid,
+  target_reset_request_id uuid,
+  approving_member_id uuid
+)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select public.phase5_member_belongs_to_network(
+    approving_member_id,
+    target_network_id
+  )
+  and exists (
+    select 1
+    from public.expense_reset_requests
+    where id = target_reset_request_id
+      and network_id = target_network_id
+  );
 $$;
 
 create or replace function public.phase5_prevent_notification_identity_update()
@@ -219,6 +459,9 @@ begin
     or new.amount_cents <> old.amount_cents
     or new.currency_symbol <> old.currency_symbol
     or coalesce(new.note_snippet, '') <> coalesce(old.note_snippet, '')
+    or new.kind <> old.kind
+    or coalesce(new.reset_request_id, '00000000-0000-0000-0000-000000000000'::uuid)
+      <> coalesce(old.reset_request_id, '00000000-0000-0000-0000-000000000000'::uuid)
     or new.created_at <> old.created_at
   then
     raise exception 'Only notification read state can be updated.';
@@ -245,6 +488,14 @@ drop policy if exists phase4_dev_insert_expenses on public.expenses;
 drop policy if exists phase4_dev_select_notifications on public.network_notifications;
 drop policy if exists phase4_dev_insert_notifications on public.network_notifications;
 drop policy if exists phase4_dev_update_notifications on public.network_notifications;
+drop policy if exists phase5_interim_read_cycles on public.expense_cycles;
+drop policy if exists phase5_interim_insert_cycles on public.expense_cycles;
+drop policy if exists phase5_interim_update_cycles on public.expense_cycles;
+drop policy if exists phase5_interim_read_reset_requests on public.expense_reset_requests;
+drop policy if exists phase5_interim_insert_reset_requests on public.expense_reset_requests;
+drop policy if exists phase5_interim_update_reset_requests on public.expense_reset_requests;
+drop policy if exists phase5_interim_read_reset_approvals on public.expense_reset_approvals;
+drop policy if exists phase5_interim_insert_reset_approvals on public.expense_reset_approvals;
 
 drop policy if exists phase5_interim_lookup_networks on public.networks;
 create policy phase5_interim_lookup_networks
@@ -331,6 +582,119 @@ create policy phase5_interim_insert_network_expenses
     )
   );
 
+drop policy if exists phase5_interim_update_network_expenses on public.expenses;
+create policy phase5_interim_update_network_expenses
+  on public.expenses
+  for update
+  using (
+    public.phase5_expense_members_match_network(
+      network_id,
+      paid_by_member_id,
+      added_by_member_id
+    )
+  )
+  with check (
+    amount_cents > 0
+    and archived_at is not null
+    and public.phase5_expense_members_match_network(
+      network_id,
+      paid_by_member_id,
+      added_by_member_id
+    )
+  );
+
+create policy phase5_interim_read_cycles
+  on public.expense_cycles
+  for select
+  using (network_id is not null);
+
+create policy phase5_interim_insert_cycles
+  on public.expense_cycles
+  for insert
+  with check (
+    status in ('active', 'pending_reset', 'closed')
+    and public.phase5_cycle_member_belongs_to_network(
+      network_id,
+      requested_by_member_id
+    )
+  );
+
+create policy phase5_interim_update_cycles
+  on public.expense_cycles
+  for update
+  using (network_id is not null)
+  with check (
+    status in ('active', 'pending_reset', 'closed')
+    and public.phase5_cycle_member_belongs_to_network(
+      network_id,
+      requested_by_member_id
+    )
+  );
+
+create policy phase5_interim_read_reset_requests
+  on public.expense_reset_requests
+  for select
+  using (
+    public.phase5_reset_request_matches_network(
+      network_id,
+      cycle_id,
+      requested_by_member_id
+    )
+  );
+
+create policy phase5_interim_insert_reset_requests
+  on public.expense_reset_requests
+  for insert
+  with check (
+    status = 'pending'
+    and public.phase5_reset_request_matches_network(
+      network_id,
+      cycle_id,
+      requested_by_member_id
+    )
+  );
+
+create policy phase5_interim_update_reset_requests
+  on public.expense_reset_requests
+  for update
+  using (
+    public.phase5_reset_request_matches_network(
+      network_id,
+      cycle_id,
+      requested_by_member_id
+    )
+  )
+  with check (
+    status in ('pending', 'completed', 'cancelled')
+    and public.phase5_reset_request_matches_network(
+      network_id,
+      cycle_id,
+      requested_by_member_id
+    )
+  );
+
+create policy phase5_interim_read_reset_approvals
+  on public.expense_reset_approvals
+  for select
+  using (
+    public.phase5_reset_approval_matches_network(
+      network_id,
+      reset_request_id,
+      member_id
+    )
+  );
+
+create policy phase5_interim_insert_reset_approvals
+  on public.expense_reset_approvals
+  for insert
+  with check (
+    public.phase5_reset_approval_matches_network(
+      network_id,
+      reset_request_id,
+      member_id
+    )
+  );
+
 drop policy if exists phase5_interim_read_addressed_notifications on public.network_notifications;
 create policy phase5_interim_read_addressed_notifications
   on public.network_notifications
@@ -340,7 +704,8 @@ create policy phase5_interim_read_addressed_notifications
       network_id,
       recipient_member_id,
       actor_member_id,
-      expense_id
+      expense_id,
+      reset_request_id
     )
   );
 
@@ -349,13 +714,14 @@ create policy phase5_interim_insert_addressed_notifications
   on public.network_notifications
   for insert
   with check (
-    amount_cents > 0
+    amount_cents >= 0
     and (note_snippet is null or char_length(note_snippet) <= 80)
     and public.phase5_notification_matches_network(
       network_id,
       recipient_member_id,
       actor_member_id,
-      expense_id
+      expense_id,
+      reset_request_id
     )
   );
 
@@ -371,7 +737,8 @@ create policy phase5_interim_mark_addressed_notifications_read
       network_id,
       recipient_member_id,
       actor_member_id,
-      expense_id
+      expense_id,
+      reset_request_id
     )
   )
   with check (
@@ -380,7 +747,8 @@ create policy phase5_interim_mark_addressed_notifications_read
       network_id,
       recipient_member_id,
       actor_member_id,
-      expense_id
+      expense_id,
+      reset_request_id
     )
   );
 
@@ -390,5 +758,11 @@ comment on table public.network_members is
   'Members inside a network with app-level password hash metadata.';
 comment on table public.expenses is
   'Network expenses stored in cents with payer and record ownership fields.';
+comment on table public.expense_cycles is
+  'Expense cycles keep old settled records archived instead of deleted.';
+comment on table public.expense_reset_requests is
+  'Unanimous approval requests for closing a cycle and starting a new one.';
+comment on table public.expense_reset_approvals is
+  'Member approvals captured against the request membership snapshot.';
 comment on table public.network_notifications is
   'Local-style notification records for cloud-backed network activity.';

@@ -1,6 +1,8 @@
 import '../utils/currency_utils.dart';
 import '../utils/id_utils.dart';
 import 'expense.dart';
+import 'expense_cycle.dart';
+import 'expense_reset_request.dart';
 import 'member.dart';
 
 class ExpenseNetwork {
@@ -12,6 +14,8 @@ class ExpenseNetwork {
     required this.createdAt,
     this.currencyCode = 'USD',
     this.currencySymbol = r'$',
+    List<ExpenseCycle>? cycles,
+    this.resetRequests = const [],
   }) : id = id ?? IdUtils.legacyId('network', name);
 
   final String id;
@@ -21,6 +25,28 @@ class ExpenseNetwork {
   final DateTime createdAt;
   final String currencyCode;
   final String currencySymbol;
+  final List<ExpenseCycle>? cycles;
+  final List<ExpenseResetRequest> resetRequests;
+
+  ExpenseCycle get activeCycle {
+    final existing = cycles?.where(
+      (cycle) =>
+          cycle.status == ExpenseCycleStatus.active ||
+          cycle.status == ExpenseCycleStatus.pendingReset,
+    );
+    if (existing != null && existing.isNotEmpty) return existing.last;
+    return ExpenseCycle(
+      id: IdUtils.legacyId('cycle', id),
+      networkId: id,
+      cycleNumber: 1,
+      startedAt: createdAt,
+    );
+  }
+
+  ExpenseResetRequest? get activeResetRequest {
+    final pending = resetRequests.where((request) => request.isPending);
+    return pending.isEmpty ? null : pending.last;
+  }
 
   int get totalExpensesCents {
     return members.fold<int>(0, (total, member) => total + member.totalPaidCents);
@@ -34,6 +60,8 @@ class ExpenseNetwork {
     DateTime? createdAt,
     String? currencyCode,
     String? currencySymbol,
+    List<ExpenseCycle>? cycles,
+    List<ExpenseResetRequest>? resetRequests,
   }) {
     return ExpenseNetwork(
       id: id ?? this.id,
@@ -43,6 +71,8 @@ class ExpenseNetwork {
       createdAt: createdAt ?? this.createdAt,
       currencyCode: currencyCode ?? this.currencyCode,
       currencySymbol: currencySymbol ?? this.currencySymbol,
+      cycles: cycles ?? this.cycles,
+      resetRequests: resetRequests ?? this.resetRequests,
     );
   }
 
@@ -70,6 +100,7 @@ class ExpenseNetwork {
             createdAt: DateTime.now(),
             addedByMemberId: addedByMemberId,
             addedByMemberName: addedByMemberName,
+            cycleId: activeCycle.id,
           ),
         ],
       );
@@ -102,6 +133,9 @@ class ExpenseNetwork {
       'createdAt': createdAt.toIso8601String(),
       'currencyCode': currencyCode,
       'currencySymbol': currencySymbol,
+      'cycles': (cycles ?? [activeCycle]).map((cycle) => cycle.toJson()).toList(),
+      'resetRequests':
+          resetRequests.map((request) => request.toJson()).toList(),
     };
   }
 
@@ -126,6 +160,16 @@ class ExpenseNetwork {
               currencySymbol?.trim().isNotEmpty == true
           ? currencySymbol!.trim()
           : currency.symbol,
+      cycles: (json['cycles'] as List<dynamic>?)
+          ?.map((cycle) => ExpenseCycle.fromJson(cycle as Map<String, dynamic>))
+          .toList(),
+      resetRequests: (json['resetRequests'] as List<dynamic>? ?? [])
+          .map(
+            (request) => ExpenseResetRequest.fromJson(
+              request as Map<String, dynamic>,
+            ),
+          )
+          .toList(),
     );
   }
 }

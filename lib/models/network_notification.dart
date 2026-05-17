@@ -9,6 +9,8 @@ class NetworkNotification {
     required this.expenseAmountCents,
     required this.currencySymbol,
     this.noteSnippet,
+    this.kind = NetworkNotificationKind.expense,
+    this.resetRequestId,
     DateTime? createdAt,
     this.isRead = false,
   })  : id = id ?? IdUtils.createId('notification'),
@@ -21,6 +23,8 @@ class NetworkNotification {
   final int expenseAmountCents;
   final String currencySymbol;
   final String? noteSnippet;
+  final NetworkNotificationKind kind;
+  final String? resetRequestId;
   final DateTime createdAt;
   final bool isRead;
 
@@ -35,6 +39,8 @@ class NetworkNotification {
       expenseAmountCents: expenseAmountCents,
       currencySymbol: currencySymbol,
       noteSnippet: noteSnippet,
+      kind: kind,
+      resetRequestId: resetRequestId,
       createdAt: createdAt,
       isRead: isRead ?? this.isRead,
     );
@@ -49,6 +55,8 @@ class NetworkNotification {
       'expenseAmountCents': expenseAmountCents,
       'currencySymbol': currencySymbol,
       'noteSnippet': noteSnippet,
+      'kind': kind.name,
+      'resetRequestId': resetRequestId,
       'createdAt': createdAt.toIso8601String(),
       'isRead': isRead,
     };
@@ -63,8 +71,23 @@ class NetworkNotification {
       expenseAmountCents: json['expenseAmountCents'] as int,
       currencySymbol: json['currencySymbol'] as String,
       noteSnippet: json['noteSnippet'] as String?,
+      kind: NetworkNotificationKind.fromName(json['kind'] as String?),
+      resetRequestId: json['resetRequestId'] as String?,
       createdAt: DateTime.parse(json['createdAt'] as String),
       isRead: json['isRead'] as bool? ?? false,
+    );
+  }
+}
+
+enum NetworkNotificationKind {
+  expense,
+  resetRequest,
+  cycleStarted;
+
+  static NetworkNotificationKind fromName(String? value) {
+    return NetworkNotificationKind.values.firstWhere(
+      (kind) => kind.name == value,
+      orElse: () => NetworkNotificationKind.expense,
     );
   }
 }

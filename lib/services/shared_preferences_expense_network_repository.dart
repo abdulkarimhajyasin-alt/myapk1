@@ -3,6 +3,8 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/expense_network.dart';
+import '../models/expense_cycle.dart';
+import '../models/expense_reset_request.dart';
 import '../models/member.dart';
 import '../models/network_notification.dart';
 import '../utils/currency_utils.dart';
@@ -260,6 +262,154 @@ class SharedPreferencesExpenseNetworkRepository
     await _saveNotifications(updated);
   }
 
+  @override
+  Future<ExpenseResetRequest?> getActiveResetRequest({
+    required String networkId,
+  }) async {
+    final networks = await getNetworks();
+    final matches = networks.where((network) => network.id == networkId);
+    if (matches.isEmpty) return null;
+    return matches.first.activeResetRequest;
+  }
+
+  @override
+  Future<ExpenseNetwork> createResetRequest({
+    required String networkName,
+    required String requestedByMemberId,
+  }) async {
+    final networks = await getNetworks();
+    final network = _findByName(networks, networkName);
+    if (network == null) {
+      throw const RepositoryException(
+        'Network not found.',
+        code: 'network_not_found',
+      );
+    }
+    if (network.activeResetRequest != null) {
+      throw const RepositoryException(
+        'A reset request is already pending.',
+        code: 'reset_request_already_pending',
+      );
+    }
+
+    final requester = network.findMemberById(requestedByMemberId);
+    if (requester == null) {
+      throw const RepositoryException(
+        'Member not found.',
+        code: 'member_not_found',
+      );
+    }
+
+    final cycle = network.activeCycle;
+    final now = DateTime.now();
+    final request = ExpenseResetRequest(
+      networkId: network.id,
+      cycleId: cycle.id,
+      requestedByMemberId: requester.id,
+      requestedByMemberName: requester.name,
+      createdAt: now,
+      requiredMemberIds: network.members.map((member) => member.id).toList(),
+      requiredMemberNames: network.members.map((member) => member.name).toList(),
+      approvals: [
+        ExpenseResetApproval(
+          memberId: requester.id,
+          memberName: requester.name,
+          approvedAt: now,
+        ),
+      ],
+    );
+
+    var updatedNetwork = network.copyWith(
+      cycles: _replaceCycle(
+        network,
+        cycle.copyWith(
+          status: ExpenseCycleStatus.pendingReset,
+          requestedByMemberId: requester.id,
+          requestedByMemberName: requester.name,
+        ),
+      ),
+      resetRequests: [...network.resetRequests, request],
+    );
+    updatedNetwork = _completeResetIfReady(updatedNetwork, request.id);
+    await _replaceNetwork(networks, updatedNetwork);
+    await _createResetRequestNotifications(
+      network: updatedNetwork,
+      requester: requester,
+      resetRequestId: request.id,
+    );
+    final completedRequest = updatedNetwork.resetRequests.firstWhere(
+      (candidate) => candidate.id == request.id,
+    );
+    if (completedRequest.isCompleted) {
+      await _createCycleStartedNotifications(
+        network: updatedNetwork,
+        resetRequestId: completedRequest.id,
+      );
+    }
+    return updatedNetwork;
+  }
+
+  @override
+  Future<ExpenseNetwork> approveResetRequest({
+    required String networkName,
+    required String resetRequestId,
+    required String memberId,
+  }) async {
+    final networks = await getNetworks();
+    final network = _findByName(networks, networkName);
+    if (network == null) {
+      throw const RepositoryException(
+        'Network not found.',
+        code: 'network_not_found',
+      );
+    }
+    final member = network.findMemberById(memberId);
+    if (member == null) {
+      throw const RepositoryException(
+        'Member not found.',
+        code: 'member_not_found',
+      );
+    }
+    final request = network.resetRequests.where(
+      (candidate) => candidate.id == resetRequestId,
+    );
+    if (request.isEmpty || !request.first.isPending) {
+      throw const RepositoryException(
+        'Reset request is not pending.',
+        code: 'reset_request_not_pending',
+      );
+    }
+    if (!request.first.requiredMemberIds.contains(member.id)) {
+      throw const RepositoryException(
+        'This member is not required for this reset request.',
+        code: 'reset_approval_not_required',
+      );
+    }
+
+    final approvedRequest = request.first.approve(
+      memberId: member.id,
+      memberName: member.name,
+    );
+    var updatedNetwork = network.copyWith(
+      resetRequests: network.resetRequests.map((candidate) {
+        return candidate.id == approvedRequest.id ? approvedRequest : candidate;
+      }).toList(),
+    );
+    updatedNetwork = _completeResetIfReady(updatedNetwork, approvedRequest.id);
+    await _replaceNetwork(networks, updatedNetwork);
+
+    final completedRequest = updatedNetwork.resetRequests.firstWhere(
+      (candidate) => candidate.id == approvedRequest.id,
+    );
+    if (completedRequest.isCompleted) {
+      await _createCycleStartedNotifications(
+        network: updatedNetwork,
+        resetRequestId: completedRequest.id,
+      );
+    }
+    return updatedNetwork;
+  }
+
   Member _createMember({
     required String displayName,
     required String memberPassword,
@@ -340,6 +490,112 @@ class SharedPreferencesExpenseNetworkRepository
         )
         .toList();
     await _saveNotifications([...notifications, ...newNotifications]);
+  }
+
+  Future<void> _createResetRequestNotifications({
+    required ExpenseNetwork network,
+    required Member requester,
+    required String resetRequestId,
+  }) async {
+    final notifications = await _getAllNotifications();
+    final newNotifications = network.members
+        .where((member) => member.id != requester.id)
+        .map(
+          (member) => NetworkNotification(
+            networkId: network.id,
+            recipientMemberId: member.id,
+            actorMemberName: requester.name,
+            expenseAmountCents: 0,
+            currencySymbol: network.currencySymbol,
+            kind: NetworkNotificationKind.resetRequest,
+            resetRequestId: resetRequestId,
+          ),
+        )
+        .toList();
+    await _saveNotifications([...notifications, ...newNotifications]);
+  }
+
+  Future<void> _createCycleStartedNotifications({
+    required ExpenseNetwork network,
+    required String resetRequestId,
+  }) async {
+    final notifications = await _getAllNotifications();
+    final newNotifications = network.members
+        .map(
+          (member) => NetworkNotification(
+            networkId: network.id,
+            recipientMemberId: member.id,
+            actorMemberName: network.name,
+            expenseAmountCents: 0,
+            currencySymbol: network.currencySymbol,
+            kind: NetworkNotificationKind.cycleStarted,
+            resetRequestId: resetRequestId,
+          ),
+        )
+        .toList();
+    await _saveNotifications([...notifications, ...newNotifications]);
+  }
+
+  List<ExpenseCycle> _replaceCycle(
+    ExpenseNetwork network,
+    ExpenseCycle updatedCycle,
+  ) {
+    final cycles = network.cycles ?? [network.activeCycle];
+    var found = false;
+    final updated = cycles.map((cycle) {
+      if (cycle.id != updatedCycle.id) return cycle;
+      found = true;
+      return updatedCycle;
+    }).toList();
+    return found ? updated : [...updated, updatedCycle];
+  }
+
+  ExpenseNetwork _completeResetIfReady(
+    ExpenseNetwork network,
+    String resetRequestId,
+  ) {
+    final request = network.resetRequests.firstWhere(
+      (candidate) => candidate.id == resetRequestId,
+    );
+    if (!request.isPending || !request.hasUnanimousApproval) return network;
+
+    final now = DateTime.now();
+    final closedCycle = network.activeCycle.copyWith(
+      status: ExpenseCycleStatus.closed,
+      closedAt: now,
+    );
+    final nextCycle = ExpenseCycle(
+      networkId: network.id,
+      cycleNumber: closedCycle.cycleNumber + 1,
+      startedAt: now,
+    );
+    final archivedMembers = network.members.map((member) {
+      return member.copyWith(
+        expenses: member.expenses.map((expense) {
+          if (expense.isArchived) return expense;
+          return expense.copyWith(
+            cycleId: expense.cycleId ?? closedCycle.id,
+            archivedAt: now,
+          );
+        }).toList(),
+      );
+    }).toList();
+
+    return network.copyWith(
+      members: archivedMembers,
+      cycles: [
+        ..._replaceCycle(network, closedCycle),
+        nextCycle,
+      ],
+      resetRequests: network.resetRequests.map((candidate) {
+        return candidate.id == resetRequestId
+            ? candidate.copyWith(
+                status: ExpenseResetStatus.completed,
+                completedAt: now,
+              )
+            : candidate;
+      }).toList(),
+    );
   }
 
   Future<List<NetworkNotification>> _getAllNotifications() async {

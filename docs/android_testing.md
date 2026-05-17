@@ -76,3 +76,10 @@ anon key, schema, and Phase 5 RLS policies.
 
 iOS/TestFlight readiness exists in the repository, but iOS distribution remains
 deferred. Android local and Supabase test APKs are the active validation target.
+# Settlement PDF and cycles
+
+The settlement screen can export the current settlement through Android's
+share/print sheet. Resetting expenses now starts a new cycle only after every
+member from the request-time snapshot approves. Old expenses are archived by
+cycle, not hard-deleted. See `docs/settlement_cycles.md` for the full behavior
+and Supabase schema notes.

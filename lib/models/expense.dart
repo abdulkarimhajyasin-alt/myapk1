@@ -8,6 +8,8 @@ class Expense {
     this.note,
     String? addedByMemberId,
     String? addedByMemberName,
+    this.cycleId,
+    this.archivedAt,
   })  : id = id ?? IdUtils.createId('expense'),
         addedByMemberId = addedByMemberId ?? '',
         addedByMemberName = addedByMemberName ?? '';
@@ -18,6 +20,26 @@ class Expense {
   final DateTime createdAt;
   final String addedByMemberId;
   final String addedByMemberName;
+  final String? cycleId;
+  final DateTime? archivedAt;
+
+  bool get isArchived => archivedAt != null;
+
+  Expense copyWith({
+    String? cycleId,
+    DateTime? archivedAt,
+  }) {
+    return Expense(
+      id: id,
+      amountCents: amountCents,
+      note: note,
+      createdAt: createdAt,
+      addedByMemberId: addedByMemberId,
+      addedByMemberName: addedByMemberName,
+      cycleId: cycleId ?? this.cycleId,
+      archivedAt: archivedAt ?? this.archivedAt,
+    );
+  }
 
   Map<String, dynamic> toJson() {
     return {
@@ -27,6 +49,8 @@ class Expense {
       'createdAt': createdAt.toIso8601String(),
       'addedByMemberId': addedByMemberId,
       'addedByMemberName': addedByMemberName,
+      'cycleId': cycleId,
+      'archivedAt': archivedAt?.toIso8601String(),
     };
   }
 
@@ -41,6 +65,10 @@ class Expense {
       createdAt: createdAt,
       addedByMemberId: json['addedByMemberId'] as String? ?? '',
       addedByMemberName: json['addedByMemberName'] as String? ?? '',
+      cycleId: json['cycleId'] as String?,
+      archivedAt: json['archivedAt'] == null
+          ? null
+          : DateTime.parse(json['archivedAt'] as String),
     );
   }
 }

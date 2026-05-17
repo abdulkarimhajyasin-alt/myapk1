@@ -23,6 +23,11 @@ class RepositoryErrorMessages {
       'member_invalid_password' => l10n.errorWrongPersonalPassword,
       'supabase_permission_denied' => l10n.errorSupabasePermission,
       'supabase_not_initialized' => l10n.errorSupabaseNotConfigured,
+      'reset_request_already_pending' => l10n.resetRequestAlreadyPending,
+      'reset_request_not_pending' => l10n.resetApprovalFailed,
+      'reset_approval_not_required' => l10n.resetApprovalFailed,
+      'supabase_reset_approval_failed' => l10n.resetApprovalFailed,
+      'supabase_reset_request_create_failed' => l10n.cycleCompletionFailed,
       _ => null,
     };
   }

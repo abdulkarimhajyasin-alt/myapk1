@@ -66,12 +66,18 @@ class _NetworkDashboardScreenState extends State<NetworkDashboardScreen> {
     }
   }
 
-  void _openSettlement() {
-    Navigator.of(context).push(
+  Future<void> _openSettlement() async {
+    await Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => ExpenseSettlementScreen(network: _network),
+        builder: (_) => ExpenseSettlementScreen(
+          repository: widget.repository,
+          network: _network,
+          currentMemberId: widget.currentMemberId,
+        ),
       ),
     );
+    if (!mounted) return;
+    await _refreshNetwork();
   }
 
   Future<void> _openHistory(Member member) async {

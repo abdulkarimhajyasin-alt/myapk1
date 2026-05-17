@@ -104,6 +104,28 @@ class AppLocalizations {
           'Could not open the Karamix Labs website. Please try again later.',
       'footerText':
           '© 2026 عبد الكريم حاج ياسين. جميع الحقوق محفوظة.',
+      'downloadPdf': 'Download PDF',
+      'startNewCycle': 'Start New Cycle',
+      'generatedAt': 'Generated at',
+      'resetRequestPending': 'Reset request pending',
+      'approveReset': 'Approve reset',
+      'waitingForMembers': 'Waiting for members',
+      'approvedMembers': 'Approved members',
+      'pendingMembers': 'Pending members',
+      'newCycleStarted': 'New cycle started.',
+      'failedToGeneratePdf': 'Failed to generate PDF.',
+      'pdfSharedSuccessfully': 'PDF generated successfully.',
+      'resetRequestAlreadyPending': 'A reset request is already pending.',
+      'resetApprovalFailed': 'Could not approve the reset request.',
+      'cycleCompletionFailed': 'Could not start the new cycle.',
+      'startNewCycleConfirmation':
+          'Do you want to archive old expenses and start a new expense cycle? Nothing will happen until all members approve.',
+      'cancel': 'Cancel',
+      'confirm': 'Confirm',
+      'resetRequestedBy': 'Requested by {member}',
+      'resetRequestNotification':
+          '{actor} requested starting a new expense cycle.',
+      'cycleStartedNotification': 'A new expense cycle has started.',
     },
     'ar': {
       'appTitle': 'مصروف السكن الجماعي',
@@ -188,6 +210,27 @@ class AppLocalizations {
           'تعذر فتح موقع Karamix Labs. يرجى المحاولة لاحقا.',
       'footerText':
           '© 2026 عبد الكريم حاج ياسين. جميع الحقوق محفوظة.',
+      'downloadPdf': 'تحميل PDF',
+      'startNewCycle': 'بدء مصروف جديد',
+      'generatedAt': 'تاريخ الإنشاء',
+      'resetRequestPending': 'طلب البدء الجديد بانتظار الموافقة',
+      'approveReset': 'الموافقة على الطلب',
+      'waitingForMembers': 'بانتظار الأعضاء',
+      'approvedMembers': 'الأعضاء الموافقون',
+      'pendingMembers': 'الأعضاء بانتظار الموافقة',
+      'newCycleStarted': 'تم بدء مصروف جديد.',
+      'failedToGeneratePdf': 'تعذر إنشاء ملف PDF.',
+      'pdfSharedSuccessfully': 'تم إنشاء ملف PDF بنجاح.',
+      'resetRequestAlreadyPending': 'يوجد طلب بدء جديد بانتظار الموافقة.',
+      'resetApprovalFailed': 'تعذرت الموافقة على طلب البدء الجديد.',
+      'cycleCompletionFailed': 'تعذر بدء المصروف الجديد.',
+      'startNewCycleConfirmation':
+          'هل تريد طلب حذف/أرشفة المصاريف القديمة وبدء مصروف جديد؟ لن يتم التنفيذ حتى يوافق جميع الأعضاء.',
+      'cancel': 'إلغاء',
+      'confirm': 'تأكيد',
+      'resetRequestedBy': 'طلبه {member}',
+      'resetRequestNotification': 'طلب {actor} بدء مصروف جديد.',
+      'cycleStartedNotification': 'تم بدء مصروف جديد.',
     },
   };
 
@@ -277,6 +320,24 @@ class AppLocalizations {
   String get karamixLabsButtonTooltip => _text('karamixLabsButtonTooltip');
   String get karamixLabsLaunchError => _text('karamixLabsLaunchError');
   String get footerText => _text('footerText');
+  String get downloadPdf => _text('downloadPdf');
+  String get startNewCycle => _text('startNewCycle');
+  String get generatedAt => _text('generatedAt');
+  String get resetRequestPending => _text('resetRequestPending');
+  String get approveReset => _text('approveReset');
+  String get waitingForMembers => _text('waitingForMembers');
+  String get approvedMembers => _text('approvedMembers');
+  String get pendingMembers => _text('pendingMembers');
+  String get newCycleStarted => _text('newCycleStarted');
+  String get failedToGeneratePdf => _text('failedToGeneratePdf');
+  String get pdfSharedSuccessfully => _text('pdfSharedSuccessfully');
+  String get resetRequestAlreadyPending => _text('resetRequestAlreadyPending');
+  String get resetApprovalFailed => _text('resetApprovalFailed');
+  String get cycleCompletionFailed => _text('cycleCompletionFailed');
+  String get startNewCycleConfirmation => _text('startNewCycleConfirmation');
+  String get cancel => _text('cancel');
+  String get confirm => _text('confirm');
+  String get cycleStartedNotification => _text('cycleStartedNotification');
 
   String addingExpenseFor(String memberName) {
     return _text('addingExpenseFor').replaceAll('{member}', memberName);
@@ -297,6 +358,16 @@ class AppLocalizations {
     return _text('newExpenseNotification')
         .replaceAll('{actor}', actor)
         .replaceAll('{amount}', amount);
+  }
+
+  String resetRequestedBy(String memberName) {
+    return _text('resetRequestedBy').replaceAll('{member}', memberName);
+  }
+
+  String resetRequestNotification({
+    required String actor,
+  }) {
+    return _text('resetRequestNotification').replaceAll('{actor}', actor);
   }
 }
 

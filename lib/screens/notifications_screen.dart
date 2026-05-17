@@ -74,6 +74,18 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 notification.expenseAmountCents,
                 currencySymbol: notification.currencySymbol,
               );
+              final title = switch (notification.kind) {
+                NetworkNotificationKind.resetRequest =>
+                  l10n.resetRequestNotification(
+                    actor: notification.actorMemberName,
+                  ),
+                NetworkNotificationKind.cycleStarted =>
+                  l10n.cycleStartedNotification,
+                NetworkNotificationKind.expense => l10n.newExpenseNotification(
+                    actor: notification.actorMemberName,
+                    amount: amount,
+                  ),
+              };
               return Card(
                 margin: const EdgeInsets.only(bottom: 10),
                 child: ListTile(
@@ -82,12 +94,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                         ? Icons.notifications_none_rounded
                         : Icons.notifications_active_rounded,
                   ),
-                  title: Text(
-                    l10n.newExpenseNotification(
-                      actor: notification.actorMemberName,
-                      amount: amount,
-                    ),
-                  ),
+                  title: Text(title),
                   subtitle: notification.noteSnippet == null
                       ? null
                       : Text('${l10n.note}: ${notification.noteSnippet}'),

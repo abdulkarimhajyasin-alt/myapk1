@@ -1,4 +1,5 @@
 import '../models/expense_network.dart';
+import '../models/expense_reset_request.dart';
 import '../models/member.dart';
 import '../models/network_notification.dart';
 
@@ -62,6 +63,21 @@ abstract class ExpenseNetworkRepository {
 
   Future<void> markAllNotificationsRead({
     required String networkId,
+    required String memberId,
+  });
+
+  Future<ExpenseResetRequest?> getActiveResetRequest({
+    required String networkId,
+  });
+
+  Future<ExpenseNetwork> createResetRequest({
+    required String networkName,
+    required String requestedByMemberId,
+  });
+
+  Future<ExpenseNetwork> approveResetRequest({
+    required String networkName,
+    required String resetRequestId,
     required String memberId,
   });
 }

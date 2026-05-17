@@ -27,7 +27,9 @@ class Member {
   }
 
   int get totalPaidCents {
-    return expenses.fold<int>(0, (total, expense) => total + expense.amountCents);
+    return expenses
+        .where((expense) => !expense.isArchived)
+        .fold<int>(0, (total, expense) => total + expense.amountCents);
   }
 
   Member copyWith({

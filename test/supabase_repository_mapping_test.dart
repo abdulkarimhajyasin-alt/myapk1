@@ -86,6 +86,7 @@ void main() {
       expenseRows: [
         {
           'id': 'expense-id',
+          'cycle_id': 'cycle-id',
           'paid_by_member_id': 'ali-id',
           'added_by_member_id': 'mona-id',
           'added_by_member_name': 'Mona',
@@ -93,9 +94,19 @@ void main() {
           'created_at': '2026-05-14T10:40:00.000Z',
         },
       ],
+      cycleRows: [
+        {
+          'id': 'cycle-id',
+          'network_id': 'network-id',
+          'cycle_number': 1,
+          'status': 'active',
+          'started_at': '2026-05-14T10:30:00.000Z',
+        },
+      ],
     );
 
     expect(network.totalExpensesCents, 1800);
+    expect(network.activeCycle.id, 'cycle-id');
     expect(network.findMemberById('ali-id')?.expenses, hasLength(1));
     expect(network.findMemberById('mona-id')?.expenses, isEmpty);
   });
@@ -117,8 +128,68 @@ void main() {
     expect(payload['added_by_member_id'], 'actor-id');
     expect(payload['added_by_member_name'], 'Mona');
     expect(payload['amount_cents'], 1234);
+    expect(payload['cycle_id'], isNull);
     expect((payload['note'] as String).length, 200);
     expect(payload['created_at'], isA<String>());
+  });
+
+  test('maps archived Supabase expenses without counting active totals', () {
+    final network = SupabaseExpenseNetworkRepository.networkFromRows(
+      {
+        'id': 'network-id',
+        'name': 'Flat 12',
+        'network_password_hash': 'network-hash',
+        'currency_code': 'USD',
+        'currency_symbol': r'$',
+        'created_at': '2026-05-14T10:30:00.000Z',
+      },
+      [
+        {
+          'id': 'ali-id',
+          'name': 'Ali',
+          'created_at': '2026-05-14T10:31:00.000Z',
+        },
+      ],
+      expenseRows: [
+        {
+          'id': 'expense-id',
+          'paid_by_member_id': 'ali-id',
+          'amount_cents': 1800,
+          'created_at': '2026-05-14T10:40:00.000Z',
+          'archived_at': '2026-05-15T10:40:00.000Z',
+        },
+      ],
+    );
+
+    expect(network.totalExpensesCents, 0);
+    expect(network.members.single.expenses.single.isArchived, isTrue);
+  });
+
+  test('maps Supabase reset requests and approvals', () {
+    final request = SupabaseExpenseNetworkRepository.resetRequestFromRows(
+      {
+        'id': 'reset-id',
+        'network_id': 'network-id',
+        'cycle_id': 'cycle-id',
+        'requested_by_member_id': 'ali-id',
+        'requested_by_member_name': 'Ali',
+        'status': 'pending',
+        'required_member_ids': ['ali-id', 'mona-id'],
+        'required_member_names': ['Ali', 'Mona'],
+        'created_at': '2026-05-14T10:40:00.000Z',
+      },
+      [
+        {
+          'member_id': 'ali-id',
+          'member_name': 'Ali',
+          'approved_at': '2026-05-14T10:41:00.000Z',
+        },
+      ],
+    );
+
+    expect(request.isPending, isTrue);
+    expect(request.approvals.single.memberId, 'ali-id');
+    expect(request.pendingMemberNames, ['Mona']);
   });
 
   test('notification payload excludes actor member', () {
