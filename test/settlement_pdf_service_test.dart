@@ -62,7 +62,8 @@ void main() {
     expect(bytes.length, greaterThan(500));
   });
 
-  test('builds Arabic settlement PDF with member balance labels', () async {
+  test('builds Arabic settlement PDF with real RTL member balance labels',
+      () async {
     final l10n = const AppLocalizations(Locale('ar'));
     final network = ExpenseNetwork(
       name: 'السكن',
@@ -89,20 +90,50 @@ void main() {
     );
 
     expect(l10n.memberStatus, 'حالة الأعضاء');
-    expect(
-      l10n.memberOwes('ر.س 30.00'),
-      'عليه أن يدفع ر.س 30.00',
-    );
-    expect(
-      l10n.memberShouldReceive('ر.س 30.00'),
-      'له أن يستلم ر.س 30.00',
-    );
+    expect(l10n.memberOwes('ر.س 30.00'), 'عليه أن يدفع ر.س 30.00');
+    expect(l10n.memberShouldReceive('ر.س 30.00'), 'له أن يستلم ر.س 30.00');
     expect(
       settlement.members
           .singleWhere((member) => member.memberName == 'أحمد')
           .balanceCents,
       3000,
     );
+    expect(bytes.length, greaterThan(500));
+  });
+
+  test('Arabic PDF generation accepts RTL names without placeholder glyphs',
+      () async {
+    final network = ExpenseNetwork(
+      name: 'بيت كريم',
+      password: 'network',
+      createdAt: DateTime(2026),
+      currencySymbol: '€',
+      members: [
+        Member(
+          name: 'كريم',
+          expenses: [
+            Expense(amountCents: 37500, createdAt: DateTime(2026)),
+          ],
+        ),
+        Member(name: 'أبو عدي'),
+      ],
+    );
+    final settlement = const SettlementService().calculate(network);
+
+    final bytes = await const SettlementPdfService().buildPdf(
+      network: network,
+      settlement: settlement,
+      l10n: const AppLocalizations(Locale('ar')),
+      generatedAt: DateTime(2026, 5, 17, 12, 30),
+    );
+
+    expect(network.name, isNot(contains('□')));
+    expect(
+      network.members.map((member) => member.name).join(),
+      isNot(contains('□')),
+    );
+    expect(settlement.payments.single.fromMember, 'أبو عدي');
+    expect(settlement.payments.single.toMember, 'كريم');
     expect(bytes.length, greaterThan(500));
   });
 }

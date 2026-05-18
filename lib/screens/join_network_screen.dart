@@ -14,12 +14,16 @@ class JoinNetworkScreen extends StatefulWidget {
     required this.repository,
     required this.sessionRepository,
     this.dataMode = 'local',
+    this.inviteNetworkId,
+    this.inviteNetworkName,
     super.key,
   });
 
   final ExpenseNetworkRepository repository;
   final SessionRepository sessionRepository;
   final String dataMode;
+  final String? inviteNetworkId;
+  final String? inviteNetworkName;
 
   @override
   State<JoinNetworkScreen> createState() => _JoinNetworkScreenState();
@@ -33,6 +37,17 @@ class _JoinNetworkScreenState extends State<JoinNetworkScreen> {
   final _memberPasswordController = TextEditingController();
   String? _error;
   bool _isJoining = false;
+  bool get _hasInvite => widget.inviteNetworkId?.trim().isNotEmpty == true;
+  bool get _isCloudMode => widget.dataMode.trim().toLowerCase() == 'supabase';
+
+  @override
+  void initState() {
+    super.initState();
+    final inviteName = widget.inviteNetworkName;
+    if (inviteName != null && inviteName.trim().isNotEmpty) {
+      _networkNameController.text = inviteName.trim();
+    }
+  }
 
   @override
   void dispose() {
@@ -45,6 +60,10 @@ class _JoinNetworkScreenState extends State<JoinNetworkScreen> {
 
   Future<void> _joinNetwork() async {
     if (!_formKey.currentState!.validate()) return;
+    if (_hasInvite && !_isCloudMode) {
+      setState(() => _error = context.l10n.cloudInviteJoinRequired);
+      return;
+    }
     setState(() {
       _isJoining = true;
       _error = null;
@@ -56,6 +75,7 @@ class _JoinNetworkScreenState extends State<JoinNetworkScreen> {
         networkName: _networkNameController.text,
         password: _passwordController.text,
         memberPassword: _memberPasswordController.text,
+        networkId: widget.inviteNetworkId,
       );
       if (!mounted) return;
       await widget.sessionRepository.saveActiveSession(
@@ -101,6 +121,31 @@ class _JoinNetworkScreenState extends State<JoinNetworkScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             FormErrorText(_error),
+            if (_hasInvite) ...[
+              Card(
+                margin: const EdgeInsets.only(bottom: 16),
+                child: Padding(
+                  padding: const EdgeInsets.all(14),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(
+                        Icons.qr_code_2_rounded,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          _isCloudMode
+                              ? l10n.inviteJoinPrefill
+                              : l10n.cloudInviteJoinRequired,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
             TextFormField(
               controller: _displayNameController,
               decoration: InputDecoration(labelText: l10n.displayName),
@@ -112,7 +157,8 @@ class _JoinNetworkScreenState extends State<JoinNetworkScreen> {
               controller: _networkNameController,
               decoration: InputDecoration(labelText: l10n.networkName),
               textInputAction: TextInputAction.next,
-              validator: _required,
+              enabled: !_hasInvite || widget.inviteNetworkName != null,
+              validator: _hasInvite ? null : _required,
             ),
             const SizedBox(height: 14),
             TextFormField(

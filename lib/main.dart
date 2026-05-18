@@ -1,11 +1,16 @@
+import 'dart:async';
+
+import 'package:app_links/app_links.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'l10n/app_localizations.dart';
 import 'screens/home_screen.dart';
+import 'screens/join_network_screen.dart';
 import 'screens/language_selection_screen.dart';
 import 'services/expense_network_repository.dart';
+import 'services/invite_service.dart';
 import 'services/locale_preference_service.dart';
 import 'services/repository_factory.dart';
 import 'services/session_repository.dart';
@@ -56,6 +61,9 @@ class ExpenseNetworkApp extends StatefulWidget {
 }
 
 class _ExpenseNetworkAppState extends State<ExpenseNetworkApp> {
+  final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
+  final InviteService _inviteService = const InviteService();
+  StreamSubscription<Uri>? _linkSubscription;
   late Locale _locale = widget.localeService.loadLocale();
   late bool _hasCompletedLanguageSelection =
       widget.localeService.hasStoredLocale;
@@ -73,6 +81,49 @@ class _ExpenseNetworkAppState extends State<ExpenseNetworkApp> {
     await _setLocale(locale);
   }
 
+  @override
+  void initState() {
+    super.initState();
+    _listenForInviteLinks();
+  }
+
+  @override
+  void dispose() {
+    _linkSubscription?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _listenForInviteLinks() async {
+    final appLinks = AppLinks();
+    try {
+      final initialLink = await appLinks.getInitialLink();
+      if (!mounted) return;
+      if (initialLink != null) _openInviteLink(initialLink);
+    } catch (_) {
+      // Deep link delivery should never block normal app startup.
+    }
+    _linkSubscription = appLinks.uriLinkStream.listen(_openInviteLink);
+  }
+
+  void _openInviteLink(Uri uri) {
+    final networkId = _inviteService.parseNetworkId(uri.toString());
+    if (networkId == null) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final navigator = _navigatorKey.currentState;
+      if (navigator == null) return;
+      navigator.push(
+        MaterialPageRoute(
+          builder: (_) => JoinNetworkScreen(
+            repository: widget.repository,
+            sessionRepository: widget.sessionRepository,
+            dataMode: widget.dataMode,
+            inviteNetworkId: networkId,
+          ),
+        ),
+      );
+    });
+  }
+
   void _openLanguageSettings(BuildContext context) {
     Navigator.of(context).push(
       MaterialPageRoute(
@@ -88,6 +139,7 @@ class _ExpenseNetworkAppState extends State<ExpenseNetworkApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: _navigatorKey,
       title: 'Maskan',
       onGenerateTitle: (context) => context.l10n.appTitle,
       debugShowCheckedModeBanner: false,

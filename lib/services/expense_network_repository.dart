@@ -36,6 +36,7 @@ abstract class ExpenseNetworkRepository {
     required String networkName,
     required String password,
     required String memberPassword,
+    String? networkId,
   });
 
   Future<void> saveNetwork(ExpenseNetwork network);

@@ -137,6 +137,23 @@ class AppLocalizations {
       'syncing': 'Syncing',
       'offline': 'Offline',
       'inviteMembers': 'Invite Members',
+      'scanInvite': 'Scan Invite',
+      'invalidInviteQr': 'This QR code is not a valid Maskan invite.',
+      'inviteScannerTitle': 'Scan Invite',
+      'inviteScannerHint': 'Point the camera at a Maskan invite QR code.',
+      'inviteJoinPrefill':
+          'Invite detected. Enter your name and passwords to join.',
+      'cloudInviteJoinRequired':
+          'QR invite joining requires cloud mode. You can still join manually in local mode.',
+      'inviteInstructions':
+          'Install Maskan first, then open this invite. The QR uses the Maskan app link, not a website.',
+      'inviteLinkLabel': 'Maskan invite link',
+      'reportSubtitleEn': 'Shared Housing Expense Report',
+      'reportSubtitleAr': 'تقرير مصاريف السكن',
+      'reportNetworkInfo': 'Network info',
+      'reportMemberCount': 'Member count',
+      'reportSettlementInstructions': 'Settlement instructions',
+      'poweredByKaramix': 'Powered by Karamix Labs',
       'copyLink': 'Copy link',
       'share': 'Share',
       'inviteCopied': 'Invite link copied',
@@ -274,6 +291,23 @@ class AppLocalizations {
       'syncing': 'جار المزامنة',
       'offline': 'غير متصل',
       'inviteMembers': 'دعوة أعضاء',
+      'scanInvite': 'مسح دعوة',
+      'invalidInviteQr': 'رمز QR هذا ليس دعوة Maskan صالحة.',
+      'inviteScannerTitle': 'مسح دعوة',
+      'inviteScannerHint': 'وجّه الكاميرا إلى رمز دعوة Maskan.',
+      'inviteJoinPrefill':
+          'تم اكتشاف الدعوة. أدخل اسمك وكلمات المرور للانضمام.',
+      'cloudInviteJoinRequired':
+          'الانضمام عبر QR يتطلب الوضع السحابي. يمكنك الانضمام يدوياً في الوضع المحلي.',
+      'inviteInstructions':
+          'ثبّت Maskan أولاً، ثم افتح الدعوة. يستخدم رمز QR رابط التطبيق وليس رابط موقع ويب.',
+      'inviteLinkLabel': 'رابط دعوة Maskan',
+      'reportSubtitleEn': 'Shared Housing Expense Report',
+      'reportSubtitleAr': 'تقرير مصاريف السكن',
+      'reportNetworkInfo': 'معلومات الشبكة',
+      'reportMemberCount': 'عدد الأعضاء',
+      'reportSettlementInstructions': 'تعليمات التسوية',
+      'poweredByKaramix': 'بدعم من Karamix Labs',
       'copyLink': 'نسخ الرابط',
       'share': 'مشاركة',
       'inviteCopied': 'تم نسخ رابط الدعوة',
@@ -410,6 +444,21 @@ class AppLocalizations {
   String get syncing => _text('syncing');
   String get offline => _text('offline');
   String get inviteMembers => _text('inviteMembers');
+  String get scanInvite => _text('scanInvite');
+  String get invalidInviteQr => _text('invalidInviteQr');
+  String get inviteScannerTitle => _text('inviteScannerTitle');
+  String get inviteScannerHint => _text('inviteScannerHint');
+  String get inviteJoinPrefill => _text('inviteJoinPrefill');
+  String get cloudInviteJoinRequired => _text('cloudInviteJoinRequired');
+  String get inviteInstructions => _text('inviteInstructions');
+  String get inviteLinkLabel => _text('inviteLinkLabel');
+  String get reportSubtitleEn => _text('reportSubtitleEn');
+  String get reportSubtitleAr => _text('reportSubtitleAr');
+  String get reportNetworkInfo => _text('reportNetworkInfo');
+  String get reportMemberCount => _text('reportMemberCount');
+  String get reportSettlementInstructions =>
+      _text('reportSettlementInstructions');
+  String get poweredByKaramix => _text('poweredByKaramix');
   String get copyLink => _text('copyLink');
   String get share => _text('share');
   String get inviteCopied => _text('inviteCopied');

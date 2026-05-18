@@ -72,6 +72,44 @@ The workflow also keeps the existing local release APK artifact for continuity.
 If cloud operations fail, check the device internet connection, Supabase URL,
 anon key, schema, and Phase 5 RLS policies.
 
+## QR Invite and Deep Link Test
+
+Cloud QR joining is designed for Supabase builds. Local mode still supports the
+manual join form, but scanning a QR invite explains that QR joining requires
+cloud mode because local data exists only on one device.
+
+1. Install the Supabase APK on two phones.
+2. On phone A, create or open a cloud network.
+3. Open **Invite Members** and confirm the screen shows:
+   - a QR code
+   - the canonical invite link `maskan://join/{networkId}`
+   - copy and share actions
+   - explanatory text telling the recipient to install Maskan first
+4. On phone B, tap **Scan Invite** / **مسح دعوة** on the home screen.
+5. Allow the camera permission and scan phone A's QR code.
+6. Confirm the join screen opens with the invite context and no website 404 is
+   shown.
+7. Enter the member name, network password, and personal password, then join.
+
+Supported invite formats:
+
+- `maskan://join/{networkId}` is the primary QR/share payload.
+- `https://karamixlabs.com/maskan/join?network={networkId}` is accepted when
+  delivered to the app as a compatibility deep link, but the app does not show
+  it as a normal website fallback because that web route is not currently
+  hosted.
+
+Invalid QR codes should show a localized error instead of navigating.
+
+## Settlement PDF Export
+
+Open the settlement screen and export a PDF in English and Arabic. The PDF now
+embeds the bundled Noto Naskh Arabic fonts from `assets/fonts`, so Arabic text
+is rendered with real glyphs instead of square placeholders in Android PDF
+viewers, Google Drive preview, Telegram, and WhatsApp. Check that the report
+contains the Maskan header, network info, total expenses card, member settlement
+table, settlement instructions, and Karamix Labs footer.
+
 ## Known Limitation
 
 iOS/TestFlight readiness exists in the repository, but iOS distribution remains

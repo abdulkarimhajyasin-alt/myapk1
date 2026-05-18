@@ -112,6 +112,7 @@ class SharedPreferencesExpenseNetworkRepository
     required String networkName,
     required String password,
     required String memberPassword,
+    String? networkId,
   }) async {
     final networks = await getNetworks();
     final network = _findByName(networks, networkName);

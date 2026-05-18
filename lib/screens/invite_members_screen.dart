@@ -29,11 +29,29 @@ class InviteMembersScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            networkName,
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w800,
-                ),
+          Card(
+            margin: EdgeInsets.zero,
+            child: Padding(
+              padding: const EdgeInsets.all(18),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    networkName,
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.w800,
+                        ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    l10n.inviteInstructions,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
           if (!isCloudMode) ...[
             const SizedBox(height: 10),
@@ -46,16 +64,35 @@ class InviteMembersScreen extends StatelessWidget {
           ],
           const SizedBox(height: 18),
           Center(
-            child: QrImageView(
-              data: invite.qrData,
-              version: QrVersions.auto,
-              size: 220,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.08),
+                    blurRadius: 18,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: QrImageView(
+                  data: invite.qrData,
+                  version: QrVersions.auto,
+                  size: 220,
+                ),
+              ),
             ),
           ),
           const SizedBox(height: 18),
+          Text(
+            l10n.inviteLinkLabel,
+            style: Theme.of(context).textTheme.labelLarge,
+          ),
+          const SizedBox(height: 6),
           SelectableText(invite.appLink),
-          const SizedBox(height: 8),
-          SelectableText(invite.webFallbackLink),
           const SizedBox(height: 18),
           FilledButton.icon(
             onPressed: () async {
@@ -71,7 +108,7 @@ class InviteMembersScreen extends StatelessWidget {
           const SizedBox(height: 10),
           OutlinedButton.icon(
             onPressed: () => Share.share(
-              '${invite.appLink}\n${invite.webFallbackLink}',
+              invite.shareText,
               subject: networkName,
             ),
             icon: const Icon(Icons.ios_share_rounded),

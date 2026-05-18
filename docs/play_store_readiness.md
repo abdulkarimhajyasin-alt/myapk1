@@ -16,7 +16,11 @@
 - Do not change `applicationId` for existing installs.
 - Verify Arabic and English screenshots on Android.
 - Verify notification permission prompt on Android 13+.
+- Verify camera permission copy appears when using **Scan Invite**.
 - Verify Supabase mode with production anon key and RLS policies.
+- Verify QR invite scanning and custom deep links open the join flow in
+  Supabase mode.
+- Verify settlement PDF export in Arabic and English with embedded Arabic fonts.
 
 ## Store Listing Assets Needed
 
@@ -36,6 +40,12 @@
 - The app does not require a service-role key in the client.
 - Push-1 notifications are local notifications triggered by in-app realtime events.
 - Production background push requires FCM/server-side delivery in a later Push-2 phase.
+- Camera access is used only for scanning Maskan invite QR codes.
+- Invite QR codes use `maskan://join/{networkId}`. The app can parse the
+  Karamix Labs HTTPS compatibility format when Android delivers it as a deep
+  link, but the share UI avoids presenting an unhosted web fallback.
+- Settlement PDFs embed Noto Naskh Arabic fonts so Arabic reports do not depend
+  on viewer/system fonts and avoid square placeholder glyphs.
 
 ## Final Manual Checks
 

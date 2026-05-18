@@ -152,6 +152,7 @@ class _QueueRepository implements ExpenseNetworkRepository {
     required String networkName,
     required String password,
     required String memberPassword,
+    String? networkId,
   }) async =>
       throw UnimplementedError();
 

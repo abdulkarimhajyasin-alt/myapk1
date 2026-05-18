@@ -8,11 +8,11 @@ share/print sheet through the `printing` package. The report includes the app
 name, network name, currency, generation time, total expenses, member totals,
 settlement transfers, and the Karamix Labs footer.
 
-The first implementation does not bundle a dedicated Arabic PDF font. The
-screen remains localized and RTL-aware, but exact Arabic glyph rendering inside
-the generated PDF depends on the PDF package's available fonts. A licensed
-bundled Arabic font can be added later under `assets/fonts` and wired into
-`SettlementPdfService`.
+The PDF renderer embeds the bundled Noto Naskh Arabic regular and bold fonts
+from `assets/fonts` for the full document. Arabic reports are generated with
+RTL text direction, real Arabic labels, clean member/result wording, and a
+professional card/table layout so Android PDF viewers, Google Drive preview,
+Telegram, and WhatsApp do not show square placeholder glyphs.
 
 ## New expense cycle approval
 

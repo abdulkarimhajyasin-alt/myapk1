@@ -10,6 +10,7 @@ import 'create_network_screen.dart';
 import 'join_network_screen.dart';
 import 'my_account_screen.dart';
 import 'network_dashboard_screen.dart';
+import 'scan_invite_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({
@@ -153,6 +154,23 @@ class _HomeScreenState extends State<HomeScreen> {
                               },
                               icon: const Icon(Icons.login_rounded),
                               label: Text(l10n.joinNetwork),
+                            ),
+                            const SizedBox(height: 12),
+                            OutlinedButton.icon(
+                              onPressed: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (_) => ScanInviteScreen(
+                                      repository: widget.repository,
+                                      sessionRepository:
+                                          widget.sessionRepository,
+                                      dataMode: widget.dataMode,
+                                    ),
+                                  ),
+                                );
+                              },
+                              icon: const Icon(Icons.qr_code_scanner_rounded),
+                              label: Text(l10n.scanInvite),
                             ),
                             const SizedBox(height: 12),
                             OutlinedButton.icon(

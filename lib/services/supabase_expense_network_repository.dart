@@ -62,7 +62,8 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
 
       if (row == null) return null;
       final networkRow = Map<String, dynamic>.from(row);
-      return _networkFromHydratedRow(networkRow);
+      final updatedNetworkRow = await _loadNetworkRowById(networkId);
+      return _networkFromHydratedRow(updatedNetworkRow ?? networkRow);
     } catch (error) {
       throw mapSupabaseError(
         error,
@@ -190,8 +191,11 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
     required String networkName,
     required String password,
     required String memberPassword,
+    String? networkId,
   }) async {
-    final networkRow = await _loadNetworkRowByName(networkName);
+    final networkRow = networkId?.trim().isNotEmpty == true
+        ? await _loadNetworkRowById(networkId!.trim())
+        : await _loadNetworkRowByName(networkName);
     if (networkRow == null) {
       throw const RepositoryException(
         'Network name or password is incorrect.',
@@ -706,6 +710,24 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
           .from('networks')
           .select()
           .eq('normalized_name', normalizeName(networkName))
+          .maybeSingle();
+      return row == null ? null : Map<String, dynamic>.from(row);
+    } catch (error) {
+      throw mapSupabaseError(
+        error,
+        fallbackCode: 'supabase_network_load_failed',
+        fallbackMessage: 'Cloud network could not be loaded.',
+      );
+    }
+  }
+
+  Future<Map<String, dynamic>?> _loadNetworkRowById(String networkId) async {
+    try {
+      final client = _requireClient();
+      final row = await client
+          .from('networks')
+          .select()
+          .eq('id', networkId)
           .maybeSingle();
       return row == null ? null : Map<String, dynamic>.from(row);
     } catch (error) {
