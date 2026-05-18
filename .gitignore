@@ -17,3 +17,8 @@ android/app/release
 *.iml
 .idea/
 .vscode/
+upload-keystore.jks
+keystore_base64.txt
+*.jks
+*.keystore
+android/key.properties
