@@ -8,9 +8,11 @@ share/print sheet through the `printing` package. The report includes the app
 name, network name, currency, generation time, total expenses, member totals,
 settlement transfers, and the Karamix Labs footer.
 
-The PDF renderer embeds the bundled Noto Naskh Arabic regular and bold fonts
-from `assets/fonts` for the full document. Arabic reports are generated with
-RTL text direction, real Arabic labels, clean member/result wording, and a
+The PDF renderer embeds the bundled Amiri regular and bold fonts from
+`assets/fonts` for the full document. Amiri is used because it covers Arabic,
+Arabic presentation forms, Latin branding, punctuation, copyright, and euro
+glyphs in one Arabic-capable family. Arabic reports are
+generated with RTL text direction, real Arabic labels, clean member/result wording, and a
 professional card/table layout so Android PDF viewers, Google Drive preview,
 Telegram, and WhatsApp do not show square placeholder glyphs.
 

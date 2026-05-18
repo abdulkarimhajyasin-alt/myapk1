@@ -124,7 +124,7 @@ The dashboard exit action is a safe leave-network flow, not a silent logout.
 ## Settlement PDF Export
 
 Open the settlement screen and export a PDF in English and Arabic. The PDF now
-embeds the bundled Noto Naskh Arabic fonts from `assets/fonts`, so Arabic text
+embeds the bundled Amiri fonts from `assets/fonts`, so Arabic text
 is rendered with real glyphs instead of square placeholders in Android PDF
 viewers, Google Drive preview, Telegram, and WhatsApp. Check that the report
 contains the Maskan header, network info, total expenses card, member settlement

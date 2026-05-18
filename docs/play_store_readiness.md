@@ -50,8 +50,9 @@
   version of Maskan.
 - Leaving a network removes only the current member after total expenses are
   zero and there are no pending reset/sync blockers.
-- Settlement PDFs embed Noto Naskh Arabic fonts so Arabic reports do not depend
-  on viewer/system fonts and avoid square placeholder glyphs.
+- Settlement PDFs embed Amiri so Arabic reports do not depend on viewer/system
+  fonts and avoid square placeholder glyphs, including Arabic presentation
+  forms, mixed Arabic, Latin, punctuation, and euro-symbol content.
 
 ## Final Manual Checks
 

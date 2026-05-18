@@ -40,11 +40,11 @@ flutter_launcher_icons:
 flutter:
   uses-material-design: true
   assets:
-    - assets/fonts/NotoNaskhArabic-Regular.ttf
-    - assets/fonts/NotoNaskhArabic-Bold.ttf
+    - assets/fonts/Amiri-Regular.ttf
+    - assets/fonts/Amiri-Bold.ttf
   fonts:
-    - family: NotoNaskhArabic
+    - family: Amiri
       fonts:
-        - asset: assets/fonts/NotoNaskhArabic-Regular.ttf
-        - asset: assets/fonts/NotoNaskhArabic-Bold.ttf
+        - asset: assets/fonts/Amiri-Regular.ttf
+        - asset: assets/fonts/Amiri-Bold.ttf
           weight: 700
