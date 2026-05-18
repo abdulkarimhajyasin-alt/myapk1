@@ -3,18 +3,15 @@ import 'package:expense_network/services/supabase_realtime_service.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test('realtime service stays disabled without Supabase configuration', () {
-    final service = SupabaseRealtimeService(
-      config: const SupabaseConfig(dataMode: 'local'),
-    );
+  test('realtime service waits for Supabase configuration', () {
+    final service = SupabaseRealtimeService();
 
     expect(service.canInitialize, isFalse);
   });
 
-  test('realtime service can initialize when Supabase mode is configured', () {
+  test('realtime service can initialize when Supabase is configured', () {
     final service = SupabaseRealtimeService(
       config: const SupabaseConfig(
-        dataMode: 'supabase',
         url: 'https://example.supabase.co',
         anonKey: 'anon',
       ),
@@ -24,9 +21,7 @@ void main() {
   });
 
   test('dispose is safe without active subscriptions', () async {
-    final service = SupabaseRealtimeService(
-      config: const SupabaseConfig(dataMode: 'local'),
-    );
+    final service = SupabaseRealtimeService();
 
     await service.dispose();
   });
@@ -34,7 +29,6 @@ void main() {
   test('realtime events trigger refresh callbacks after debounce', () async {
     var refreshCount = 0;
     final service = SupabaseRealtimeService(
-      config: const SupabaseConfig(dataMode: 'local'),
       debounceDuration: const Duration(milliseconds: 1),
     );
 

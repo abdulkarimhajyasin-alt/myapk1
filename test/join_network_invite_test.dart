@@ -10,7 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  testWidgets('local invite join explains that QR requires cloud mode',
+  testWidgets('invite join passes network id to cloud repository',
       (tester) async {
     final repository = _InviteJoinRepository();
 
@@ -19,25 +19,6 @@ void main() {
         child: JoinNetworkScreen(
           repository: repository,
           sessionRepository: _SessionRepository(),
-          dataMode: 'local',
-          inviteNetworkId: 'network_1',
-        ),
-      ),
-    );
-
-    expect(find.text('QR invite joining requires cloud mode. You can still join manually in local mode.'), findsWidgets);
-  });
-
-  testWidgets('cloud invite join passes network id to repository',
-      (tester) async {
-    final repository = _InviteJoinRepository();
-
-    await tester.pumpWidget(
-      _TestApp(
-        child: JoinNetworkScreen(
-          repository: repository,
-          sessionRepository: _SessionRepository(),
-          dataMode: 'supabase',
           inviteNetworkId: 'network_1',
         ),
       ),
@@ -88,7 +69,6 @@ class _SessionRepository implements SessionRepository {
   Future<void> saveActiveSession({
     required String networkName,
     required String memberId,
-    String? dataMode,
   }) async {}
 }
 

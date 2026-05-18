@@ -18,28 +18,85 @@ import 'services/supabase_config.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  const supabaseConfig = SupabaseConfig.defaultConfig;
-  if (supabaseConfig.shouldUseSupabase) {
+  final preferences = await SharedPreferences.getInstance();
+  final localeService = LocalePreferenceService(preferences);
+  runApp(ExpenseNetworkBootstrap(localeService: localeService));
+}
+
+class ExpenseNetworkBootstrap extends StatefulWidget {
+  const ExpenseNetworkBootstrap({
+    required this.localeService,
+    super.key,
+  });
+
+  final LocalePreferenceService localeService;
+
+  @override
+  State<ExpenseNetworkBootstrap> createState() =>
+      _ExpenseNetworkBootstrapState();
+}
+
+class _ExpenseNetworkBootstrapState extends State<ExpenseNetworkBootstrap> {
+  static const supabaseConfig = SupabaseConfig.defaultConfig;
+  Future<AppRepositoryBundle>? _bootstrapFuture;
+  bool _hasInitializedSupabase = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _bootstrapFuture = _initializeCloud();
+  }
+
+  Future<AppRepositoryBundle> _initializeCloud() async {
+    supabaseConfig.requireConfigured();
+    await _ensureSupabaseInitialized();
+    await Supabase.instance.client
+        .from('networks')
+        .select('id')
+        .limit(1)
+        .timeout(const Duration(seconds: 12));
+    return RepositoryFactory.create();
+  }
+
+  Future<void> _ensureSupabaseInitialized() async {
+    if (_hasInitializedSupabase) return;
     await Supabase.initialize(
       url: supabaseConfig.url,
       anonKey: supabaseConfig.anonKey,
     );
+    _hasInitializedSupabase = true;
   }
 
-  final preferences = await SharedPreferences.getInstance();
-  final repositories = await RepositoryFactory.create(
-    preferences: preferences,
-    supabaseConfig: supabaseConfig,
-  );
-  final localeService = LocalePreferenceService(preferences);
-  runApp(
-    ExpenseNetworkApp(
-      repository: repositories.expenseNetworkRepository,
-      sessionRepository: repositories.sessionRepository,
-      localeService: localeService,
-      dataMode: supabaseConfig.shouldUseSupabase ? 'supabase' : 'local',
-    ),
-  );
+  void _retry() {
+    setState(() => _bootstrapFuture = _initializeCloud());
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<AppRepositoryBundle>(
+      future: _bootstrapFuture,
+      builder: (context, snapshot) {
+        if (snapshot.hasData) {
+          final repositories = snapshot.data!;
+          return ExpenseNetworkApp(
+            repository: repositories.expenseNetworkRepository,
+            sessionRepository: repositories.sessionRepository,
+            localeService: widget.localeService,
+          );
+        }
+        if (snapshot.hasError) {
+          return CloudInitializationFailureApp(
+            localeService: widget.localeService,
+            error: snapshot.error,
+            onRetry: _retry,
+          );
+        }
+        return CloudInitializationLoadingApp(
+          localeService: widget.localeService,
+        );
+      },
+    );
+  }
 }
 
 class ExpenseNetworkApp extends StatefulWidget {
@@ -47,14 +104,12 @@ class ExpenseNetworkApp extends StatefulWidget {
     required this.repository,
     required this.sessionRepository,
     required this.localeService,
-    required this.dataMode,
     super.key,
   });
 
   final ExpenseNetworkRepository repository;
   final SessionRepository sessionRepository;
   final LocalePreferenceService localeService;
-  final String dataMode;
 
   @override
   State<ExpenseNetworkApp> createState() => _ExpenseNetworkAppState();
@@ -116,7 +171,6 @@ class _ExpenseNetworkAppState extends State<ExpenseNetworkApp> {
           builder: (_) => JoinNetworkScreen(
             repository: widget.repository,
             sessionRepository: widget.sessionRepository,
-            dataMode: widget.dataMode,
             inviteNetworkId: networkId,
           ),
         ),
@@ -146,33 +200,11 @@ class _ExpenseNetworkAppState extends State<ExpenseNetworkApp> {
       locale: _locale,
       supportedLocales: AppLocalizations.supportedLocales,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF2563EB),
-          brightness: Brightness.light,
-        ),
-        useMaterial3: true,
-        inputDecorationTheme: const InputDecorationTheme(
-          border: OutlineInputBorder(),
-        ),
-        filledButtonTheme: FilledButtonThemeData(
-          style: FilledButton.styleFrom(
-            minimumSize: const Size.fromHeight(52),
-            textStyle: const TextStyle(fontWeight: FontWeight.w700),
-          ),
-        ),
-        outlinedButtonTheme: OutlinedButtonThemeData(
-          style: OutlinedButton.styleFrom(
-            minimumSize: const Size.fromHeight(52),
-            textStyle: const TextStyle(fontWeight: FontWeight.w700),
-          ),
-        ),
-      ),
+      theme: _appTheme(),
       home: _hasCompletedLanguageSelection
           ? HomeScreen(
               repository: widget.repository,
               sessionRepository: widget.sessionRepository,
-              dataMode: widget.dataMode,
               onChangeLanguage: _openLanguageSettings,
             )
           : LanguageSelectionScreen(
@@ -181,4 +213,156 @@ class _ExpenseNetworkAppState extends State<ExpenseNetworkApp> {
             ),
     );
   }
+}
+
+class CloudInitializationLoadingApp extends StatelessWidget {
+  const CloudInitializationLoadingApp({
+    required this.localeService,
+    super.key,
+  });
+
+  final LocalePreferenceService localeService;
+
+  @override
+  Widget build(BuildContext context) {
+    return _BootstrapMaterialApp(
+      locale: localeService.loadLocale(),
+      home: const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      ),
+    );
+  }
+}
+
+class CloudInitializationFailureApp extends StatelessWidget {
+  const CloudInitializationFailureApp({
+    required this.localeService,
+    required this.error,
+    required this.onRetry,
+    super.key,
+  });
+
+  final LocalePreferenceService localeService;
+  final Object? error;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return _BootstrapMaterialApp(
+      locale: localeService.loadLocale(),
+      home: _CloudInitializationFailureScreen(
+        error: error,
+        onRetry: onRetry,
+      ),
+    );
+  }
+}
+
+class _BootstrapMaterialApp extends StatelessWidget {
+  const _BootstrapMaterialApp({
+    required this.locale,
+    required this.home,
+  });
+
+  final Locale locale;
+  final Widget home;
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Maskan',
+      debugShowCheckedModeBanner: false,
+      locale: locale,
+      supportedLocales: AppLocalizations.supportedLocales,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      theme: _appTheme(),
+      home: home,
+    );
+  }
+}
+
+class _CloudInitializationFailureScreen extends StatelessWidget {
+  const _CloudInitializationFailureScreen({
+    required this.error,
+    required this.onRetry,
+  });
+
+  final Object? error;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final l10n = context.l10n;
+    return Scaffold(
+      body: SafeArea(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 480),
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Icon(
+                    Icons.cloud_off_rounded,
+                    size: 64,
+                    color: theme.colorScheme.error,
+                  ),
+                  const SizedBox(height: 18),
+                  Text(
+                    l10n.cloudConnectionFailedTitle,
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    l10n.cloudConnectionFailedMessage,
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(height: 22),
+                  FilledButton.icon(
+                    onPressed: onRetry,
+                    icon: const Icon(Icons.refresh_rounded),
+                    label: Text(l10n.retry),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+ThemeData _appTheme() {
+  return ThemeData(
+    colorScheme: ColorScheme.fromSeed(
+      seedColor: const Color(0xFF2563EB),
+      brightness: Brightness.light,
+    ),
+    useMaterial3: true,
+    inputDecorationTheme: const InputDecorationTheme(
+      border: OutlineInputBorder(),
+    ),
+    filledButtonTheme: FilledButtonThemeData(
+      style: FilledButton.styleFrom(
+        minimumSize: const Size.fromHeight(52),
+        textStyle: const TextStyle(fontWeight: FontWeight.w700),
+      ),
+    ),
+    outlinedButtonTheme: OutlinedButtonThemeData(
+      style: OutlinedButton.styleFrom(
+        minimumSize: const Size.fromHeight(52),
+        textStyle: const TextStyle(fontWeight: FontWeight.w700),
+      ),
+    ),
+  );
 }

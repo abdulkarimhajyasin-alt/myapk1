@@ -11,13 +11,11 @@ class ScanInviteScreen extends StatefulWidget {
   const ScanInviteScreen({
     required this.repository,
     required this.sessionRepository,
-    required this.dataMode,
     super.key,
   });
 
   final ExpenseNetworkRepository repository;
   final SessionRepository sessionRepository;
-  final String dataMode;
 
   @override
   State<ScanInviteScreen> createState() => _ScanInviteScreenState();
@@ -61,7 +59,6 @@ class _ScanInviteScreenState extends State<ScanInviteScreen> {
         builder: (_) => JoinNetworkScreen(
           repository: widget.repository,
           sessionRepository: widget.sessionRepository,
-          dataMode: widget.dataMode,
           inviteNetworkId: networkId,
         ),
       ),

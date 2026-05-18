@@ -1,5 +1,5 @@
 -- Supabase schema foundation for Maskan.
--- The Flutter app still uses the local SharedPreferences repository by default.
+-- The Flutter app uses Supabase as its only network data source.
 --
 -- Security note:
 -- Row Level Security is enabled below. Phase 5 replaces the broad Phase 3/4
@@ -336,6 +336,14 @@ alter table public.expense_cycles enable row level security;
 alter table public.expense_reset_requests enable row level security;
 alter table public.expense_reset_approvals enable row level security;
 alter table public.network_notifications enable row level security;
+
+do $$
+begin
+  alter publication supabase_realtime add table public.network_members;
+exception
+  when duplicate_object then null;
+  when undefined_object then null;
+end $$;
 
 do $$
 begin
@@ -860,4 +868,4 @@ comment on table public.expense_reset_requests is
 comment on table public.expense_reset_approvals is
   'Member approvals captured against the request membership snapshot.';
 comment on table public.network_notifications is
-  'Local-style notification records for cloud-backed network activity.';
+  'Notification records for cloud-backed network activity.';

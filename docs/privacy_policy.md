@@ -6,9 +6,11 @@ Maskan helps private housing groups track shared expenses and settlements.
 
 ## Information Stored
 
-In local mode, Maskan stores app data on your device, including network names, member names, expenses, notes, currency settings, notifications, avatar preferences, and session metadata.
-
-In Supabase cloud mode, Maskan stores the same shared network data in Supabase so members can collaborate across devices. Passwords are stored as hashes with salts. Raw passwords are not stored.
+Maskan stores shared network data in Supabase so members can collaborate across
+devices. This includes network names, member names, expenses, notes, currency
+settings, notifications, avatar preferences, cycle/reset records, and session
+metadata. Passwords are stored as hashes with salts. Raw passwords are not
+stored.
 
 ## Notifications
 
@@ -20,7 +22,8 @@ Maskan does not sell personal data. Shared network data is visible to members of
 
 ## Data Retention
 
-Local data remains on your device until you delete app data or uninstall the app. Supabase data remains in the configured project until deleted by the project owner or through app flows.
+Supabase data remains in the configured project until deleted by the project
+owner or through app flows.
 
 ## Contact
 

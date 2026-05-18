@@ -14,13 +14,11 @@ class CreateNetworkScreen extends StatefulWidget {
   const CreateNetworkScreen({
     required this.repository,
     required this.sessionRepository,
-    this.dataMode = 'local',
     super.key,
   });
 
   final ExpenseNetworkRepository repository;
   final SessionRepository sessionRepository;
-  final String dataMode;
 
   @override
   State<CreateNetworkScreen> createState() => _CreateNetworkScreenState();
@@ -86,7 +84,6 @@ class _CreateNetworkScreenState extends State<CreateNetworkScreen> {
           sessionRepository: widget.sessionRepository,
           network: network,
           currentMemberId: network.members.first.id,
-          dataMode: widget.dataMode,
         ),
       ),
     );

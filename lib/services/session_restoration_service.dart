@@ -16,23 +16,15 @@ class SessionRestorationService {
   const SessionRestorationService({
     required ExpenseNetworkRepository repository,
     required SessionRepository sessionRepository,
-    String currentDataMode = 'local',
   })  : _repository = repository,
-        _sessionRepository = sessionRepository,
-        _currentDataMode = currentDataMode;
+        _sessionRepository = sessionRepository;
 
   final ExpenseNetworkRepository _repository;
   final SessionRepository _sessionRepository;
-  final String _currentDataMode;
 
   Future<RestoredSession?> restore() async {
     final session = await _sessionRepository.getActiveSession();
     if (session == null) return null;
-    if (session.dataMode != null &&
-        session.dataMode!.trim().toLowerCase() !=
-            _currentDataMode.trim().toLowerCase()) {
-      return null;
-    }
 
     try {
       final network = await _repository.findNetwork(session.networkName);

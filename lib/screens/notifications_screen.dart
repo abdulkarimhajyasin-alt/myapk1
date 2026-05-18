@@ -14,14 +14,12 @@ class NotificationsScreen extends StatefulWidget {
     required this.repository,
     required this.networkId,
     required this.memberId,
-    this.dataMode = 'local',
     super.key,
   });
 
   final ExpenseNetworkRepository repository;
   final String networkId;
   final String memberId;
-  final String dataMode;
 
   @override
   State<NotificationsScreen> createState() => _NotificationsScreenState();
@@ -45,7 +43,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   }
 
   Future<void> _startRealtime() async {
-    if (widget.dataMode != 'supabase') return;
     final service = SupabaseRealtimeService();
     _realtimeService = service;
     await service.subscribe(

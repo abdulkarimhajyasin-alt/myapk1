@@ -1380,7 +1380,7 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
         message.contains('xmlhttprequest error');
     if (isNetworkUnavailable) {
       return const RepositoryException(
-        'Cloud mode needs an internet connection.',
+        'Maskan needs an internet connection.',
         code: 'supabase_network_unavailable',
       );
     }

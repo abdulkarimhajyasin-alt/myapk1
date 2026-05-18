@@ -15,13 +15,11 @@ class MyAccountScreen extends StatefulWidget {
   const MyAccountScreen({
     required this.repository,
     required this.sessionRepository,
-    this.dataMode = 'local',
     super.key,
   });
 
   final ExpenseNetworkRepository repository;
   final SessionRepository sessionRepository;
-  final String dataMode;
 
   @override
   State<MyAccountScreen> createState() => _MyAccountScreenState();
@@ -114,7 +112,6 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
             sessionRepository: widget.sessionRepository,
             network: authenticatedNetwork,
             currentMemberId: member.id,
-            dataMode: widget.dataMode,
           ),
         ),
       );

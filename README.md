@@ -1,6 +1,8 @@
 # Maskan
 
-A Flutter mobile app for private expense-sharing networks. The first version is Android APK-first and uses local persistent storage through `shared_preferences`, with repository interfaces that can later be backed by Firebase or Supabase.
+A Flutter mobile app for private expense-sharing networks. Maskan is a
+cloud-only Supabase application: networks, members, expenses, notifications,
+cycles, invites, and account sessions all use the shared cloud data source.
 
 The app includes a global footer shortcut to the Karamix Labs company website.
 It opens `https://karamixlabs.com` in the external browser through
@@ -18,11 +20,15 @@ flutter run
 ```bash
 flutter clean
 flutter pub get
-flutter build apk --release --dart-define=DATA_MODE=local
-flutter build appbundle --release --dart-define=DATA_MODE=local
+flutter build apk --release \
+  --dart-define=SUPABASE_URL=https://your-project.supabase.co \
+  --dart-define=SUPABASE_ANON_KEY=your-anon-key
+flutter build appbundle --release \
+  --dart-define=SUPABASE_URL=https://your-project.supabase.co \
+  --dart-define=SUPABASE_ANON_KEY=your-anon-key
 ```
 
-For Android local and Supabase test APK workflows, see
+For Android cloud APK workflows, see
 [`docs/android_testing.md`](docs/android_testing.md).
 
 ## Android Release Signing
@@ -71,7 +77,9 @@ keystore files are ignored by Git and must never be committed.
 Build a locally signed release APK:
 
 ```powershell
-flutter build apk --release --dart-define=DATA_MODE=local
+flutter build apk --release `
+  --dart-define=SUPABASE_URL=https://your-project.supabase.co `
+  --dart-define=SUPABASE_ANON_KEY=your-anon-key
 ```
 
 The signed output is:
@@ -108,16 +116,10 @@ maskan-release-signed.apk
 maskan-release-signed.aab
 ```
 
-The workflow always builds the debug artifact:
+The workflow builds the debug artifact when Supabase secrets are configured:
 
 ```text
 maskan-debug.apk
-```
-
-If Supabase secrets are configured, it also builds:
-
-```text
-maskan-supabase-debug.apk
 ```
 
 If Android signing secrets are missing, the signed release step is skipped with
@@ -144,11 +146,10 @@ dart run flutter_launcher_icons
 flutter build ios --release --no-codesign
 ```
 
-Cloud mode uses the same Dart defines on iOS as Android:
+Supabase uses the same Dart defines on iOS as Android:
 
 ```bash
 flutter build ios --release --no-codesign \
-  --dart-define=DATA_MODE=supabase \
   --dart-define=SUPABASE_URL=https://your-project.supabase.co \
   --dart-define=SUPABASE_ANON_KEY=your-anon-key
 ```
@@ -163,7 +164,7 @@ Manual CI validation is available from the GitHub Actions workflow
 ## Structure
 
 - `lib/models/` - network, member, expense, and settlement models
-- `lib/services/` - storage repository and settlement calculation
+- `lib/services/` - Supabase repositories, realtime, session, and settlement calculation
 - `lib/screens/` - app screens and navigation flow
 - `lib/widgets/` - reusable UI components
 - `lib/utils/` - centralized strings and money parsing/formatting

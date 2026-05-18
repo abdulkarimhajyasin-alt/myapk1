@@ -16,14 +16,12 @@ class HomeScreen extends StatefulWidget {
   const HomeScreen({
     required this.repository,
     required this.sessionRepository,
-    required this.dataMode,
     required this.onChangeLanguage,
     super.key,
   });
 
   final ExpenseNetworkRepository repository;
   final SessionRepository sessionRepository;
-  final String dataMode;
   final ValueChanged<BuildContext> onChangeLanguage;
 
   @override
@@ -45,7 +43,6 @@ class _HomeScreenState extends State<HomeScreen> {
     final restored = await SessionRestorationService(
       repository: widget.repository,
       sessionRepository: widget.sessionRepository,
-      currentDataMode: widget.dataMode,
     ).restore();
     if (!mounted || restored == null) return;
     Navigator.of(context).push(
@@ -55,7 +52,6 @@ class _HomeScreenState extends State<HomeScreen> {
           sessionRepository: widget.sessionRepository,
           network: restored.network,
           currentMemberId: restored.memberId,
-          dataMode: widget.dataMode,
         ),
       ),
     );
@@ -130,7 +126,6 @@ class _HomeScreenState extends State<HomeScreen> {
                                       repository: widget.repository,
                                       sessionRepository:
                                           widget.sessionRepository,
-                                      dataMode: widget.dataMode,
                                     ),
                                   ),
                                 );
@@ -147,7 +142,6 @@ class _HomeScreenState extends State<HomeScreen> {
                                       repository: widget.repository,
                                       sessionRepository:
                                           widget.sessionRepository,
-                                      dataMode: widget.dataMode,
                                     ),
                                   ),
                                 );
@@ -164,7 +158,6 @@ class _HomeScreenState extends State<HomeScreen> {
                                       repository: widget.repository,
                                       sessionRepository:
                                           widget.sessionRepository,
-                                      dataMode: widget.dataMode,
                                     ),
                                   ),
                                 );
@@ -181,7 +174,6 @@ class _HomeScreenState extends State<HomeScreen> {
                                       repository: widget.repository,
                                       sessionRepository:
                                           widget.sessionRepository,
-                                      dataMode: widget.dataMode,
                                     ),
                                   ),
                                 );

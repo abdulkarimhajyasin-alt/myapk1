@@ -13,7 +13,6 @@ class JoinNetworkScreen extends StatefulWidget {
   const JoinNetworkScreen({
     required this.repository,
     required this.sessionRepository,
-    this.dataMode = 'local',
     this.inviteNetworkId,
     this.inviteNetworkName,
     super.key,
@@ -21,7 +20,6 @@ class JoinNetworkScreen extends StatefulWidget {
 
   final ExpenseNetworkRepository repository;
   final SessionRepository sessionRepository;
-  final String dataMode;
   final String? inviteNetworkId;
   final String? inviteNetworkName;
 
@@ -38,7 +36,6 @@ class _JoinNetworkScreenState extends State<JoinNetworkScreen> {
   String? _error;
   bool _isJoining = false;
   bool get _hasInvite => widget.inviteNetworkId?.trim().isNotEmpty == true;
-  bool get _isCloudMode => widget.dataMode.trim().toLowerCase() == 'supabase';
 
   @override
   void initState() {
@@ -60,10 +57,6 @@ class _JoinNetworkScreenState extends State<JoinNetworkScreen> {
 
   Future<void> _joinNetwork() async {
     if (!_formKey.currentState!.validate()) return;
-    if (_hasInvite && !_isCloudMode) {
-      setState(() => _error = context.l10n.cloudInviteJoinRequired);
-      return;
-    }
     setState(() {
       _isJoining = true;
       _error = null;
@@ -103,7 +96,6 @@ class _JoinNetworkScreenState extends State<JoinNetworkScreen> {
           sessionRepository: widget.sessionRepository,
           network: network,
           currentMemberId: network.members.last.id,
-          dataMode: widget.dataMode,
         ),
       ),
     );
@@ -136,9 +128,7 @@ class _JoinNetworkScreenState extends State<JoinNetworkScreen> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          _isCloudMode
-                              ? l10n.inviteJoinPrefill
-                              : l10n.cloudInviteJoinRequired,
+                          l10n.inviteJoinPrefill,
                         ),
                       ),
                     ],

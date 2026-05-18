@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../l10n/app_localizations.dart';
 import '../models/expense_network.dart';
 import '../services/expense_network_repository.dart';
-import '../services/offline_sync_queue.dart';
 import '../services/repository_error_messages.dart';
 import '../utils/id_utils.dart';
 import '../utils/money_utils.dart';
@@ -16,14 +14,12 @@ class AddExpenseScreen extends StatefulWidget {
     required this.repository,
     required this.network,
     required this.currentMemberId,
-    this.dataMode = 'local',
     super.key,
   });
 
   final ExpenseNetworkRepository repository;
   final ExpenseNetwork network;
   final String currentMemberId;
-  final String dataMode;
 
   @override
   State<AddExpenseScreen> createState() => _AddExpenseScreenState();
@@ -65,24 +61,6 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
       );
       if (mounted) Navigator.of(context).pop(network);
     } on RepositoryException catch (error) {
-      if (widget.dataMode == 'supabase' &&
-          error.code == 'supabase_network_unavailable') {
-        final preferences = await SharedPreferences.getInstance();
-        await OfflineSyncQueue(preferences).enqueueAddExpense(
-          networkName: widget.network.name,
-          memberName: _currentMemberName,
-          addedByMemberId: widget.currentMemberId,
-          amountCents: cents,
-          note: _noteController.text,
-          clientGeneratedId: clientGeneratedId,
-        );
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(context.l10n.savedOffline)),
-        );
-        Navigator.of(context).pop();
-        return;
-      }
       if (!mounted) return;
       setState(() => _error = RepositoryErrorMessages.fromException(
             context,

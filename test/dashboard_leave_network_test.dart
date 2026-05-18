@@ -64,7 +64,6 @@ class _LeaveSessionRepository implements SessionRepository {
   Future<void> saveActiveSession({
     required String networkName,
     required String memberId,
-    String? dataMode,
   }) async {}
 }
 

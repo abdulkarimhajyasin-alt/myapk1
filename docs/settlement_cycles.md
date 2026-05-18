@@ -1,28 +1,25 @@
 # Settlement PDF Export and Expense Cycles
 
-## PDF export
+## PDF Export
 
-The Expense Settlement screen includes a **Download PDF** / **تحميل PDF** action.
-The app generates the current settlement report and opens Android's native
-share/print sheet through the `printing` package. The report includes the app
-name, network name, currency, generation time, total expenses, member totals,
-settlement transfers, and the Karamix Labs footer.
+The Expense Settlement screen includes a **Download PDF** action. The app
+generates the current settlement report and opens Android's native share/print
+sheet through the `printing` package. The report includes the app name, network
+name, currency, generation time, total expenses, member totals, settlement
+transfers, and the Karamix Labs footer.
 
 The PDF renderer embeds the bundled Amiri regular and bold fonts from
-`assets/fonts` for the full document. Amiri is used because it covers Arabic,
-Arabic presentation forms, Latin branding, punctuation, copyright, and euro
-glyphs in one Arabic-capable family. Arabic reports are
-generated with RTL text direction, real Arabic labels, clean member/result wording, and a
-professional card/table layout so Android PDF viewers, Google Drive preview,
-Telegram, and WhatsApp do not show square placeholder glyphs.
+`assets/fonts` for the full document. Amiri covers Arabic, Arabic presentation
+forms, Latin branding, punctuation, copyright, and euro glyphs in one
+Arabic-capable family.
 
-## New expense cycle approval
+## New Expense Cycle Approval
 
-The settlement screen also includes **Start New Cycle** / **بدء مصروف جديد**.
-This creates a reset request instead of deleting data. The requester is counted
-as approved immediately, and the approval snapshot is the member list that
-existed when the request was created. Members who join later are not required
-for that pending request.
+The settlement screen also includes **Start New Cycle**. This creates a reset
+request instead of deleting data. The requester is counted as approved
+immediately, and the approval snapshot is the member list that existed when the
+request was created. Members who join later are not required for that pending
+request.
 
 Expenses remain active until every required member approves. While pending, the
 screen shows who requested the reset, who approved, who is still pending, and an
@@ -36,13 +33,7 @@ After unanimous approval:
 - dashboard and settlement totals show the new empty active cycle
 - all members receive a "new cycle started" notification
 
-## Local vs cloud mode
-
-Local mode stores cycles, reset requests, approvals, archived expenses, and
-notifications in SharedPreferences. It affects only the current device's local
-data, matching the rest of local mode.
-
-Supabase mode stores the same flow centrally in:
+Supabase stores the flow centrally in:
 
 - `expense_cycles`
 - `expense_reset_requests`

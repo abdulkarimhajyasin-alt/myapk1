@@ -11,13 +11,11 @@ class InviteMembersScreen extends StatelessWidget {
   const InviteMembersScreen({
     required this.networkName,
     required this.networkId,
-    required this.isCloudMode,
     super.key,
   });
 
   final String networkName;
   final String networkId;
-  final bool isCloudMode;
 
   @override
   Widget build(BuildContext context) {
@@ -53,15 +51,6 @@ class InviteMembersScreen extends StatelessWidget {
               ),
             ),
           ),
-          if (!isCloudMode) ...[
-            const SizedBox(height: 10),
-            Text(
-              l10n.cloudInviteRequired,
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ],
           const SizedBox(height: 18),
           Center(
             child: DecoratedBox(

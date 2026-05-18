@@ -1,5 +1,6 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../l10n/app_localizations.dart';
 import '../models/expense_network.dart';
@@ -7,7 +8,6 @@ import '../models/member.dart';
 import '../models/network_notification.dart';
 import '../services/dashboard_analytics_service.dart';
 import '../services/expense_network_repository.dart';
-import '../services/offline_sync_queue.dart';
 import '../services/push_notification_service.dart';
 import '../services/session_repository.dart';
 import '../services/supabase_realtime_service.dart';
@@ -28,7 +28,6 @@ class NetworkDashboardScreen extends StatefulWidget {
     required this.sessionRepository,
     required this.network,
     required this.currentMemberId,
-    this.dataMode = 'local',
     super.key,
   });
 
@@ -36,7 +35,6 @@ class NetworkDashboardScreen extends StatefulWidget {
   final SessionRepository sessionRepository;
   final ExpenseNetwork network;
   final String currentMemberId;
-  final String dataMode;
 
   @override
   State<NetworkDashboardScreen> createState() => _NetworkDashboardScreenState();
@@ -46,8 +44,8 @@ class _NetworkDashboardScreenState extends State<NetworkDashboardScreen> {
   late ExpenseNetwork _network = widget.network;
   final _pushNotifications = PushNotificationService();
   SupabaseRealtimeService? _realtimeService;
-  RealtimeConnectionState _realtimeState = RealtimeConnectionState.disabled;
-  int _pendingSyncCount = 0;
+  RealtimeConnectionState _realtimeState = RealtimeConnectionState.connecting;
+  Timer? _reconnectTimer;
 
   Member get _currentMember {
     return _network.findMemberById(widget.currentMemberId) ??
@@ -57,28 +55,39 @@ class _NetworkDashboardScreenState extends State<NetworkDashboardScreen> {
   }
 
   Future<void> _refreshNetwork() async {
-    await _retryOfflineQueue();
-    final latest = await widget.repository.findNetwork(_network.name);
-    if (latest != null && mounted) {
-      setState(() => _network = latest);
+    try {
+      final latest = await widget.repository.findNetwork(_network.name);
+      if (latest != null && mounted) {
+        setState(() {
+          _network = latest;
+          _realtimeState = RealtimeConnectionState.connected;
+        });
+      }
+    } on RepositoryException catch (error) {
+      if (error.code == 'supabase_network_unavailable') {
+        _markOfflineAndRetry();
+        return;
+      }
+      rethrow;
     }
   }
 
   @override
   void initState() {
     super.initState();
-    _retryOfflineQueue();
     _startRealtime();
   }
 
   @override
   void dispose() {
+    _reconnectTimer?.cancel();
     _realtimeService?.dispose();
     super.dispose();
   }
 
   Future<void> _startRealtime() async {
-    if (widget.dataMode != 'supabase') return;
+    _reconnectTimer?.cancel();
+    await _realtimeService?.dispose();
     final service = SupabaseRealtimeService();
     _realtimeService = service;
     setState(() => _realtimeState = RealtimeConnectionState.connecting);
@@ -92,27 +101,22 @@ class _NetworkDashboardScreenState extends State<NetworkDashboardScreen> {
     );
     if (!mounted) return;
     setState(() => _realtimeState = state);
+    if (state == RealtimeConnectionState.offline) {
+      _scheduleRealtimeReconnect();
+    }
   }
 
-  Future<void> _retryOfflineQueue() async {
-    if (widget.dataMode != 'supabase') return;
-    final preferences = await SharedPreferences.getInstance();
-    final queue = OfflineSyncQueue(preferences);
-    final before = await queue.pendingOperations();
-    var synced = 0;
-    try {
-      synced = await queue.retryPending(widget.repository);
-    } on RepositoryException {
-      return;
-    }
-    final after = await queue.pendingOperations();
+  void _markOfflineAndRetry() {
     if (!mounted) return;
-    setState(() => _pendingSyncCount = after.length);
-    if (before.isNotEmpty && synced > 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.l10n.syncedOfflineItems)),
-      );
-    }
+    setState(() => _realtimeState = RealtimeConnectionState.offline);
+    _scheduleRealtimeReconnect();
+  }
+
+  void _scheduleRealtimeReconnect() {
+    _reconnectTimer?.cancel();
+    _reconnectTimer = Timer(const Duration(seconds: 5), () {
+      if (mounted) _startRealtime();
+    });
   }
 
   Future<void> _showRealtimeNotification(
@@ -134,7 +138,6 @@ class _NetworkDashboardScreenState extends State<NetworkDashboardScreen> {
           repository: widget.repository,
           network: _network,
           currentMemberId: widget.currentMemberId,
-          dataMode: widget.dataMode,
         ),
       ),
     );
@@ -184,7 +187,6 @@ class _NetworkDashboardScreenState extends State<NetworkDashboardScreen> {
           repository: widget.repository,
           networkId: _network.id,
           memberId: widget.currentMemberId,
-          dataMode: widget.dataMode,
         ),
       ),
     );
@@ -198,7 +200,6 @@ class _NetworkDashboardScreenState extends State<NetworkDashboardScreen> {
         builder: (_) => InviteMembersScreen(
           networkName: _network.name,
           networkId: _network.id,
-          isCloudMode: widget.dataMode == 'supabase',
         ),
       ),
     );
@@ -291,10 +292,6 @@ class _NetworkDashboardScreenState extends State<NetworkDashboardScreen> {
     );
     if (confirmed != true || !mounted) return;
 
-    if (_pendingSyncCount > 0) {
-      _showSnack(l10n.cannotLeavePendingSync);
-      return;
-    }
     if (_network.totalExpensesCents != 0) {
       _showSnack(l10n.cannotLeaveBeforeSettlement);
       return;
@@ -401,11 +398,7 @@ class _NetworkDashboardScreenState extends State<NetworkDashboardScreen> {
           Row(
             children: [
               const Expanded(child: ModeIndicator()),
-              if (widget.dataMode == 'supabase')
-                _SyncStatusChip(
-                  state: _realtimeState,
-                  pendingCount: _pendingSyncCount,
-                ),
+              _SyncStatusChip(state: _realtimeState),
             ],
           ),
           const SizedBox(height: 12),
@@ -452,16 +445,6 @@ class _NetworkDashboardScreenState extends State<NetworkDashboardScreen> {
               ],
             ),
           ),
-          if (_pendingSyncCount > 0) ...[
-            const SizedBox(height: 10),
-            Text(
-              '${l10n.pendingSync}: $_pendingSyncCount',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.primary,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ],
           const SizedBox(height: 16),
           _AnalyticsGrid(
             analytics: analytics,
@@ -521,28 +504,23 @@ class _NetworkDashboardScreenState extends State<NetworkDashboardScreen> {
 class _SyncStatusChip extends StatelessWidget {
   const _SyncStatusChip({
     required this.state,
-    required this.pendingCount,
   });
 
   final RealtimeConnectionState state;
-  final int pendingCount;
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final label = pendingCount > 0
-        ? l10n.syncing
-        : switch (state) {
-            RealtimeConnectionState.connected => l10n.connected,
-            RealtimeConnectionState.connecting => l10n.syncing,
-            RealtimeConnectionState.offline => l10n.offline,
-            RealtimeConnectionState.disabled => l10n.offline,
-          };
+    final label = switch (state) {
+      RealtimeConnectionState.connected => l10n.connected,
+      RealtimeConnectionState.connecting => l10n.syncing,
+      RealtimeConnectionState.offline => l10n.reconnecting,
+    };
     return Chip(
       visualDensity: VisualDensity.compact,
       label: Text(label),
       avatar: Icon(
-        pendingCount > 0 || state == RealtimeConnectionState.connecting
+        state == RealtimeConnectionState.connecting
             ? Icons.sync_rounded
             : state == RealtimeConnectionState.connected
                 ? Icons.cloud_done_rounded

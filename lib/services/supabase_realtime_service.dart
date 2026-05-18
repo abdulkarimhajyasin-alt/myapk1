@@ -7,7 +7,6 @@ import 'supabase_config.dart';
 import 'supabase_expense_network_repository.dart';
 
 enum RealtimeConnectionState {
-  disabled,
   connecting,
   connected,
   offline,
@@ -29,7 +28,7 @@ class SupabaseRealtimeService {
   Timer? _debounce;
   bool _isDisposed = false;
 
-  bool get canInitialize => _config.shouldUseSupabase || _client != null;
+  bool get canInitialize => _config.isConfigured || _client != null;
 
   Future<RealtimeConnectionState> subscribe({
     required String networkId,
@@ -38,10 +37,19 @@ class SupabaseRealtimeService {
     required void Function(NetworkNotification notification, String? actorId)
         onNotification,
   }) async {
-    if (!canInitialize) return RealtimeConnectionState.disabled;
+    if (!canInitialize) return RealtimeConnectionState.offline;
     final client = _client ?? Supabase.instance.client;
     try {
       _channels
+        ..add(
+          _networkChannel(
+            client: client,
+            name: 'maskan-members-$networkId',
+            table: 'network_members',
+            networkId: networkId,
+            onRefresh: onRefresh,
+          ),
+        )
         ..add(
           _networkChannel(
             client: client,
@@ -160,7 +168,7 @@ class SupabaseRealtimeService {
     _isDisposed = true;
     _debounce?.cancel();
     final client =
-        _client ?? (_config.shouldUseSupabase ? Supabase.instance.client : null);
+        _client ?? (_config.isConfigured ? Supabase.instance.client : null);
     if (client != null) {
       for (final channel in _channels) {
         await client.removeChannel(channel);
