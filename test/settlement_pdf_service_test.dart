@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import 'package:expense_network/l10n/app_localizations.dart';
 import 'package:expense_network/models/expense.dart';
 import 'package:expense_network/models/expense_network.dart';

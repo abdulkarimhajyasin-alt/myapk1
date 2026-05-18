@@ -111,14 +111,14 @@ jobs:
             --dart-define=DATA_MODE=local
           mkdir -p build/artifacts
           cp build/app/outputs/flutter-apk/app-release.apk \
-            build/artifacts/maskan-release-signed.apk
+            build/artifacts/Maskan.apk
 
       - name: Upload signed release APK
         if: steps.android_signing.outputs.enabled == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: maskan-release-signed-apk
-          path: build/artifacts/maskan-release-signed.apk
+          path: build/artifacts/Maskan.apk
           if-no-files-found: error
 
       - name: Build signed release App Bundle
