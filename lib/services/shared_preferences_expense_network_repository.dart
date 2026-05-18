@@ -238,26 +238,24 @@ class SharedPreferencesExpenseNetworkRepository
   }
 
   @override
-  Future<void> markNotificationRead(String notificationId) async {
+  Future<void> deleteNotification(String notificationId) async {
     final notifications = await _getAllNotifications();
-    final updated = notifications.map((notification) {
-      return notification.id == notificationId
-          ? notification.copyWith(isRead: true)
-          : notification;
-    }).toList();
+    final updated = notifications
+        .where((notification) => notification.id != notificationId)
+        .toList();
     await _saveNotifications(updated);
   }
 
   @override
-  Future<void> markAllNotificationsRead({
+  Future<void> clearNotificationsForMember({
     required String networkId,
     required String memberId,
   }) async {
     final notifications = await _getAllNotifications();
-    final updated = notifications.map((notification) {
+    final updated = notifications.where((notification) {
       final isTarget = notification.networkId == networkId &&
           notification.recipientMemberId == memberId;
-      return isTarget ? notification.copyWith(isRead: true) : notification;
+      return !isTarget;
     }).toList();
     await _saveNotifications(updated);
   }

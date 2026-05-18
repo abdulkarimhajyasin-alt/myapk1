@@ -59,9 +59,9 @@ abstract class ExpenseNetworkRepository {
     required String memberId,
   });
 
-  Future<void> markNotificationRead(String notificationId);
+  Future<void> deleteNotification(String notificationId);
 
-  Future<void> markAllNotificationsRead({
+  Future<void> clearNotificationsForMember({
     required String networkId,
     required String memberId,
   });

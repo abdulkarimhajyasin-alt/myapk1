@@ -21,7 +21,7 @@ class AppLocalizations {
 
   static const _localizedValues = {
     'en': {
-      'appTitle': 'Shared Housing Expenses',
+      'appTitle': 'Maskan',
       'homeSubtitle':
           'Create or join a private group and settle shared costs clearly.',
       'createNetwork': 'Create Network',
@@ -57,6 +57,10 @@ class AppLocalizations {
       'paid': 'Paid',
       'shouldPay': 'Should pay',
       'balance': 'Balance',
+      'netResult': 'Net result',
+      'memberOwes': 'Owes {amount}',
+      'memberShouldReceive': 'Should receive {amount}',
+      'memberSettled': 'Settled',
       'pays': 'pays',
       'to': 'to',
       'addingExpenseFor': 'Adding expense for {member}',
@@ -83,6 +87,9 @@ class AppLocalizations {
       'notifications': 'Notifications',
       'noNotifications': 'No notifications yet.',
       'markAllRead': 'Mark all read',
+      'clear': 'Clear',
+      'clearAll': 'Clear all',
+      'notificationRemoved': 'Notification removed',
       'newExpenseNotification': '{actor} added {amount}',
       'localMode': 'Local mode',
       'cloudTestMode': 'Cloud test mode',
@@ -128,7 +135,7 @@ class AppLocalizations {
       'cycleStartedNotification': 'A new expense cycle has started.',
     },
     'ar': {
-      'appTitle': 'مصروف السكن الجماعي',
+      'appTitle': 'Maskan',
       'homeSubtitle':
           'أنشئ مجموعة خاصة أو انضم إليها لتقسيم المصاريف وتسويتها بوضوح.',
       'createNetwork': 'إنشاء شبكة',
@@ -164,6 +171,10 @@ class AppLocalizations {
       'paid': 'دفع',
       'shouldPay': 'المستحق عليه',
       'balance': 'الرصيد',
+      'netResult': 'النتيجة',
+      'memberOwes': 'عليه أن يدفع {amount}',
+      'memberShouldReceive': 'له أن يستلم {amount}',
+      'memberSettled': 'متوازن',
       'pays': 'يدفع',
       'to': 'إلى',
       'addingExpenseFor': 'إضافة مصروف باسم {member}',
@@ -190,6 +201,9 @@ class AppLocalizations {
       'notifications': 'الإشعارات',
       'noNotifications': 'لا توجد إشعارات بعد.',
       'markAllRead': 'تعليم الكل كمقروء',
+      'clear': 'مسح',
+      'clearAll': 'مسح الكل',
+      'notificationRemoved': 'تمت إزالة الإشعار',
       'newExpenseNotification': 'أضاف {actor} {amount}',
       'localMode': 'الوضع المحلي',
       'cloudTestMode': 'وضع الاختبار السحابي',
@@ -282,6 +296,7 @@ class AppLocalizations {
   String get paid => _text('paid');
   String get shouldPay => _text('shouldPay');
   String get balance => _text('balance');
+  String get netResult => _text('netResult');
   String get pays => _text('pays');
   String get to => _text('to');
   String get chooseLanguage => _text('chooseLanguage');
@@ -306,6 +321,9 @@ class AppLocalizations {
   String get notifications => _text('notifications');
   String get noNotifications => _text('noNotifications');
   String get markAllRead => _text('markAllRead');
+  String get clear => _text('clear');
+  String get clearAll => _text('clearAll');
+  String get notificationRemoved => _text('notificationRemoved');
   String get localMode => _text('localMode');
   String get cloudTestMode => _text('cloudTestMode');
   String get errorNoInternet => _text('errorNoInternet');
@@ -350,6 +368,16 @@ class AppLocalizations {
   }) {
     return '$fromMember $pays $amount $to $toMember';
   }
+
+  String memberOwes(String amount) {
+    return _text('memberOwes').replaceAll('{amount}', amount);
+  }
+
+  String memberShouldReceive(String amount) {
+    return _text('memberShouldReceive').replaceAll('{amount}', amount);
+  }
+
+  String get memberSettled => _text('memberSettled');
 
   String newExpenseNotification({
     required String actor,

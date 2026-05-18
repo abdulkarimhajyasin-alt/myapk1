@@ -209,11 +209,10 @@ class _ExpenseSettlementScreenState extends State<ExpenseSettlementScreen> {
                       )}',
                     ),
                     Text(
-                      '${l10n.balance}: '
-                      '${MoneyUtils.formatCents(
-                        member.balanceCents,
-                        currencySymbol: _network.currencySymbol,
-                      )}',
+                      _memberBalanceStatus(l10n, member.balanceCents),
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ],
                 ),
@@ -274,6 +273,26 @@ class _ExpenseSettlementScreenState extends State<ExpenseSettlementScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message)),
     );
+  }
+
+  String _memberBalanceStatus(AppLocalizations l10n, double balanceCents) {
+    if (balanceCents < -0.5) {
+      return l10n.memberOwes(
+        MoneyUtils.formatCents(
+          -balanceCents,
+          currencySymbol: _network.currencySymbol,
+        ),
+      );
+    }
+    if (balanceCents > 0.5) {
+      return l10n.memberShouldReceive(
+        MoneyUtils.formatCents(
+          balanceCents,
+          currencySymbol: _network.currencySymbol,
+        ),
+      );
+    }
+    return l10n.memberSettled;
   }
 }
 

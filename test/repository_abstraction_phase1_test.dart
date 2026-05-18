@@ -12,8 +12,12 @@ void main() {
       SharedPreferencesStorageKeys.notifications,
       'expense_network_notifications_v1',
     );
-    expect(SharedPreferencesStorageKeys.activeNetworkName, 'active_network_name');
+    expect(
+      SharedPreferencesStorageKeys.activeNetworkName,
+      'active_network_name',
+    );
     expect(SharedPreferencesStorageKeys.activeMemberId, 'active_member_id');
+    expect(SharedPreferencesStorageKeys.activeDataMode, 'active_data_mode');
   });
 
   test('session repository stores and clears active session separately', () async {
@@ -29,6 +33,7 @@ void main() {
     final session = await sessionRepository.getActiveSession();
     expect(session?.networkName, 'Trip');
     expect(session?.memberId, 'member_1');
+    expect(session?.dataMode, 'local');
 
     await sessionRepository.clearActiveSession();
     expect(await sessionRepository.getActiveSession(), isNull);

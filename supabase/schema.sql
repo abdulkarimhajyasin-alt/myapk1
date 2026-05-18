@@ -729,21 +729,13 @@ create policy phase5_interim_insert_addressed_notifications
 -- Supabase Auth, RLS still cannot prove which human controls recipient_member_id.
 drop policy if exists phase5_interim_mark_addressed_notifications_read
   on public.network_notifications;
-create policy phase5_interim_mark_addressed_notifications_read
+drop policy if exists phase5_interim_delete_addressed_notifications
+  on public.network_notifications;
+create policy phase5_interim_delete_addressed_notifications
   on public.network_notifications
-  for update
+  for delete
   using (
     public.phase5_notification_matches_network(
-      network_id,
-      recipient_member_id,
-      actor_member_id,
-      expense_id,
-      reset_request_id
-    )
-  )
-  with check (
-    is_read = true
-    and public.phase5_notification_matches_network(
       network_id,
       recipient_member_id,
       actor_member_id,

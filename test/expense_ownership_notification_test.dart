@@ -59,11 +59,84 @@ void main() {
     );
     expect(history?.expenses, hasLength(1));
 
-    await repository.markNotificationRead(monaNotifications.single.id);
+    await repository.deleteNotification(monaNotifications.single.id);
     final readNotifications = await repository.getNotifications(
       networkId: updated.id,
       memberId: mona.id,
     );
-    expect(readNotifications.single.isRead, isTrue);
+    expect(readNotifications, isEmpty);
+  });
+
+  test('clear notifications removes current member notifications only',
+      () async {
+    SharedPreferences.setMockInitialValues({});
+    final repository = SharedPreferencesExpenseNetworkRepository();
+    await repository.init();
+
+    final created = await repository.createNetwork(
+      displayName: 'Ali',
+      networkName: 'Trip',
+      password: 'network',
+      memberPassword: '1234',
+      currencyCode: 'USD',
+    );
+    final joinedMona = await repository.joinNetwork(
+      displayName: 'Mona',
+      networkName: 'Trip',
+      password: 'network',
+      memberPassword: '5678',
+    );
+    final joinedSara = await repository.joinNetwork(
+      displayName: 'Sara',
+      networkName: 'Trip',
+      password: 'network',
+      memberPassword: '9012',
+    );
+    final ali = created.members.single;
+    final mona = joinedMona.findMemberByName('Mona')!;
+    final sara = joinedSara.findMemberByName('Sara')!;
+
+    final updated = await repository.addExpense(
+      networkName: 'Trip',
+      memberName: 'Ali',
+      addedByMemberId: ali.id,
+      amountCents: 1200,
+      note: 'Coffee',
+    );
+
+    expect(
+      await repository.getNotifications(
+        networkId: updated.id,
+        memberId: mona.id,
+      ),
+      hasLength(1),
+    );
+    expect(
+      await repository.getNotifications(
+        networkId: updated.id,
+        memberId: sara.id,
+      ),
+      hasLength(1),
+    );
+
+    await repository.clearNotificationsForMember(
+      networkId: updated.id,
+      memberId: mona.id,
+    );
+
+    expect(
+      await repository.getNotifications(
+        networkId: updated.id,
+        memberId: mona.id,
+      ),
+      isEmpty,
+    );
+    expect(
+      await repository.getNotifications(
+        networkId: updated.id,
+        memberId: sara.id,
+      ),
+      hasLength(1),
+    );
   });
 }

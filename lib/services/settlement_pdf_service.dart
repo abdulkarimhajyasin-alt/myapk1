@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:flutter/services.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
@@ -18,6 +19,12 @@ class SettlementPdfService {
     required AppLocalizations l10n,
     required DateTime generatedAt,
   }) async {
+    final regularFont = pw.Font.ttf(
+      await rootBundle.load('assets/fonts/NotoNaskhArabic-Regular.ttf'),
+    );
+    final boldFont = pw.Font.ttf(
+      await rootBundle.load('assets/fonts/NotoNaskhArabic-Bold.ttf'),
+    );
     final document = pw.Document();
     final isArabic = l10n.locale.languageCode == 'ar';
     final direction = isArabic ? pw.TextDirection.rtl : pw.TextDirection.ltr;
@@ -25,6 +32,10 @@ class SettlementPdfService {
     document.addPage(
       pw.MultiPage(
         pageFormat: PdfPageFormat.a4,
+        theme: pw.ThemeData.withFont(
+          base: regularFont,
+          bold: boldFont,
+        ),
         textDirection: direction,
         margin: const pw.EdgeInsets.all(32),
         build: (context) => [
@@ -60,7 +71,7 @@ class SettlementPdfService {
               l10n.members,
               l10n.paid,
               l10n.shouldPay,
-              l10n.balance,
+              l10n.netResult,
             ],
             data: settlement.members.map((member) {
               return [
@@ -73,8 +84,9 @@ class SettlementPdfService {
                   member.shouldPayCents,
                   currencySymbol: network.currencySymbol,
                 ),
-                MoneyUtils.formatCents(
-                  member.balanceCents,
+                _memberBalanceStatus(
+                  l10n: l10n,
+                  balanceCents: member.balanceCents,
                   currencySymbol: network.currencySymbol,
                 ),
               ];
@@ -139,6 +151,24 @@ class SettlementPdfService {
         style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold),
       ),
     );
+  }
+
+  String _memberBalanceStatus({
+    required AppLocalizations l10n,
+    required double balanceCents,
+    required String currencySymbol,
+  }) {
+    if (balanceCents < -0.5) {
+      return l10n.memberOwes(
+        MoneyUtils.formatCents(-balanceCents, currencySymbol: currencySymbol),
+      );
+    }
+    if (balanceCents > 0.5) {
+      return l10n.memberShouldReceive(
+        MoneyUtils.formatCents(balanceCents, currencySymbol: currencySymbol),
+      );
+    }
+    return l10n.memberSettled;
   }
 
   String _formatDateTime(DateTime value) {

@@ -422,24 +422,24 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
   }
 
   @override
-  Future<void> markNotificationRead(String notificationId) async {
+  Future<void> deleteNotification(String notificationId) async {
     try {
       final client = _requireClient();
       await client
           .from('network_notifications')
-          .update({'is_read': true})
+          .delete()
           .eq('id', notificationId);
     } catch (error) {
       throw mapSupabaseError(
         error,
-        fallbackCode: 'supabase_notification_update_failed',
-        fallbackMessage: 'Cloud notification could not be updated.',
+        fallbackCode: 'supabase_notification_delete_failed',
+        fallbackMessage: 'Cloud notification could not be removed.',
       );
     }
   }
 
   @override
-  Future<void> markAllNotificationsRead({
+  Future<void> clearNotificationsForMember({
     required String networkId,
     required String memberId,
   }) async {
@@ -447,14 +447,14 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
       final client = _requireClient();
       await client
           .from('network_notifications')
-          .update({'is_read': true})
+          .delete()
           .eq('network_id', networkId)
           .eq('recipient_member_id', memberId);
     } catch (error) {
       throw mapSupabaseError(
         error,
-        fallbackCode: 'supabase_notifications_update_failed',
-        fallbackMessage: 'Cloud notifications could not be updated.',
+        fallbackCode: 'supabase_notifications_clear_failed',
+        fallbackMessage: 'Cloud notifications could not be removed.',
       );
     }
   }

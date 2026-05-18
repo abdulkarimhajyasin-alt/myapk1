@@ -33,12 +33,12 @@ void main() {
     const english = AppLocalizations(Locale('en'));
     const arabic = AppLocalizations(Locale('ar'));
 
-    expect(english.appTitle, 'Shared Housing Expenses');
+    expect(english.appTitle, 'Maskan');
     expect(english.createNetwork, 'Create Network');
     expect(english.joinNetwork, 'Join Network');
     expect(english.chooseLanguage, 'Choose your language');
     expect(english.footerText, contains('عبد الكريم حاج ياسين'));
-    expect(arabic.appTitle, 'مصروف السكن الجماعي');
+    expect(arabic.appTitle, 'Maskan');
     expect(arabic.createNetwork, 'إنشاء شبكة');
     expect(arabic.joinNetwork, 'الانضمام إلى شبكة');
     expect(arabic.chooseLanguage, 'اختر لغة التطبيق');

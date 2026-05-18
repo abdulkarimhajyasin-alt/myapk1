@@ -1,6 +1,6 @@
 # Supabase Cross-Device Architecture Plan
 
-This document prepares `مصروف السكن الجماعي / Shared Housing Expenses` for real Android/iOS cross-device network sharing while preserving the current local-first app behavior until migration is safe.
+This document prepares `Maskan` for real Android/iOS cross-device network sharing while preserving the current local-first app behavior until migration is safe.
 
 ## Current Architecture Review
 
@@ -336,7 +336,7 @@ Safe migration approach:
 ## What Must Change Before iPhone Support
 
 - Add iOS Flutter platform project files.
-- Configure iOS app display name as `مصروف السكن الجماعي`.
+- Configure iOS app display name as `Maskan`.
 - Configure iOS launcher icons.
 - Configure signing/team ID.
 - Ensure Supabase config works on iOS.
@@ -349,7 +349,7 @@ The repository now includes the Flutter iOS platform project under `ios/`.
 Configured:
 
 - Bundle identifier: `com.expensenetwork.app`
-- Display name: `مصروف السكن الجماعي`
+- Display name: `Maskan`
 - Deployment target: iOS 12.0
 - Launcher icons generated from `assets/icons/app_icon.png`
 - Supabase configuration through the existing Flutter `--dart-define` values:

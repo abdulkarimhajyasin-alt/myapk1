@@ -3,23 +3,61 @@ import 'package:flutter/material.dart';
 import '../l10n/app_localizations.dart';
 import '../services/expense_network_repository.dart';
 import '../services/session_repository.dart';
+import '../services/session_restoration_service.dart';
 import '../widgets/app_footer.dart';
 import '../widgets/mode_indicator.dart';
 import 'create_network_screen.dart';
 import 'join_network_screen.dart';
 import 'my_account_screen.dart';
+import 'network_dashboard_screen.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({
     required this.repository,
     required this.sessionRepository,
+    required this.dataMode,
     required this.onChangeLanguage,
     super.key,
   });
 
   final ExpenseNetworkRepository repository;
   final SessionRepository sessionRepository;
+  final String dataMode;
   final ValueChanged<BuildContext> onChangeLanguage;
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  bool _hasTriedRestore = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_hasTriedRestore) return;
+    _hasTriedRestore = true;
+    _restoreSession();
+  }
+
+  Future<void> _restoreSession() async {
+    final restored = await SessionRestorationService(
+      repository: widget.repository,
+      sessionRepository: widget.sessionRepository,
+      currentDataMode: widget.dataMode,
+    ).restore();
+    if (!mounted || restored == null) return;
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => NetworkDashboardScreen(
+          repository: widget.repository,
+          sessionRepository: widget.sessionRepository,
+          network: restored.network,
+          currentMemberId: restored.memberId,
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -38,7 +76,7 @@ class HomeScreen extends StatelessWidget {
                       padding: const EdgeInsets.all(8),
                       child: IconButton(
                         tooltip: l10n.changeLanguage,
-                        onPressed: () => onChangeLanguage(context),
+                        onPressed: () => widget.onChangeLanguage(context),
                         icon: const Icon(Icons.language_rounded),
                       ),
                     ),
@@ -87,8 +125,9 @@ class HomeScreen extends StatelessWidget {
                                 Navigator.of(context).push(
                                   MaterialPageRoute(
                                     builder: (_) => CreateNetworkScreen(
-                                      repository: repository,
-                                      sessionRepository: sessionRepository,
+                                      repository: widget.repository,
+                                      sessionRepository:
+                                          widget.sessionRepository,
                                     ),
                                   ),
                                 );
@@ -102,8 +141,9 @@ class HomeScreen extends StatelessWidget {
                                 Navigator.of(context).push(
                                   MaterialPageRoute(
                                     builder: (_) => JoinNetworkScreen(
-                                      repository: repository,
-                                      sessionRepository: sessionRepository,
+                                      repository: widget.repository,
+                                      sessionRepository:
+                                          widget.sessionRepository,
                                     ),
                                   ),
                                 );
@@ -117,8 +157,9 @@ class HomeScreen extends StatelessWidget {
                                 Navigator.of(context).push(
                                   MaterialPageRoute(
                                     builder: (_) => MyAccountScreen(
-                                      repository: repository,
-                                      sessionRepository: sessionRepository,
+                                      repository: widget.repository,
+                                      sessionRepository:
+                                          widget.sessionRepository,
                                     ),
                                   ),
                                 );

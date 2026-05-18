@@ -33,19 +33,23 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     );
   }
 
-  Future<void> _markAllRead() async {
-    await widget.repository.markAllNotificationsRead(
+  Future<void> _clearAll() async {
+    final l10n = context.l10n;
+    await widget.repository.clearNotificationsForMember(
       networkId: widget.networkId,
       memberId: widget.memberId,
     );
     if (!mounted) return;
     setState(() => _notificationsFuture = _loadNotifications());
+    _showMessage(l10n.notificationRemoved);
   }
 
-  Future<void> _markRead(NetworkNotification notification) async {
-    await widget.repository.markNotificationRead(notification.id);
+  Future<void> _removeNotification(NetworkNotification notification) async {
+    final l10n = context.l10n;
+    await widget.repository.deleteNotification(notification.id);
     if (!mounted) return;
     setState(() => _notificationsFuture = _loadNotifications());
+    _showMessage(l10n.notificationRemoved);
   }
 
   @override
@@ -56,8 +60,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       title: l10n.notifications,
       actions: [
         TextButton(
-          onPressed: _markAllRead,
-          child: Text(l10n.markAllRead),
+          onPressed: _clearAll,
+          child: Text(l10n.clearAll),
         ),
       ],
       child: FutureBuilder<List<NetworkNotification>>(
@@ -98,13 +102,24 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   subtitle: notification.noteSnippet == null
                       ? null
                       : Text('${l10n.note}: ${notification.noteSnippet}'),
-                  onTap: () => _markRead(notification),
+                  trailing: IconButton(
+                    tooltip: l10n.clear,
+                    onPressed: () => _removeNotification(notification),
+                    icon: const Icon(Icons.close_rounded),
+                  ),
+                  onTap: () => _removeNotification(notification),
                 ),
               );
             }).toList(),
           );
         },
       ),
+    );
+  }
+
+  void _showMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
     );
   }
 }

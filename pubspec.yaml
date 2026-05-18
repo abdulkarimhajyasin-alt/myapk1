@@ -1,5 +1,5 @@
 name: expense_network
-description: Shared Housing Expenses, a private expense-sharing mobile app.
+description: Maskan, a private shared housing expense app.
 publish_to: "none"
 version: 1.0.0+1
 
@@ -34,3 +34,12 @@ flutter_launcher_icons:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/fonts/NotoNaskhArabic-Regular.ttf
+    - assets/fonts/NotoNaskhArabic-Bold.ttf
+  fonts:
+    - family: NotoNaskhArabic
+      fonts:
+        - asset: assets/fonts/NotoNaskhArabic-Regular.ttf
+        - asset: assets/fonts/NotoNaskhArabic-Bold.ttf
+          weight: 700

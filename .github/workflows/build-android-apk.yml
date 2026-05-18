@@ -39,13 +39,13 @@ jobs:
             --dart-define=DATA_MODE=local
           mkdir -p build/artifacts
           cp build/app/outputs/flutter-apk/app-debug.apk \
-            build/artifacts/shared-housing-debug.apk
+            build/artifacts/maskan-debug.apk
 
       - name: Upload local debug APK
         uses: actions/upload-artifact@v4
         with:
-          name: shared-housing-debug-apk
-          path: build/artifacts/shared-housing-debug.apk
+          name: maskan-debug-apk
+          path: build/artifacts/maskan-debug.apk
           if-no-files-found: error
 
       - name: Build Supabase debug APK
@@ -64,13 +64,13 @@ jobs:
             --dart-define=SUPABASE_ANON_KEY="$SUPABASE_ANON_KEY"
           mkdir -p build/artifacts
           cp build/app/outputs/flutter-apk/app-debug.apk \
-            build/artifacts/shared-housing-supabase-debug.apk
+            build/artifacts/maskan-supabase-debug.apk
 
       - name: Upload Supabase debug APK
         uses: actions/upload-artifact@v4
         with:
-          name: shared-housing-supabase-debug-apk
-          path: build/artifacts/shared-housing-supabase-debug.apk
+          name: maskan-supabase-debug-apk
+          path: build/artifacts/maskan-supabase-debug.apk
           if-no-files-found: warn
 
       - name: Check Android signing secrets
@@ -111,12 +111,12 @@ jobs:
             --dart-define=DATA_MODE=local
           mkdir -p build/artifacts
           cp build/app/outputs/flutter-apk/app-release.apk \
-            build/artifacts/shared-housing-release-signed.apk
+            build/artifacts/maskan-release-signed.apk
 
       - name: Upload signed release APK
         if: steps.android_signing.outputs.enabled == 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: shared-housing-release-signed-apk
-          path: build/artifacts/shared-housing-release-signed.apk
+          name: maskan-release-signed-apk
+          path: build/artifacts/maskan-release-signed.apk
           if-no-files-found: error

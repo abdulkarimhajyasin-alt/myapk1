@@ -29,7 +29,10 @@ class RepositoryFactory {
       return AppRepositoryBundle(
         expenseNetworkRepository:
             supabaseRepository ?? SupabaseExpenseNetworkRepository.active(),
-        sessionRepository: SharedPreferencesSessionRepository(preferences),
+        sessionRepository: SharedPreferencesSessionRepository(
+          preferences,
+          dataMode: 'supabase',
+        ),
       );
     }
 
@@ -44,7 +47,10 @@ class RepositoryFactory {
 
     return AppRepositoryBundle(
       expenseNetworkRepository: expenseNetworkRepository,
-      sessionRepository: SharedPreferencesSessionRepository(preferences),
+      sessionRepository: SharedPreferencesSessionRepository(
+        preferences,
+        dataMode: 'local',
+      ),
     );
   }
 }

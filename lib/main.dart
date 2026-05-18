@@ -32,6 +32,7 @@ Future<void> main() async {
       repository: repositories.expenseNetworkRepository,
       sessionRepository: repositories.sessionRepository,
       localeService: localeService,
+      dataMode: supabaseConfig.shouldUseSupabase ? 'supabase' : 'local',
     ),
   );
 }
@@ -41,12 +42,14 @@ class ExpenseNetworkApp extends StatefulWidget {
     required this.repository,
     required this.sessionRepository,
     required this.localeService,
+    required this.dataMode,
     super.key,
   });
 
   final ExpenseNetworkRepository repository;
   final SessionRepository sessionRepository;
   final LocalePreferenceService localeService;
+  final String dataMode;
 
   @override
   State<ExpenseNetworkApp> createState() => _ExpenseNetworkAppState();
@@ -85,7 +88,7 @@ class _ExpenseNetworkAppState extends State<ExpenseNetworkApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Shared Housing Expenses',
+      title: 'Maskan',
       onGenerateTitle: (context) => context.l10n.appTitle,
       debugShowCheckedModeBanner: false,
       locale: _locale,
@@ -117,6 +120,7 @@ class _ExpenseNetworkAppState extends State<ExpenseNetworkApp> {
           ? HomeScreen(
               repository: widget.repository,
               sessionRepository: widget.sessionRepository,
+              dataMode: widget.dataMode,
               onChangeLanguage: _openLanguageSettings,
             )
           : LanguageSelectionScreen(

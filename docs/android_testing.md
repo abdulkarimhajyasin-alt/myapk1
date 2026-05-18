@@ -52,14 +52,14 @@ of breaking the local build.
 1. Open the repository `Actions` tab.
 2. Select the latest `Build Android APK` workflow run.
 3. Download:
-   - `shared-housing-local-debug-apk`
-   - `shared-housing-supabase-debug-apk` when Supabase secrets are configured
+   - `maskan-debug-apk`
+   - `maskan-supabase-debug-apk` when Supabase secrets are configured
 
 The workflow also keeps the existing local release APK artifact for continuity.
 
 ## Two-Phone Supabase Test
 
-1. Install the `shared-housing-supabase-debug-apk` artifact on both Android
+1. Install the `maskan-supabase-debug-apk` artifact on both Android
    phones.
 2. Confirm the home screen shows `Cloud test mode`.
 3. On phone A, create a network with a network password and personal password.

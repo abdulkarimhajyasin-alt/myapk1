@@ -1,4 +1,4 @@
-# Shared Housing Expenses
+# Maskan
 
 A Flutter mobile app for private expense-sharing networks. The first version is Android APK-first and uses local persistent storage through `shared_preferences`, with repository interfaces that can later be backed by Firebase or Supabase.
 
@@ -103,19 +103,19 @@ When all four secrets exist, the `Build Android APK` workflow decodes the
 keystore into a temporary runner file, signs the release APK, and uploads:
 
 ```text
-shared-housing-release-signed.apk
+maskan-release-signed.apk
 ```
 
 The workflow always builds the debug artifact:
 
 ```text
-shared-housing-debug.apk
+maskan-debug.apk
 ```
 
 If Supabase secrets are configured, it also builds:
 
 ```text
-shared-housing-supabase-debug.apk
+maskan-supabase-debug.apk
 ```
 
 If Android signing secrets are missing, the signed release step is skipped with
@@ -123,7 +123,7 @@ a warning and debug APK builds continue.
 
 ### Installing updates safely
 
-For normal user updates, install `shared-housing-release-signed.apk` from GitHub
+For normal user updates, install `maskan-release-signed.apk` from GitHub
 Actions. Future signed release APKs built with the same keystore will install
 over it and preserve app data.
 
