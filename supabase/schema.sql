@@ -646,6 +646,19 @@ create policy phase5_interim_update_member_profile
     and length(trim(normalized_name)) > 0
   );
 
+drop policy if exists phase5_interim_leave_network
+  on public.network_members;
+create policy phase5_interim_leave_network
+  on public.network_members
+  for delete
+  using (
+    exists (
+      select 1
+      from public.networks
+      where id = network_id
+    )
+  );
+
 drop policy if exists phase5_interim_read_network_expenses on public.expenses;
 create policy phase5_interim_read_network_expenses
   on public.expenses

@@ -41,6 +41,11 @@ abstract class ExpenseNetworkRepository {
 
   Future<void> saveNetwork(ExpenseNetwork network);
 
+  Future<void> leaveNetwork({
+    required String networkId,
+    required String memberId,
+  });
+
   Future<Member> updateMemberProfile({
     required String networkName,
     required String memberId,

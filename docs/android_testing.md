@@ -82,7 +82,8 @@ cloud mode because local data exists only on one device.
 2. On phone A, create or open a cloud network.
 3. Open **Invite Members** and confirm the screen shows:
    - a QR code
-   - the canonical invite link `maskan://join/{networkId}`
+   - the canonical invite link
+     `https://karamixlabs.com/maskan/join?network={networkId}`
    - copy and share actions
    - explanatory text telling the recipient to install Maskan first
 4. On phone B, tap **Scan Invite** / **مسح دعوة** on the home screen.
@@ -93,13 +94,32 @@ cloud mode because local data exists only on one device.
 
 Supported invite formats:
 
-- `maskan://join/{networkId}` is the primary QR/share payload.
-- `https://karamixlabs.com/maskan/join?network={networkId}` is accepted when
-  delivered to the app as a compatibility deep link, but the app does not show
-  it as a normal website fallback because that web route is not currently
-  hosted.
+- `https://karamixlabs.com/maskan/join?network={networkId}` is the primary
+  QR/share payload because Telegram, WhatsApp, and SMS reliably auto-link HTTPS
+  URLs.
+- `maskan://join/{networkId}` remains supported as the direct app scheme.
+
+Until the Karamix Labs website hosts `/maskan/join`, testers may see a browser
+404 if they tap the HTTPS link outside the app. The app still parses the link
+when Android dispatches it as a deep link. The website page should explain how
+to install Maskan, open the invite in the app, and copy the `network` code if
+needed.
 
 Invalid QR codes should show a localized error instead of navigating.
+
+## Leave Network Test
+
+The dashboard exit action is a safe leave-network flow, not a silent logout.
+
+1. Tap **Leave Network**.
+2. Confirm the dialog text asks whether to delete the account and permanently
+   leave the expense network.
+3. If total expenses are not zero, confirm leaving is blocked with the localized
+   settlement message.
+4. If total expenses are zero and there is no pending reset or pending sync, the
+   current member is removed, the active session is cleared, and the app returns
+   to the home screen.
+5. Confirm other members remain in the network.
 
 ## Settlement PDF Export
 

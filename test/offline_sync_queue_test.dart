@@ -157,6 +157,12 @@ class _QueueRepository implements ExpenseNetworkRepository {
       throw UnimplementedError();
 
   @override
+  Future<void> leaveNetwork({
+    required String networkId,
+    required String memberId,
+  }) async {}
+
+  @override
   Future<void> saveNetwork(ExpenseNetwork network) async {}
 
   @override

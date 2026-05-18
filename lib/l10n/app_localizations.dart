@@ -146,8 +146,22 @@ class AppLocalizations {
       'cloudInviteJoinRequired':
           'QR invite joining requires cloud mode. You can still join manually in local mode.',
       'inviteInstructions':
-          'Install Maskan first, then open this invite. The QR uses the Maskan app link, not a website.',
+          'Install Maskan first, then open this invite link. If the website page appears, copy the network code and open it in Maskan.',
       'inviteLinkLabel': 'Maskan invite link',
+      'joinMyMaskanNetwork': 'Join my Maskan network:',
+      'leaveNetwork': 'Leave Network',
+      'confirmLeaveNetwork':
+          'Do you want to delete your account and permanently leave this expense network?',
+      'cannotLeaveBeforeSettlement':
+          'You must settle accounts with your friends first. You can leave after the total expenses becomes 0.',
+      'cannotLeavePendingSync':
+          'Sync pending changes before leaving this network.',
+      'cannotLeavePendingReset':
+          'Finish the pending new cycle request before leaving this network.',
+      'cannotLeaveWithHistory':
+          'This account still has expense history in this network. Export or settle records before leaving.',
+      'leaveNetworkSuccess': 'You left the network.',
+      'leaveNetworkFailed': 'Could not leave the network.',
       'reportSubtitleEn': 'Shared Housing Expense Report',
       'reportSubtitleAr': 'تقرير مصاريف السكن',
       'reportNetworkInfo': 'Network info',
@@ -300,8 +314,22 @@ class AppLocalizations {
       'cloudInviteJoinRequired':
           'الانضمام عبر QR يتطلب الوضع السحابي. يمكنك الانضمام يدوياً في الوضع المحلي.',
       'inviteInstructions':
-          'ثبّت Maskan أولاً، ثم افتح الدعوة. يستخدم رمز QR رابط التطبيق وليس رابط موقع ويب.',
+          'ثبّت Maskan أولاً، ثم افتح رابط الدعوة. إذا ظهرت صفحة الموقع، انسخ رمز الشبكة وافتحه في Maskan.',
       'inviteLinkLabel': 'رابط دعوة Maskan',
+      'joinMyMaskanNetwork': 'انضم إلى شبكتي في Maskan:',
+      'leaveNetwork': 'مغادرة الشبكة',
+      'confirmLeaveNetwork':
+          'هل تريد حذف حسابك ومغادرة شبكة المصروف نهائيًا؟',
+      'cannotLeaveBeforeSettlement':
+          'يجب عليك تسوية حساباتك مع أصدقائك أولًا. يمكنك مغادرة الشبكة بعد أن يصبح إجمالي المصاريف 0.',
+      'cannotLeavePendingSync':
+          'زامن التغييرات المعلقة قبل مغادرة هذه الشبكة.',
+      'cannotLeavePendingReset':
+          'أكمل طلب بدء الدورة الجديدة المعلق قبل مغادرة هذه الشبكة.',
+      'cannotLeaveWithHistory':
+          'لا يزال لهذا الحساب سجل مصاريف في هذه الشبكة. صدّر السجلات أو سوّها قبل المغادرة.',
+      'leaveNetworkSuccess': 'تمت مغادرة الشبكة.',
+      'leaveNetworkFailed': 'تعذر مغادرة الشبكة.',
       'reportSubtitleEn': 'Shared Housing Expense Report',
       'reportSubtitleAr': 'تقرير مصاريف السكن',
       'reportNetworkInfo': 'معلومات الشبكة',
@@ -452,6 +480,15 @@ class AppLocalizations {
   String get cloudInviteJoinRequired => _text('cloudInviteJoinRequired');
   String get inviteInstructions => _text('inviteInstructions');
   String get inviteLinkLabel => _text('inviteLinkLabel');
+  String get joinMyMaskanNetwork => _text('joinMyMaskanNetwork');
+  String get leaveNetwork => _text('leaveNetwork');
+  String get confirmLeaveNetwork => _text('confirmLeaveNetwork');
+  String get cannotLeaveBeforeSettlement => _text('cannotLeaveBeforeSettlement');
+  String get cannotLeavePendingSync => _text('cannotLeavePendingSync');
+  String get cannotLeavePendingReset => _text('cannotLeavePendingReset');
+  String get cannotLeaveWithHistory => _text('cannotLeaveWithHistory');
+  String get leaveNetworkSuccess => _text('leaveNetworkSuccess');
+  String get leaveNetworkFailed => _text('leaveNetworkFailed');
   String get reportSubtitleEn => _text('reportSubtitleEn');
   String get reportSubtitleAr => _text('reportSubtitleAr');
   String get reportNetworkInfo => _text('reportNetworkInfo');

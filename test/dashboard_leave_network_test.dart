@@ -3,83 +3,59 @@ import 'package:expense_network/models/expense_network.dart';
 import 'package:expense_network/models/expense_reset_request.dart';
 import 'package:expense_network/models/member.dart';
 import 'package:expense_network/models/network_notification.dart';
-import 'package:expense_network/screens/join_network_screen.dart';
+import 'package:expense_network/screens/network_dashboard_screen.dart';
 import 'package:expense_network/services/expense_network_repository.dart';
 import 'package:expense_network/services/session_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  testWidgets('local invite join explains that QR requires cloud mode',
+  testWidgets('leave flow clears active session after confirmed leave',
       (tester) async {
-    final repository = _InviteJoinRepository();
+    final network = ExpenseNetwork(
+      id: 'network_1',
+      name: 'Flat',
+      password: 'network',
+      createdAt: DateTime(2026),
+      members: [
+        Member(id: 'member_1', name: 'Ali'),
+        Member(id: 'member_2', name: 'Mona'),
+      ],
+    );
+    final repository = _LeaveRepository(network);
+    final sessionRepository = _LeaveSessionRepository();
 
     await tester.pumpWidget(
-      _TestApp(
-        child: JoinNetworkScreen(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: NetworkDashboardScreen(
           repository: repository,
-          sessionRepository: _SessionRepository(),
-          dataMode: 'local',
-          inviteNetworkId: 'network_1',
+          sessionRepository: sessionRepository,
+          network: network,
+          currentMemberId: 'member_1',
         ),
       ),
     );
 
-    expect(find.text('QR invite joining requires cloud mode. You can still join manually in local mode.'), findsWidgets);
-  });
-
-  testWidgets('cloud invite join passes network id to repository',
-      (tester) async {
-    final repository = _InviteJoinRepository();
-
-    await tester.pumpWidget(
-      _TestApp(
-        child: JoinNetworkScreen(
-          repository: repository,
-          sessionRepository: _SessionRepository(),
-          dataMode: 'supabase',
-          inviteNetworkId: 'network_1',
-        ),
-      ),
-    );
-
-    await tester.enterText(
-      find.widgetWithText(TextFormField, 'User display name'),
-      'Mona',
-    );
-    await tester.enterText(
-      find.widgetWithText(TextFormField, 'Network password'),
-      'network-pass',
-    );
-    await tester.enterText(
-      find.widgetWithText(TextFormField, 'Personal account password'),
-      'member-pass',
-    );
-    await tester.tap(find.text('Join'));
+    await tester.tap(find.byTooltip('Leave Network'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Confirm'));
     await tester.pumpAndSettle();
 
-    expect(repository.joinedNetworkId, 'network_1');
+    expect(repository.leftNetworkId, 'network_1');
+    expect(repository.leftMemberId, 'member_1');
+    expect(sessionRepository.cleared, isTrue);
   });
 }
 
-class _TestApp extends StatelessWidget {
-  const _TestApp({required this.child});
-
-  final Widget child;
+class _LeaveSessionRepository implements SessionRepository {
+  bool cleared = false;
 
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      localizationsDelegates: AppLocalizations.localizationsDelegates,
-      supportedLocales: AppLocalizations.supportedLocales,
-      home: child,
-    );
+  Future<void> clearActiveSession() async {
+    cleared = true;
   }
-}
-
-class _SessionRepository implements SessionRepository {
-  @override
-  Future<void> clearActiveSession() async {}
 
   @override
   Future<AccountSession?> getActiveSession() async => null;
@@ -92,32 +68,38 @@ class _SessionRepository implements SessionRepository {
   }) async {}
 }
 
-class _InviteJoinRepository implements ExpenseNetworkRepository {
-  String? joinedNetworkId;
+class _LeaveRepository implements ExpenseNetworkRepository {
+  _LeaveRepository(this.network);
 
-  @override
-  Future<ExpenseNetwork> joinNetwork({
-    required String displayName,
-    required String networkName,
-    required String password,
-    required String memberPassword,
-    String? networkId,
-  }) async {
-    joinedNetworkId = networkId;
-    return ExpenseNetwork(
-      id: networkId ?? 'network_1',
-      name: 'Flat',
-      password: 'hash',
-      createdAt: DateTime(2026),
-      members: [Member(name: displayName)],
-    );
-  }
+  final ExpenseNetwork network;
+  String? leftNetworkId;
+  String? leftMemberId;
 
   @override
   Future<void> leaveNetwork({
     required String networkId,
     required String memberId,
-  }) async {}
+  }) async {
+    leftNetworkId = networkId;
+    leftMemberId = memberId;
+  }
+
+  @override
+  Future<List<NetworkNotification>> getNotifications({
+    required String networkId,
+    required String memberId,
+  }) async =>
+      const [];
+
+  @override
+  Future<ExpenseNetwork?> findNetwork(String networkName) async => network;
+
+  @override
+  Future<Member?> getMemberHistory({
+    required String networkName,
+    required String memberId,
+  }) async =>
+      network.findMemberById(memberId);
 
   @override
   Future<ExpenseNetwork> addExpense({
@@ -177,10 +159,7 @@ class _InviteJoinRepository implements ExpenseNetworkRepository {
     required String networkName,
     required String memberId,
   }) async =>
-      null;
-
-  @override
-  Future<ExpenseNetwork?> findNetwork(String networkName) async => null;
+      network.findMemberById(memberId);
 
   @override
   Future<ExpenseResetRequest?> getActiveResetRequest({
@@ -189,21 +168,17 @@ class _InviteJoinRepository implements ExpenseNetworkRepository {
       null;
 
   @override
-  Future<Member?> getMemberHistory({
+  Future<List<ExpenseNetwork>> getNetworks() async => [network];
+
+  @override
+  Future<ExpenseNetwork> joinNetwork({
+    required String displayName,
     required String networkName,
-    required String memberId,
+    required String password,
+    required String memberPassword,
+    String? networkId,
   }) async =>
-      null;
-
-  @override
-  Future<List<ExpenseNetwork>> getNetworks() async => const [];
-
-  @override
-  Future<List<NetworkNotification>> getNotifications({
-    required String networkId,
-    required String memberId,
-  }) async =>
-      const [];
+      throw UnimplementedError();
 
   @override
   Future<void> saveNetwork(ExpenseNetwork network) async {}
@@ -217,5 +192,5 @@ class _InviteJoinRepository implements ExpenseNetworkRepository {
     String? avatarImagePath,
     String? avatarImageUrl,
   }) async =>
-      Member(name: 'Mona', id: memberId);
+      network.findMemberById(memberId)!;
 }

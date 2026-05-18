@@ -270,10 +270,73 @@ class _NetworkDashboardScreenState extends State<NetworkDashboardScreen> {
     return notifications.where((notification) => !notification.isRead).length;
   }
 
-  Future<void> _logout() async {
-    await widget.sessionRepository.clearActiveSession();
-    if (!mounted) return;
-    Navigator.of(context).popUntil((route) => route.isFirst);
+  Future<void> _leaveNetwork() async {
+    final l10n = context.l10n;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.leaveNetwork),
+        content: Text(l10n.confirmLeaveNetwork),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(l10n.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(l10n.confirm),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    if (_pendingSyncCount > 0) {
+      _showSnack(l10n.cannotLeavePendingSync);
+      return;
+    }
+    if (_network.totalExpensesCents != 0) {
+      _showSnack(l10n.cannotLeaveBeforeSettlement);
+      return;
+    }
+    if (_network.activeResetRequest != null) {
+      _showSnack(l10n.cannotLeavePendingReset);
+      return;
+    }
+
+    try {
+      await widget.repository.leaveNetwork(
+        networkId: _network.id,
+        memberId: widget.currentMemberId,
+      );
+      await widget.sessionRepository.clearActiveSession();
+      if (!mounted) return;
+      final navigator = Navigator.of(context);
+      final messenger = ScaffoldMessenger.of(context);
+      navigator.popUntil((route) => route.isFirst);
+      messenger.showSnackBar(
+        SnackBar(content: Text(l10n.leaveNetworkSuccess)),
+      );
+    } on RepositoryException catch (error) {
+      if (!mounted) return;
+      _showSnack(_leaveErrorMessage(error));
+    }
+  }
+
+  String _leaveErrorMessage(RepositoryException error) {
+    final l10n = context.l10n;
+    return switch (error.code) {
+      'leave_unsettled_expenses' => l10n.cannotLeaveBeforeSettlement,
+      'leave_pending_reset' => l10n.cannotLeavePendingReset,
+      'leave_member_has_history' => l10n.cannotLeaveWithHistory,
+      _ => l10n.leaveNetworkFailed,
+    };
+  }
+
+  void _showSnack(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
   }
 
   @override
@@ -319,9 +382,9 @@ class _NetworkDashboardScreenState extends State<NetworkDashboardScreen> {
           },
         ),
         IconButton(
-          tooltip: l10n.logout,
-          onPressed: _logout,
-          icon: const Icon(Icons.logout_rounded),
+          tooltip: l10n.leaveNetwork,
+          onPressed: _leaveNetwork,
+          icon: const Icon(Icons.exit_to_app_rounded),
         ),
       ],
       child: Column(

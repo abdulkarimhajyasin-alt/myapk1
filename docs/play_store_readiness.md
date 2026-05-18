@@ -41,9 +41,15 @@
 - Push-1 notifications are local notifications triggered by in-app realtime events.
 - Production background push requires FCM/server-side delivery in a later Push-2 phase.
 - Camera access is used only for scanning Maskan invite QR codes.
-- Invite QR codes use `maskan://join/{networkId}`. The app can parse the
-  Karamix Labs HTTPS compatibility format when Android delivers it as a deep
-  link, but the share UI avoids presenting an unhosted web fallback.
+- Invite QR codes and share messages use
+  `https://karamixlabs.com/maskan/join?network={networkId}` because chat apps
+  reliably auto-link HTTPS URLs. The app also keeps parsing
+  `maskan://join/{networkId}` for direct app opens.
+- The Karamix Labs website should host `/maskan/join` before launch or clearly
+  document that the page is an install/copy-code landing page, not a full web
+  version of Maskan.
+- Leaving a network removes only the current member after total expenses are
+  zero and there are no pending reset/sync blockers.
 - Settlement PDFs embed Noto Naskh Arabic fonts so Arabic reports do not depend
   on viewer/system fonts and avoid square placeholder glyphs.
 

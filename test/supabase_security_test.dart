@@ -39,4 +39,12 @@ void main() {
     expect(workflow.toLowerCase(), isNot(contains('service_role')));
     expect(workflow.toLowerCase(), isNot(contains('service-role')));
   });
+
+  test('Supabase schema includes member leave delete policy', () {
+    final schema = File('supabase/schema.sql').readAsStringSync();
+
+    expect(schema, contains('phase5_interim_leave_network'));
+    expect(schema, contains('on public.network_members'));
+    expect(schema, contains('for delete'));
+  });
 }

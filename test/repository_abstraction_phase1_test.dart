@@ -1,3 +1,5 @@
+import 'package:expense_network/models/expense.dart';
+import 'package:expense_network/models/member.dart';
 import 'package:expense_network/services/expense_network_repository.dart';
 import 'package:expense_network/services/shared_preferences_expense_network_repository.dart';
 import 'package:expense_network/services/shared_preferences_session_repository.dart';
@@ -80,5 +82,89 @@ void main() {
     final updated = await repository.findNetwork('Trip Updated');
 
     expect(updated?.name, 'Trip Updated');
+  });
+
+  test('leave network is blocked while total expenses are not zero', () async {
+    SharedPreferences.setMockInitialValues({});
+    final repository = SharedPreferencesExpenseNetworkRepository();
+    await repository.init();
+
+    final network = await repository.createNetwork(
+      displayName: 'Ali',
+      networkName: 'Trip',
+      password: 'network',
+      memberPassword: '1234',
+      currencyCode: 'USD',
+    );
+    await repository.saveNetwork(
+      network.copyWith(
+        members: [
+          network.members.first.copyWith(
+            expenses: [
+              Expense(amountCents: 1000, createdAt: DateTime(2026)),
+            ],
+          ),
+        ],
+      ),
+    );
+
+    expect(
+      () => repository.leaveNetwork(
+        networkId: network.id,
+        memberId: network.members.first.id,
+      ),
+      throwsA(
+        isA<RepositoryException>()
+            .having((error) => error.code, 'code', 'leave_unsettled_expenses'),
+      ),
+    );
+  });
+
+  test('leave network removes only the leaving member when total is zero',
+      () async {
+    SharedPreferences.setMockInitialValues({});
+    final repository = SharedPreferencesExpenseNetworkRepository();
+    await repository.init();
+
+    final network = await repository.createNetwork(
+      displayName: 'Ali',
+      networkName: 'Trip',
+      password: 'network',
+      memberPassword: '1234',
+      currencyCode: 'USD',
+    );
+    final mona = Member(name: 'Mona');
+    await repository.saveNetwork(network.addMember(mona));
+
+    await repository.leaveNetwork(
+      networkId: network.id,
+      memberId: network.members.first.id,
+    );
+
+    final updated = await repository.findNetwork('Trip');
+    expect(updated, isNotNull);
+    expect(updated!.members, hasLength(1));
+    expect(updated.members.single.name, 'Mona');
+  });
+
+  test('leave network removes empty single-member local network', () async {
+    SharedPreferences.setMockInitialValues({});
+    final repository = SharedPreferencesExpenseNetworkRepository();
+    await repository.init();
+
+    final network = await repository.createNetwork(
+      displayName: 'Ali',
+      networkName: 'Trip',
+      password: 'network',
+      memberPassword: '1234',
+      currencyCode: 'USD',
+    );
+
+    await repository.leaveNetwork(
+      networkId: network.id,
+      memberId: network.members.first.id,
+    );
+
+    expect(await repository.findNetwork('Trip'), isNull);
   });
 }

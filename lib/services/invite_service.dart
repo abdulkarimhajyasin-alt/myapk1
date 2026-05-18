@@ -2,19 +2,21 @@ class NetworkInvite {
   const NetworkInvite({
     required this.networkId,
     required this.appLink,
-    required this.compatibilityLink,
+    required this.httpsLink,
   });
 
   final String networkId;
   final String appLink;
-  final String compatibilityLink;
+  final String httpsLink;
 
-  String get qrData => appLink;
-  String get shareText =>
-      'Install Maskan first, then open this invite:\n$appLink';
+  String get qrData => httpsLink;
+  String get shareText => 'Join my Maskan network:\n$httpsLink';
 
-  @Deprecated('Use compatibilityLink only for parsing existing links.')
-  String get webFallbackLink => compatibilityLink;
+  @Deprecated('Use httpsLink.')
+  String get compatibilityLink => httpsLink;
+
+  @Deprecated('Use httpsLink.')
+  String get webFallbackLink => httpsLink;
 }
 
 class InviteService {
@@ -25,7 +27,7 @@ class InviteService {
     return NetworkInvite(
       networkId: networkId,
       appLink: 'maskan://join/$encodedNetworkId',
-      compatibilityLink:
+      httpsLink:
           'https://karamixlabs.com/maskan/join?network=$encodedNetworkId',
     );
   }

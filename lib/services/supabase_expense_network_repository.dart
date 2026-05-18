@@ -515,6 +515,85 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
   }
 
   @override
+  Future<void> leaveNetwork({
+    required String networkId,
+    required String memberId,
+  }) async {
+    try {
+      final networkRow = await _loadNetworkRowById(networkId);
+      if (networkRow == null) {
+        throw const RepositoryException(
+          'Network not found.',
+          code: 'network_not_found',
+        );
+      }
+      final network = await _networkFromHydratedRow(networkRow);
+      if (network.totalExpensesCents != 0) {
+        throw const RepositoryException(
+          'Network expenses must be settled before leaving.',
+          code: 'leave_unsettled_expenses',
+        );
+      }
+      if (network.activeResetRequest != null) {
+        throw const RepositoryException(
+          'Finish the pending reset request before leaving.',
+          code: 'leave_pending_reset',
+        );
+      }
+      final leavingMember = network.findMemberById(memberId);
+      if (leavingMember == null) {
+        throw const RepositoryException(
+          'Member not found.',
+          code: 'member_not_found',
+        );
+      }
+      if (leavingMember.expenses.isNotEmpty) {
+        throw const RepositoryException(
+          'Member history must be cleared before leaving.',
+          code: 'leave_member_has_history',
+        );
+      }
+      if (await _memberHasAnyExpenseReference(memberId)) {
+        throw const RepositoryException(
+          'Member history must be cleared before leaving.',
+          code: 'leave_member_has_history',
+        );
+      }
+
+      final client = _requireClient();
+      await client
+          .from('network_notifications')
+          .delete()
+          .eq('network_id', networkId)
+          .eq('recipient_member_id', memberId);
+      await client
+          .from('network_notifications')
+          .delete()
+          .eq('network_id', networkId)
+          .eq('actor_member_id', memberId);
+      await client.from('network_members').delete().eq('id', memberId);
+    } on RepositoryException {
+      rethrow;
+    } catch (error) {
+      throw mapSupabaseError(
+        error,
+        fallbackCode: 'supabase_leave_network_failed',
+        fallbackMessage: 'Cloud member could not leave the network.',
+      );
+    }
+  }
+
+  Future<bool> _memberHasAnyExpenseReference(String memberId) async {
+    final client = _requireClient();
+    final rows = await client
+        .from('expenses')
+        .select('id')
+        .or('paid_by_member_id.eq.$memberId,added_by_member_id.eq.$memberId')
+        .limit(1);
+    return rows.isNotEmpty;
+  }
+
+  @override
   Future<ExpenseResetRequest?> getActiveResetRequest({
     required String networkId,
   }) async {

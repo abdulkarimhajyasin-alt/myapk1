@@ -92,11 +92,11 @@ class InviteMembersScreen extends StatelessWidget {
             style: Theme.of(context).textTheme.labelLarge,
           ),
           const SizedBox(height: 6),
-          SelectableText(invite.appLink),
+          SelectableText(invite.httpsLink),
           const SizedBox(height: 18),
           FilledButton.icon(
             onPressed: () async {
-              await Clipboard.setData(ClipboardData(text: invite.appLink));
+              await Clipboard.setData(ClipboardData(text: invite.httpsLink));
               if (!context.mounted) return;
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(content: Text(l10n.inviteCopied)),
@@ -108,7 +108,7 @@ class InviteMembersScreen extends StatelessWidget {
           const SizedBox(height: 10),
           OutlinedButton.icon(
             onPressed: () => Share.share(
-              invite.shareText,
+              '${l10n.joinMyMaskanNetwork}\n${invite.httpsLink}',
               subject: networkName,
             ),
             icon: const Icon(Icons.ios_share_rounded),

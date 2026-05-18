@@ -45,7 +45,7 @@
                 <data
                     android:scheme="https"
                     android:host="karamixlabs.com"
-                    android:path="/maskan/join"/>
+                    android:pathPrefix="/maskan/join"/>
             </intent-filter>
         </activity>
         <meta-data

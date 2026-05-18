@@ -156,6 +156,62 @@ class SharedPreferencesExpenseNetworkRepository
   }
 
   @override
+  Future<void> leaveNetwork({
+    required String networkId,
+    required String memberId,
+  }) async {
+    final networks = await getNetworks();
+    final matches = networks.where((network) => network.id == networkId);
+    if (matches.isEmpty) {
+      throw const RepositoryException(
+        'Network not found.',
+        code: 'network_not_found',
+      );
+    }
+    final network = matches.first;
+    if (network.totalExpensesCents != 0) {
+      throw const RepositoryException(
+        'Network expenses must be settled before leaving.',
+        code: 'leave_unsettled_expenses',
+      );
+    }
+    if (network.activeResetRequest != null) {
+      throw const RepositoryException(
+        'Finish the pending reset request before leaving.',
+        code: 'leave_pending_reset',
+      );
+    }
+    final leavingMember = network.findMemberById(memberId);
+    if (leavingMember == null) {
+      throw const RepositoryException(
+        'Member not found.',
+        code: 'member_not_found',
+      );
+    }
+    if (leavingMember.expenses.isNotEmpty) {
+      throw const RepositoryException(
+        'Member history must be cleared before leaving.',
+        code: 'leave_member_has_history',
+      );
+    }
+
+    final updatedMembers = network.members
+        .where((member) => member.id != memberId)
+        .toList(growable: false);
+    if (updatedMembers.isEmpty) {
+      await _saveNetworks(
+        networks.where((candidate) => candidate.id != networkId).toList(),
+      );
+    } else {
+      await _replaceNetwork(
+        networks,
+        network.copyWith(members: updatedMembers),
+      );
+    }
+    await clearNotificationsForMember(networkId: networkId, memberId: memberId);
+  }
+
+  @override
   Future<Member> updateMemberProfile({
     required String networkName,
     required String memberId,

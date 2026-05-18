@@ -2,25 +2,28 @@ import 'package:expense_network/services/invite_service.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test('creates app invite link as QR data without promoting website fallback',
-      () {
+  test('creates HTTPS invite link as QR and share payload', () {
     final invite = const InviteService().createInvite('network_1');
 
     expect(invite.appLink, 'maskan://join/network_1');
     expect(
-      invite.webFallbackLink,
+      invite.httpsLink,
       'https://karamixlabs.com/maskan/join?network=network_1',
     );
-    expect(invite.qrData, invite.appLink);
-    expect(invite.shareText, contains('Install Maskan first'));
-    expect(invite.shareText, contains(invite.appLink));
-    expect(invite.shareText, isNot(contains(invite.webFallbackLink)));
+    expect(invite.qrData, invite.httpsLink);
+    expect(invite.shareText, startsWith('Join my Maskan network:'));
+    expect(invite.shareText, contains(invite.httpsLink));
+    expect(invite.shareText, isNot(contains(invite.appLink)));
   });
 
   test('encodes network ids for invite links', () {
     final invite = const InviteService().createInvite('network 1/arabic');
 
     expect(invite.appLink, 'maskan://join/network%201%2Farabic');
+    expect(
+      invite.httpsLink,
+      'https://karamixlabs.com/maskan/join?network=network%201%2Farabic',
+    );
     expect(
       const InviteService().parseNetworkId(invite.appLink),
       'network 1/arabic',
