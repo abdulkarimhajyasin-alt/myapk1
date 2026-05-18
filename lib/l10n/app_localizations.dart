@@ -133,6 +133,31 @@ class AppLocalizations {
       'resetRequestNotification':
           '{actor} requested starting a new expense cycle.',
       'cycleStartedNotification': 'A new expense cycle has started.',
+      'connected': 'Connected',
+      'syncing': 'Syncing',
+      'offline': 'Offline',
+      'inviteMembers': 'Invite Members',
+      'copyLink': 'Copy link',
+      'share': 'Share',
+      'inviteCopied': 'Invite link copied',
+      'cloudInviteRequired':
+          'Cross-device invites work best in cloud mode. Local mode keeps data on this device.',
+      'topPayer': 'Top payer',
+      'currentCycleTotal': 'Current cycle',
+      'averageExpense': 'Average expense',
+      'expenseCount': 'Expenses',
+      'monthlySpend': 'This month',
+      'activityTimeline': 'Activity timeline',
+      'noActivityYet': 'No activity yet.',
+      'pendingSync': 'Pending sync',
+      'savedOffline': 'Saved offline, will sync later.',
+      'syncedOfflineItems': 'Offline changes synced.',
+      'editAvatar': 'Edit avatar',
+      'avatarColor': 'Avatar color',
+      'save': 'Save',
+      'pushExpenseAddedTitle': 'New expense added',
+      'pushResetRequestedTitle': 'New cycle request',
+      'pushCycleStartedTitle': 'New cycle started',
     },
     'ar': {
       'appTitle': 'Maskan',
@@ -245,6 +270,31 @@ class AppLocalizations {
       'resetRequestedBy': 'طلبه {member}',
       'resetRequestNotification': 'طلب {actor} بدء مصروف جديد.',
       'cycleStartedNotification': 'تم بدء مصروف جديد.',
+      'connected': 'متصل',
+      'syncing': 'جار المزامنة',
+      'offline': 'غير متصل',
+      'inviteMembers': 'دعوة أعضاء',
+      'copyLink': 'نسخ الرابط',
+      'share': 'مشاركة',
+      'inviteCopied': 'تم نسخ رابط الدعوة',
+      'cloudInviteRequired':
+          'تعمل الدعوات بين الأجهزة بشكل أفضل في الوضع السحابي. الوضع المحلي يحفظ البيانات على هذا الجهاز فقط.',
+      'topPayer': 'الأكثر دفعا',
+      'currentCycleTotal': 'الدورة الحالية',
+      'averageExpense': 'متوسط المصروف',
+      'expenseCount': 'عدد المصاريف',
+      'monthlySpend': 'هذا الشهر',
+      'activityTimeline': 'سجل النشاط',
+      'noActivityYet': 'لا يوجد نشاط بعد.',
+      'pendingSync': 'بانتظار المزامنة',
+      'savedOffline': 'تم الحفظ دون اتصال، ستتم المزامنة لاحقا.',
+      'syncedOfflineItems': 'تمت مزامنة التغييرات المحفوظة.',
+      'editAvatar': 'تعديل الصورة',
+      'avatarColor': 'لون الصورة',
+      'save': 'حفظ',
+      'pushExpenseAddedTitle': 'تمت إضافة مصروف جديد',
+      'pushResetRequestedTitle': 'طلب بدء مصروف جديد',
+      'pushCycleStartedTitle': 'تم بدء مصروف جديد',
     },
   };
 
@@ -356,6 +406,30 @@ class AppLocalizations {
   String get cancel => _text('cancel');
   String get confirm => _text('confirm');
   String get cycleStartedNotification => _text('cycleStartedNotification');
+  String get connected => _text('connected');
+  String get syncing => _text('syncing');
+  String get offline => _text('offline');
+  String get inviteMembers => _text('inviteMembers');
+  String get copyLink => _text('copyLink');
+  String get share => _text('share');
+  String get inviteCopied => _text('inviteCopied');
+  String get cloudInviteRequired => _text('cloudInviteRequired');
+  String get topPayer => _text('topPayer');
+  String get currentCycleTotal => _text('currentCycleTotal');
+  String get averageExpense => _text('averageExpense');
+  String get expenseCount => _text('expenseCount');
+  String get monthlySpend => _text('monthlySpend');
+  String get activityTimeline => _text('activityTimeline');
+  String get noActivityYet => _text('noActivityYet');
+  String get pendingSync => _text('pendingSync');
+  String get savedOffline => _text('savedOffline');
+  String get syncedOfflineItems => _text('syncedOfflineItems');
+  String get editAvatar => _text('editAvatar');
+  String get avatarColor => _text('avatarColor');
+  String get save => _text('save');
+  String get pushExpenseAddedTitle => _text('pushExpenseAddedTitle');
+  String get pushResetRequestedTitle => _text('pushResetRequestedTitle');
+  String get pushCycleStartedTitle => _text('pushCycleStartedTitle');
 
   String addingExpenseFor(String memberName) {
     return _text('addingExpenseFor').replaceAll('{member}', memberName);

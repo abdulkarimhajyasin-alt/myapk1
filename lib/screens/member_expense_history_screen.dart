@@ -5,6 +5,7 @@ import '../models/expense_network.dart';
 import '../models/member.dart';
 import '../utils/money_utils.dart';
 import '../widgets/app_scaffold.dart';
+import '../widgets/member_avatar.dart';
 
 class MemberExpenseHistoryScreen extends StatelessWidget {
   const MemberExpenseHistoryScreen({
@@ -26,11 +27,19 @@ class MemberExpenseHistoryScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            member.name,
-            style: theme.textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.w800,
-            ),
+          Row(
+            children: [
+              MemberAvatar(member: member, radius: 26),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  member.name,
+                  style: theme.textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 6),
           Text(

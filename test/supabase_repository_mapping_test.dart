@@ -20,6 +20,8 @@ void main() {
           'name': 'Ali',
           'password_hash': 'member-hash',
           'password_salt': 'member-salt',
+          'avatar_color': '#059669',
+          'avatar_initials': 'AL',
           'created_at': '2026-05-14T10:31:00.000Z',
         },
       ],
@@ -33,6 +35,8 @@ void main() {
     expect(network.members.single.id, 'member-id');
     expect(network.members.single.passwordHash, 'member-hash');
     expect(network.members.single.passwordSalt, 'member-salt');
+    expect(network.members.single.avatarColor, '#059669');
+    expect(network.members.single.avatarInitials, 'AL');
   });
 
   test('normalizes names for cloud uniqueness', () {
@@ -50,6 +54,7 @@ void main() {
       'added_by_member_name': 'Mona',
       'amount_cents': 2500,
       'note': 'Groceries',
+      'client_generated_id': 'client_1',
       'created_at': '2026-05-14T11:30:00.000Z',
     });
 
@@ -59,6 +64,7 @@ void main() {
     expect(expense.addedByMemberId, 'actor-id');
     expect(expense.addedByMemberName, 'Mona');
     expect(expense.createdAt.toUtc().year, 2026);
+    expect(expense.clientGeneratedId, 'client_1');
   });
 
   test('hydrates network totals by assigning expenses to paid member', () {
@@ -120,6 +126,7 @@ void main() {
       addedByMemberName: 'Mona',
       amountCents: 1234,
       note: '  ${List.filled(210, 'x').join()}  ',
+      clientGeneratedId: 'client_1',
     );
 
     expect(payload['network_id'], 'network-id');
@@ -129,6 +136,7 @@ void main() {
     expect(payload['added_by_member_name'], 'Mona');
     expect(payload['amount_cents'], 1234);
     expect(payload['cycle_id'], isNull);
+    expect(payload['client_generated_id'], 'client_1');
     expect((payload['note'] as String).length, 200);
     expect(payload['created_at'], isA<String>());
   });

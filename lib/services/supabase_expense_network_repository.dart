@@ -305,12 +305,56 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
   }
 
   @override
+  Future<Member> updateMemberProfile({
+    required String networkName,
+    required String memberId,
+    String? avatarColor,
+    String? avatarInitials,
+    String? avatarImagePath,
+    String? avatarImageUrl,
+  }) async {
+    try {
+      final client = _requireClient();
+      final payload = <String, dynamic>{
+        if (avatarColor != null) 'avatar_color': avatarColor,
+        if (avatarInitials != null) 'avatar_initials': avatarInitials,
+        if (avatarImagePath != null) 'avatar_image_path': avatarImagePath,
+        if (avatarImageUrl != null) 'avatar_image_url': avatarImageUrl,
+      };
+      if (payload.isEmpty) {
+        final member = await findMember(
+          networkName: networkName,
+          memberId: memberId,
+        );
+        if (member == null) {
+          throw const RepositoryException('Member not found.');
+        }
+        return member;
+      }
+      final row = await client
+          .from('network_members')
+          .update(payload)
+          .eq('id', memberId)
+          .select()
+          .single();
+      return memberFromRow(Map<String, dynamic>.from(row));
+    } catch (error) {
+      throw mapSupabaseError(
+        error,
+        fallbackCode: 'supabase_member_profile_update_failed',
+        fallbackMessage: 'Cloud member profile could not be updated.',
+      );
+    }
+  }
+
+  @override
   Future<ExpenseNetwork> addExpense({
     required String networkName,
     required String memberName,
     required String addedByMemberId,
     required int amountCents,
     String? note,
+    String? clientGeneratedId,
   }) async {
     if (amountCents <= 0) {
       throw const RepositoryException(
@@ -367,6 +411,7 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
               amountCents: amountCents,
               note: cleanedNote,
               cycleId: cycle.id,
+              clientGeneratedId: clientGeneratedId,
             ),
           )
           .select()
@@ -386,6 +431,8 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
     } catch (error) {
       throw mapSupabaseError(
         error,
+        duplicateCode: 'duplicate_expense_operation',
+        duplicateMessage: 'This expense was already synced.',
         fallbackCode: 'supabase_add_expense_failed',
         fallbackMessage: 'Cloud expense could not be added.',
       );
@@ -1013,6 +1060,10 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
       passwordHash: row['password_hash'] as String?,
       passwordSalt: row['password_salt'] as String?,
       createdAt: _parseTimestamp(row['created_at']),
+      avatarColor: row['avatar_color'] as String?,
+      avatarInitials: row['avatar_initials'] as String?,
+      avatarImagePath: row['avatar_image_path'] as String?,
+      avatarImageUrl: row['avatar_image_url'] as String?,
     );
   }
 
@@ -1026,6 +1077,7 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
       addedByMemberName: row['added_by_member_name'] as String? ?? '',
       cycleId: row['cycle_id'] as String?,
       archivedAt: _parseNullableTimestamp(row['archived_at']),
+      clientGeneratedId: row['client_generated_id'] as String?,
     );
   }
 
@@ -1092,6 +1144,7 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
     required int amountCents,
     String? note,
     String? cycleId,
+    String? clientGeneratedId,
   }) {
     return {
       'network_id': networkId,
@@ -1102,6 +1155,7 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
       'amount_cents': amountCents,
       'note': sanitizeExpenseNote(note),
       'cycle_id': cycleId,
+      'client_generated_id': clientGeneratedId,
       'created_at': DateTime.now().toUtc().toIso8601String(),
     };
   }

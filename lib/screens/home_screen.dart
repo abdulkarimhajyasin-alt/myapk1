@@ -54,6 +54,7 @@ class _HomeScreenState extends State<HomeScreen> {
           sessionRepository: widget.sessionRepository,
           network: restored.network,
           currentMemberId: restored.memberId,
+          dataMode: widget.dataMode,
         ),
       ),
     );
@@ -128,6 +129,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                       repository: widget.repository,
                                       sessionRepository:
                                           widget.sessionRepository,
+                                      dataMode: widget.dataMode,
                                     ),
                                   ),
                                 );
@@ -144,6 +146,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                       repository: widget.repository,
                                       sessionRepository:
                                           widget.sessionRepository,
+                                      dataMode: widget.dataMode,
                                     ),
                                   ),
                                 );
@@ -160,6 +163,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                       repository: widget.repository,
                                       sessionRepository:
                                           widget.sessionRepository,
+                                      dataMode: widget.dataMode,
                                     ),
                                   ),
                                 );

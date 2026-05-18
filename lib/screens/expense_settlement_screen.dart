@@ -8,6 +8,7 @@ import '../services/settlement_pdf_service.dart';
 import '../services/settlement_service.dart';
 import '../utils/money_utils.dart';
 import '../widgets/app_scaffold.dart';
+import '../widgets/member_avatar.dart';
 
 class ExpenseSettlementScreen extends StatefulWidget {
   const ExpenseSettlementScreen({
@@ -180,44 +181,57 @@ class _ExpenseSettlementScreenState extends State<ExpenseSettlementScreen> {
           ),
           const SizedBox(height: 10),
           ...settlement.members.map(
-            (member) => Card(
-              margin: const EdgeInsets.only(bottom: 10),
-              child: Padding(
-                padding: const EdgeInsets.all(14),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      member.memberName,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w800,
+            (member) {
+              final profile = _network.findMemberByName(member.memberName);
+              return Card(
+                margin: const EdgeInsets.only(bottom: 10),
+                child: Padding(
+                  padding: const EdgeInsets.all(14),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          if (profile != null) ...[
+                            MemberAvatar(member: profile),
+                            const SizedBox(width: 10),
+                          ],
+                          Expanded(
+                            child: Text(
+                              member.memberName,
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      '${l10n.paid}: '
-                      '${MoneyUtils.formatCents(
-                        member.paidCents,
-                        currencySymbol: _network.currencySymbol,
-                      )}',
-                    ),
-                    Text(
-                      '${l10n.shouldPay}: '
-                      '${MoneyUtils.formatCents(
-                        member.shouldPayCents,
-                        currencySymbol: _network.currencySymbol,
-                      )}',
-                    ),
-                    Text(
-                      _memberBalanceStatus(l10n, member.balanceCents),
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
+                      const SizedBox(height: 8),
+                      Text(
+                        '${l10n.paid}: '
+                        '${MoneyUtils.formatCents(
+                          member.paidCents,
+                          currencySymbol: _network.currencySymbol,
+                        )}',
                       ),
-                    ),
-                  ],
+                      Text(
+                        '${l10n.shouldPay}: '
+                        '${MoneyUtils.formatCents(
+                          member.shouldPayCents,
+                          currencySymbol: _network.currencySymbol,
+                        )}',
+                      ),
+                      Text(
+                        _memberBalanceStatus(l10n, member.balanceCents),
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ),
+              );
+            },
           ),
           const SizedBox(height: 18),
           Text(

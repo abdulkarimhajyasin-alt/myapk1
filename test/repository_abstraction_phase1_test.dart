@@ -18,6 +18,10 @@ void main() {
     );
     expect(SharedPreferencesStorageKeys.activeMemberId, 'active_member_id');
     expect(SharedPreferencesStorageKeys.activeDataMode, 'active_data_mode');
+    expect(
+      SharedPreferencesStorageKeys.offlineSyncQueue,
+      'offline_sync_queue_v1',
+    );
   });
 
   test('session repository stores and clears active session separately', () async {

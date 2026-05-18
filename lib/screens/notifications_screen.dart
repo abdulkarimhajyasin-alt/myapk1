@@ -1,22 +1,27 @@
 import 'package:flutter/material.dart';
 
 import '../l10n/app_localizations.dart';
+import '../models/member.dart';
 import '../models/network_notification.dart';
 import '../services/expense_network_repository.dart';
+import '../services/supabase_realtime_service.dart';
 import '../utils/money_utils.dart';
 import '../widgets/app_scaffold.dart';
+import '../widgets/member_avatar.dart';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({
     required this.repository,
     required this.networkId,
     required this.memberId,
+    this.dataMode = 'local',
     super.key,
   });
 
   final ExpenseNetworkRepository repository;
   final String networkId;
   final String memberId;
+  final String dataMode;
 
   @override
   State<NotificationsScreen> createState() => _NotificationsScreenState();
@@ -25,6 +30,34 @@ class NotificationsScreen extends StatefulWidget {
 class _NotificationsScreenState extends State<NotificationsScreen> {
   late Future<List<NetworkNotification>> _notificationsFuture =
       _loadNotifications();
+  SupabaseRealtimeService? _realtimeService;
+
+  @override
+  void initState() {
+    super.initState();
+    _startRealtime();
+  }
+
+  @override
+  void dispose() {
+    _realtimeService?.dispose();
+    super.dispose();
+  }
+
+  Future<void> _startRealtime() async {
+    if (widget.dataMode != 'supabase') return;
+    final service = SupabaseRealtimeService();
+    _realtimeService = service;
+    await service.subscribe(
+      networkId: widget.networkId,
+      memberId: widget.memberId,
+      onRefresh: () {
+        if (!mounted) return;
+        setState(() => _notificationsFuture = _loadNotifications());
+      },
+      onNotification: (_, __) {},
+    );
+  }
 
   Future<List<NetworkNotification>> _loadNotifications() {
     return widget.repository.getNotifications(
@@ -93,10 +126,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               return Card(
                 margin: const EdgeInsets.only(bottom: 10),
                 child: ListTile(
-                  leading: Icon(
-                    notification.isRead
-                        ? Icons.notifications_none_rounded
-                        : Icons.notifications_active_rounded,
+                  leading: MemberAvatar(
+                    member: Member(name: notification.actorMemberName),
                   ),
                   title: Text(title),
                   subtitle: notification.noteSnippet == null

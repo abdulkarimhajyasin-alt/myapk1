@@ -6,4 +6,5 @@ class SharedPreferencesStorageKeys {
   static const activeNetworkName = 'active_network_name';
   static const activeMemberId = 'active_member_id';
   static const activeDataMode = 'active_data_mode';
+  static const offlineSyncQueue = 'offline_sync_queue_v1';
 }

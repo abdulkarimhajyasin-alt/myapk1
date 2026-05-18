@@ -155,6 +155,41 @@ class SharedPreferencesExpenseNetworkRepository
   }
 
   @override
+  Future<Member> updateMemberProfile({
+    required String networkName,
+    required String memberId,
+    String? avatarColor,
+    String? avatarInitials,
+    String? avatarImagePath,
+    String? avatarImageUrl,
+  }) async {
+    final networks = await getNetworks();
+    final network = _findByName(networks, networkName);
+    if (network == null) {
+      throw const RepositoryException('Network not found.');
+    }
+
+    Member? updatedMember;
+    final updatedNetwork = network.copyWith(
+      members: network.members.map((member) {
+        if (member.id != memberId) return member;
+        updatedMember = member.copyWith(
+          avatarColor: avatarColor,
+          avatarInitials: avatarInitials,
+          avatarImagePath: avatarImagePath,
+          avatarImageUrl: avatarImageUrl,
+        );
+        return updatedMember!;
+      }).toList(),
+    );
+    if (updatedMember == null) {
+      throw const RepositoryException('Member not found.');
+    }
+    await _replaceNetwork(networks, updatedNetwork);
+    return updatedMember!;
+  }
+
+  @override
   Future<ExpenseNetwork> authenticateMember({
     required String networkName,
     required String memberName,
@@ -192,6 +227,7 @@ class SharedPreferencesExpenseNetworkRepository
     required String addedByMemberId,
     required int amountCents,
     String? note,
+    String? clientGeneratedId,
   }) async {
     final networks = await getNetworks();
     final network = _findByName(networks, networkName);
@@ -210,6 +246,7 @@ class SharedPreferencesExpenseNetworkRepository
       addedByMemberId: actor.id,
       addedByMemberName: actor.name,
       note: trimmedNote == null || trimmedNote.isEmpty ? null : trimmedNote,
+      clientGeneratedId: clientGeneratedId,
     );
     await _replaceNetwork(networks, updatedNetwork);
     await _createExpenseNotifications(

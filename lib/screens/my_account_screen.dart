@@ -8,17 +8,20 @@ import '../services/repository_error_messages.dart';
 import '../services/session_repository.dart';
 import '../widgets/app_scaffold.dart';
 import '../widgets/form_error_text.dart';
+import '../widgets/member_avatar.dart';
 import 'network_dashboard_screen.dart';
 
 class MyAccountScreen extends StatefulWidget {
   const MyAccountScreen({
     required this.repository,
     required this.sessionRepository,
+    this.dataMode = 'local',
     super.key,
   });
 
   final ExpenseNetworkRepository repository;
   final SessionRepository sessionRepository;
+  final String dataMode;
 
   @override
   State<MyAccountScreen> createState() => _MyAccountScreenState();
@@ -111,6 +114,7 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
             sessionRepository: widget.sessionRepository,
             network: authenticatedNetwork,
             currentMemberId: member.id,
+            dataMode: widget.dataMode,
           ),
         ),
       );
@@ -173,7 +177,13 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
               items: (_selectedNetwork?.members ?? const []).map((member) {
                 return DropdownMenuItem<String>(
                   value: member.id,
-                  child: Text(member.name),
+                  child: Row(
+                    children: [
+                      MemberAvatar(member: member, radius: 14),
+                      const SizedBox(width: 8),
+                      Text(member.name),
+                    ],
+                  ),
                 );
               }).toList(),
               onChanged: (value) {

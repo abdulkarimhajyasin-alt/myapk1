@@ -120,3 +120,25 @@ jobs:
           name: maskan-release-signed-apk
           path: build/artifacts/maskan-release-signed.apk
           if-no-files-found: error
+
+      - name: Build signed release App Bundle
+        if: steps.android_signing.outputs.enabled == 'true'
+        env:
+          ANDROID_KEYSTORE_FILE: ${{ runner.temp }}/android-signing/upload-keystore.jks
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          flutter build appbundle --release \
+            --dart-define=DATA_MODE=local
+          mkdir -p build/artifacts
+          cp build/app/outputs/bundle/release/app-release.aab \
+            build/artifacts/maskan-release-signed.aab
+
+      - name: Upload signed release App Bundle
+        if: steps.android_signing.outputs.enabled == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: maskan-release-signed-aab
+          path: build/artifacts/maskan-release-signed.aab
+          if-no-files-found: error

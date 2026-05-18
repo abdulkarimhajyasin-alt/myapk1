@@ -1,15 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../l10n/app_localizations.dart';
 import '../models/expense_network.dart';
 import '../models/member.dart';
+import '../models/network_notification.dart';
+import '../services/dashboard_analytics_service.dart';
 import '../services/expense_network_repository.dart';
+import '../services/offline_sync_queue.dart';
+import '../services/push_notification_service.dart';
 import '../services/session_repository.dart';
+import '../services/supabase_realtime_service.dart';
+import '../utils/avatar_utils.dart';
 import '../utils/money_utils.dart';
 import '../widgets/app_scaffold.dart';
+import '../widgets/member_avatar.dart';
 import '../widgets/mode_indicator.dart';
 import 'add_expense_screen.dart';
 import 'expense_settlement_screen.dart';
+import 'invite_members_screen.dart';
 import 'member_expense_history_screen.dart';
 import 'notifications_screen.dart';
 
@@ -19,6 +28,7 @@ class NetworkDashboardScreen extends StatefulWidget {
     required this.sessionRepository,
     required this.network,
     required this.currentMemberId,
+    this.dataMode = 'local',
     super.key,
   });
 
@@ -26,6 +36,7 @@ class NetworkDashboardScreen extends StatefulWidget {
   final SessionRepository sessionRepository;
   final ExpenseNetwork network;
   final String currentMemberId;
+  final String dataMode;
 
   @override
   State<NetworkDashboardScreen> createState() => _NetworkDashboardScreenState();
@@ -33,6 +44,10 @@ class NetworkDashboardScreen extends StatefulWidget {
 
 class _NetworkDashboardScreenState extends State<NetworkDashboardScreen> {
   late ExpenseNetwork _network = widget.network;
+  final _pushNotifications = PushNotificationService();
+  SupabaseRealtimeService? _realtimeService;
+  RealtimeConnectionState _realtimeState = RealtimeConnectionState.disabled;
+  int _pendingSyncCount = 0;
 
   Member get _currentMember {
     return _network.findMemberById(widget.currentMemberId) ??
@@ -42,10 +57,74 @@ class _NetworkDashboardScreenState extends State<NetworkDashboardScreen> {
   }
 
   Future<void> _refreshNetwork() async {
+    await _retryOfflineQueue();
     final latest = await widget.repository.findNetwork(_network.name);
     if (latest != null && mounted) {
       setState(() => _network = latest);
     }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _retryOfflineQueue();
+    _startRealtime();
+  }
+
+  @override
+  void dispose() {
+    _realtimeService?.dispose();
+    super.dispose();
+  }
+
+  Future<void> _startRealtime() async {
+    if (widget.dataMode != 'supabase') return;
+    final service = SupabaseRealtimeService();
+    _realtimeService = service;
+    setState(() => _realtimeState = RealtimeConnectionState.connecting);
+    final state = await service.subscribe(
+      networkId: _network.id,
+      memberId: widget.currentMemberId,
+      onRefresh: () {
+        if (mounted) _refreshNetwork();
+      },
+      onNotification: _showRealtimeNotification,
+    );
+    if (!mounted) return;
+    setState(() => _realtimeState = state);
+  }
+
+  Future<void> _retryOfflineQueue() async {
+    if (widget.dataMode != 'supabase') return;
+    final preferences = await SharedPreferences.getInstance();
+    final queue = OfflineSyncQueue(preferences);
+    final before = await queue.pendingOperations();
+    var synced = 0;
+    try {
+      synced = await queue.retryPending(widget.repository);
+    } on RepositoryException {
+      return;
+    }
+    final after = await queue.pendingOperations();
+    if (!mounted) return;
+    setState(() => _pendingSyncCount = after.length);
+    if (before.isNotEmpty && synced > 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.l10n.syncedOfflineItems)),
+      );
+    }
+  }
+
+  Future<void> _showRealtimeNotification(
+    NetworkNotification notification,
+    String? actorMemberId,
+  ) {
+    return _pushNotifications.showNetworkNotification(
+      notification: notification,
+      l10n: context.l10n,
+      currentMemberId: widget.currentMemberId,
+      actorMemberId: actorMemberId,
+    );
   }
 
   Future<void> _openAddExpense() async {
@@ -55,6 +134,7 @@ class _NetworkDashboardScreenState extends State<NetworkDashboardScreen> {
           repository: widget.repository,
           network: _network,
           currentMemberId: widget.currentMemberId,
+          dataMode: widget.dataMode,
         ),
       ),
     );
@@ -104,11 +184,82 @@ class _NetworkDashboardScreenState extends State<NetworkDashboardScreen> {
           repository: widget.repository,
           networkId: _network.id,
           memberId: widget.currentMemberId,
+          dataMode: widget.dataMode,
         ),
       ),
     );
     if (!mounted) return;
     setState(() {});
+  }
+
+  Future<void> _openInvite() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => InviteMembersScreen(
+          networkName: _network.name,
+          networkId: _network.id,
+          isCloudMode: widget.dataMode == 'supabase',
+        ),
+      ),
+    );
+  }
+
+  Future<void> _editAvatar() async {
+    final member = _currentMember;
+    var selectedColor = member.avatarColor;
+    final updatedColor = await showDialog<String>(
+      context: context,
+      builder: (context) {
+        final l10n = context.l10n;
+        return StatefulBuilder(
+          builder: (context, setDialogState) => AlertDialog(
+            title: Text(l10n.editAvatar),
+            content: Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: AvatarUtils.colorChoices.map((color) {
+                final selected = color == selectedColor;
+                return InkWell(
+                  borderRadius: BorderRadius.circular(20),
+                  onTap: () => setDialogState(() => selectedColor = color),
+                  child: CircleAvatar(
+                    backgroundColor: AvatarUtils.colorFromHex(color),
+                    child: selected
+                        ? const Icon(Icons.check_rounded, color: Colors.white)
+                        : null,
+                  ),
+                );
+              }).toList(),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: Text(l10n.cancel),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.of(context).pop(selectedColor),
+                child: Text(l10n.save),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+    if (updatedColor == null) return;
+    final updatedMember = await widget.repository.updateMemberProfile(
+      networkName: _network.name,
+      memberId: member.id,
+      avatarColor: updatedColor,
+    );
+    if (!mounted) return;
+    setState(() {
+      _network = _network.copyWith(
+        members: _network.members
+            .map((candidate) =>
+                candidate.id == updatedMember.id ? updatedMember : candidate)
+            .toList(),
+      );
+    });
   }
 
   Future<int> _unreadCount() async {
@@ -129,10 +280,16 @@ class _NetworkDashboardScreenState extends State<NetworkDashboardScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final l10n = context.l10n;
+    final analytics = const DashboardAnalyticsService().calculate(_network);
 
     return AppScaffold(
       title: _network.name,
       actions: [
+        IconButton(
+          tooltip: l10n.inviteMembers,
+          onPressed: _openInvite,
+          icon: const Icon(Icons.qr_code_rounded),
+        ),
         FutureBuilder<int>(
           future: _unreadCount(),
           builder: (context, snapshot) {
@@ -178,7 +335,30 @@ class _NetworkDashboardScreenState extends State<NetworkDashboardScreen> {
             ),
           ),
           const SizedBox(height: 10),
-          const ModeIndicator(),
+          Row(
+            children: [
+              const Expanded(child: ModeIndicator()),
+              if (widget.dataMode == 'supabase')
+                _SyncStatusChip(
+                  state: _realtimeState,
+                  pendingCount: _pendingSyncCount,
+                ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              MemberAvatar(member: _currentMember, radius: 24),
+              const SizedBox(width: 10),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: _editAvatar,
+                  icon: const Icon(Icons.palette_rounded),
+                  label: Text(l10n.editAvatar),
+                ),
+              ),
+            ],
+          ),
           const SizedBox(height: 12),
           Container(
             padding: const EdgeInsets.all(18),
@@ -209,6 +389,26 @@ class _NetworkDashboardScreenState extends State<NetworkDashboardScreen> {
               ],
             ),
           ),
+          if (_pendingSyncCount > 0) ...[
+            const SizedBox(height: 10),
+            Text(
+              '${l10n.pendingSync}: $_pendingSyncCount',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.primary,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+          const SizedBox(height: 16),
+          _AnalyticsGrid(
+            analytics: analytics,
+            currencySymbol: _network.currencySymbol,
+          ),
+          const SizedBox(height: 18),
+          _ActivityTimeline(
+            analytics: analytics,
+            currencySymbol: _network.currencySymbol,
+          ),
           const SizedBox(height: 24),
           Text(
             l10n.members,
@@ -222,9 +422,7 @@ class _NetworkDashboardScreenState extends State<NetworkDashboardScreen> {
               margin: const EdgeInsets.only(bottom: 10),
               child: ListTile(
                 onTap: () => _openHistory(member),
-                leading: CircleAvatar(
-                  child: Text(_avatarText(member.name)),
-                ),
+                leading: MemberAvatar(member: member),
                 title: Text(member.name),
                 subtitle: Text(l10n.totalPaid),
                 trailing: Text(
@@ -255,9 +453,192 @@ class _NetworkDashboardScreenState extends State<NetworkDashboardScreen> {
       ),
     );
   }
+}
 
-  String _avatarText(String name) {
-    final trimmed = name.trim();
-    return trimmed.isEmpty ? '?' : trimmed.substring(0, 1).toUpperCase();
+class _SyncStatusChip extends StatelessWidget {
+  const _SyncStatusChip({
+    required this.state,
+    required this.pendingCount,
+  });
+
+  final RealtimeConnectionState state;
+  final int pendingCount;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final label = pendingCount > 0
+        ? l10n.syncing
+        : switch (state) {
+            RealtimeConnectionState.connected => l10n.connected,
+            RealtimeConnectionState.connecting => l10n.syncing,
+            RealtimeConnectionState.offline => l10n.offline,
+            RealtimeConnectionState.disabled => l10n.offline,
+          };
+    return Chip(
+      visualDensity: VisualDensity.compact,
+      label: Text(label),
+      avatar: Icon(
+        pendingCount > 0 || state == RealtimeConnectionState.connecting
+            ? Icons.sync_rounded
+            : state == RealtimeConnectionState.connected
+                ? Icons.cloud_done_rounded
+                : Icons.cloud_off_rounded,
+        size: 18,
+      ),
+    );
+  }
+}
+
+class _AnalyticsGrid extends StatelessWidget {
+  const _AnalyticsGrid({
+    required this.analytics,
+    required this.currencySymbol,
+  });
+
+  final DashboardAnalytics analytics;
+  final String currencySymbol;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final topPayer = analytics.topPayer;
+    return Wrap(
+      spacing: 10,
+      runSpacing: 10,
+      children: [
+        _AnalyticsCard(
+          label: l10n.currentCycleTotal,
+          value: MoneyUtils.formatCents(
+            analytics.currentCycleTotalCents,
+            currencySymbol: currencySymbol,
+          ),
+        ),
+        _AnalyticsCard(
+          label: l10n.averageExpense,
+          value: MoneyUtils.formatCents(
+            analytics.averageExpenseCents,
+            currencySymbol: currencySymbol,
+          ),
+        ),
+        _AnalyticsCard(
+          label: l10n.expenseCount,
+          value: analytics.expenseCount.toString(),
+        ),
+        _AnalyticsCard(
+          label: l10n.monthlySpend,
+          value: MoneyUtils.formatCents(
+            analytics.monthlyTotalCents,
+            currencySymbol: currencySymbol,
+          ),
+        ),
+        _AnalyticsCard(
+          label: l10n.topPayer,
+          value: topPayer == null ? '-' : topPayer.name,
+        ),
+      ],
+    );
+  }
+}
+
+class _AnalyticsCard extends StatelessWidget {
+  const _AnalyticsCard({
+    required this.label,
+    required this.value,
+  });
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return SizedBox(
+      width: 165,
+      child: Card(
+        margin: EdgeInsets.zero,
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: theme.textTheme.labelMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                value,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ActivityTimeline extends StatelessWidget {
+  const _ActivityTimeline({
+    required this.analytics,
+    required this.currencySymbol,
+  });
+
+  final DashboardAnalytics analytics;
+  final String currencySymbol;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final material = MaterialLocalizations.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          l10n.activityTimeline,
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w800,
+              ),
+        ),
+        const SizedBox(height: 10),
+        if (analytics.recentActivity.isEmpty)
+          Text(l10n.noActivityYet)
+        else
+          ...analytics.recentActivity.map(
+            (entry) => Card(
+              margin: const EdgeInsets.only(bottom: 10),
+              child: ListTile(
+                leading: MemberAvatar(member: entry.member),
+                title: Text(
+                  '${entry.member.name} ${MoneyUtils.formatCents(
+                    entry.expense.amountCents,
+                    currencySymbol: currencySymbol,
+                  )}',
+                ),
+                subtitle: Text(
+                  [
+                    material.formatShortDate(entry.expense.createdAt),
+                    material.formatTimeOfDay(
+                      TimeOfDay.fromDateTime(entry.expense.createdAt),
+                    ),
+                    if (entry.expense.note?.trim().isNotEmpty == true)
+                      entry.expense.note!.trim(),
+                  ].join(' - '),
+                ),
+                trailing: entry.expense.isPendingSync
+                    ? const Icon(Icons.sync_rounded)
+                    : null,
+              ),
+            ),
+          ),
+      ],
+    );
   }
 }

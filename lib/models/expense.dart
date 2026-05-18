@@ -10,6 +10,8 @@ class Expense {
     String? addedByMemberName,
     this.cycleId,
     this.archivedAt,
+    this.clientGeneratedId,
+    this.isPendingSync = false,
   })  : id = id ?? IdUtils.createId('expense'),
         addedByMemberId = addedByMemberId ?? '',
         addedByMemberName = addedByMemberName ?? '';
@@ -22,12 +24,16 @@ class Expense {
   final String addedByMemberName;
   final String? cycleId;
   final DateTime? archivedAt;
+  final String? clientGeneratedId;
+  final bool isPendingSync;
 
   bool get isArchived => archivedAt != null;
 
   Expense copyWith({
     String? cycleId,
     DateTime? archivedAt,
+    String? clientGeneratedId,
+    bool? isPendingSync,
   }) {
     return Expense(
       id: id,
@@ -38,6 +44,8 @@ class Expense {
       addedByMemberName: addedByMemberName,
       cycleId: cycleId ?? this.cycleId,
       archivedAt: archivedAt ?? this.archivedAt,
+      clientGeneratedId: clientGeneratedId ?? this.clientGeneratedId,
+      isPendingSync: isPendingSync ?? this.isPendingSync,
     );
   }
 
@@ -51,6 +59,8 @@ class Expense {
       'addedByMemberName': addedByMemberName,
       'cycleId': cycleId,
       'archivedAt': archivedAt?.toIso8601String(),
+      'clientGeneratedId': clientGeneratedId,
+      'isPendingSync': isPendingSync,
     };
   }
 
@@ -69,6 +79,8 @@ class Expense {
       archivedAt: json['archivedAt'] == null
           ? null
           : DateTime.parse(json['archivedAt'] as String),
+      clientGeneratedId: json['clientGeneratedId'] as String?,
+      isPendingSync: json['isPendingSync'] as bool? ?? false,
     );
   }
 }

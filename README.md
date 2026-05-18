@@ -19,6 +19,7 @@ flutter run
 flutter clean
 flutter pub get
 flutter build apk --release --dart-define=DATA_MODE=local
+flutter build appbundle --release --dart-define=DATA_MODE=local
 ```
 
 For Android local and Supabase test APK workflows, see
@@ -100,10 +101,11 @@ Use the contents of `keystore_base64.txt` for `ANDROID_KEYSTORE_BASE64`. Use the
 same alias and passwords created with `keytool`.
 
 When all four secrets exist, the `Build Android APK` workflow decodes the
-keystore into a temporary runner file, signs the release APK, and uploads:
+keystore into a temporary runner file, signs the release APK/AAB, and uploads:
 
 ```text
 maskan-release-signed.apk
+maskan-release-signed.aab
 ```
 
 The workflow always builds the debug artifact:

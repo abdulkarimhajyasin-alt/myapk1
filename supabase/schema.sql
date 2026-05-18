@@ -1,4 +1,4 @@
--- Supabase schema foundation for Shared Housing Expenses.
+-- Supabase schema foundation for Maskan.
 -- The Flutter app still uses the local SharedPreferences repository by default.
 --
 -- Security note:
@@ -29,9 +29,22 @@ create table if not exists public.network_members (
   normalized_name text not null,
   password_hash text,
   password_salt text,
+  avatar_color text,
+  avatar_initials text,
+  avatar_image_path text,
+  avatar_image_url text,
   created_at timestamptz not null default now(),
   unique (network_id, normalized_name)
 );
+
+alter table public.network_members
+  add column if not exists avatar_color text;
+alter table public.network_members
+  add column if not exists avatar_initials text;
+alter table public.network_members
+  add column if not exists avatar_image_path text;
+alter table public.network_members
+  add column if not exists avatar_image_url text;
 
 do $$
 begin
@@ -59,6 +72,7 @@ create table if not exists public.expenses (
   amount_cents bigint not null,
   note text,
   archived_at timestamptz,
+  client_generated_id text,
   created_at timestamptz not null default now()
 );
 
@@ -82,6 +96,16 @@ begin
       and column_name = 'archived_at'
   ) then
     alter table public.expenses add column archived_at timestamptz;
+  end if;
+
+  if not exists (
+    select 1
+    from information_schema.columns
+    where table_schema = 'public'
+      and table_name = 'expenses'
+      and column_name = 'client_generated_id'
+  ) then
+    alter table public.expenses add column client_generated_id text;
   end if;
 
   if not exists (
@@ -295,6 +319,10 @@ create unique index if not exists expense_reset_requests_one_pending_idx
 create index if not exists expense_reset_approvals_request_idx
   on public.expense_reset_approvals (reset_request_id, member_id);
 
+create unique index if not exists expenses_network_client_generated_id_idx
+  on public.expenses (network_id, client_generated_id)
+  where client_generated_id is not null;
+
 create index if not exists network_notifications_recipient_read_created_idx
   on public.network_notifications (recipient_member_id, is_read, created_at desc);
 
@@ -308,6 +336,46 @@ alter table public.expense_cycles enable row level security;
 alter table public.expense_reset_requests enable row level security;
 alter table public.expense_reset_approvals enable row level security;
 alter table public.network_notifications enable row level security;
+
+do $$
+begin
+  alter publication supabase_realtime add table public.expenses;
+exception
+  when duplicate_object then null;
+  when undefined_object then null;
+end $$;
+
+do $$
+begin
+  alter publication supabase_realtime add table public.network_notifications;
+exception
+  when duplicate_object then null;
+  when undefined_object then null;
+end $$;
+
+do $$
+begin
+  alter publication supabase_realtime add table public.expense_reset_requests;
+exception
+  when duplicate_object then null;
+  when undefined_object then null;
+end $$;
+
+do $$
+begin
+  alter publication supabase_realtime add table public.expense_reset_approvals;
+exception
+  when duplicate_object then null;
+  when undefined_object then null;
+end $$;
+
+do $$
+begin
+  alter publication supabase_realtime add table public.expense_cycles;
+exception
+  when duplicate_object then null;
+  when undefined_object then null;
+end $$;
 
 create or replace function public.phase5_member_belongs_to_network(
   member_id uuid,
@@ -554,6 +622,28 @@ create policy phase5_interim_join_networks
     and length(trim(normalized_name)) > 0
     and password_hash is not null
     and password_salt is not null
+  );
+
+drop policy if exists phase5_interim_update_member_profile
+  on public.network_members;
+create policy phase5_interim_update_member_profile
+  on public.network_members
+  for update
+  using (
+    exists (
+      select 1
+      from public.networks
+      where id = network_id
+    )
+  )
+  with check (
+    exists (
+      select 1
+      from public.networks
+      where id = network_id
+    )
+    and length(trim(name)) > 0
+    and length(trim(normalized_name)) > 0
   );
 
 drop policy if exists phase5_interim_read_network_expenses on public.expenses;

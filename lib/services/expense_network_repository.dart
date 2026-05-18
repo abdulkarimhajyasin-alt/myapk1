@@ -40,6 +40,15 @@ abstract class ExpenseNetworkRepository {
 
   Future<void> saveNetwork(ExpenseNetwork network);
 
+  Future<Member> updateMemberProfile({
+    required String networkName,
+    required String memberId,
+    String? avatarColor,
+    String? avatarInitials,
+    String? avatarImagePath,
+    String? avatarImageUrl,
+  });
+
   Future<ExpenseNetwork> authenticateMember({
     required String networkName,
     required String memberName,
@@ -52,6 +61,7 @@ abstract class ExpenseNetworkRepository {
     required String addedByMemberId,
     required int amountCents,
     String? note,
+    String? clientGeneratedId,
   });
 
   Future<List<NetworkNotification>> getNotifications({

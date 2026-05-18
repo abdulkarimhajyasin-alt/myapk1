@@ -13,11 +13,13 @@ class JoinNetworkScreen extends StatefulWidget {
   const JoinNetworkScreen({
     required this.repository,
     required this.sessionRepository,
+    this.dataMode = 'local',
     super.key,
   });
 
   final ExpenseNetworkRepository repository;
   final SessionRepository sessionRepository;
+  final String dataMode;
 
   @override
   State<JoinNetworkScreen> createState() => _JoinNetworkScreenState();
@@ -81,6 +83,7 @@ class _JoinNetworkScreenState extends State<JoinNetworkScreen> {
           sessionRepository: widget.sessionRepository,
           network: network,
           currentMemberId: network.members.last.id,
+          dataMode: widget.dataMode,
         ),
       ),
     );

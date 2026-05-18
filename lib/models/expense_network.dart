@@ -87,6 +87,7 @@ class ExpenseNetwork {
     required String addedByMemberId,
     required String addedByMemberName,
     String? note,
+    String? clientGeneratedId,
   }) {
     final updatedMembers = members.map((member) {
       if (member.name.toLowerCase() != memberName.toLowerCase()) {
@@ -102,6 +103,7 @@ class ExpenseNetwork {
             addedByMemberId: addedByMemberId,
             addedByMemberName: addedByMemberName,
             cycleId: activeCycle.id,
+            clientGeneratedId: clientGeneratedId,
           ),
         ],
       );
