@@ -62,8 +62,7 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
 
       if (row == null) return null;
       final networkRow = Map<String, dynamic>.from(row);
-      final updatedNetworkRow = await _loadNetworkRowById(networkId);
-      return _networkFromHydratedRow(updatedNetworkRow ?? networkRow);
+      return _networkFromHydratedRow(networkRow);
     } catch (error) {
       throw mapSupabaseError(
         error,
@@ -193,9 +192,13 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
     required String memberPassword,
     String? networkId,
   }) async {
-    final networkRow = networkId?.trim().isNotEmpty == true
-        ? await _loadNetworkRowById(networkId!.trim())
-        : await _loadNetworkRowByName(networkName);
+    final requestedNetworkId = networkId?.trim();
+    final Map<String, dynamic>? networkRow;
+    if (requestedNetworkId != null && requestedNetworkId.isNotEmpty) {
+      networkRow = await _loadNetworkRowById(requestedNetworkId);
+    } else {
+      networkRow = await _loadNetworkRowByName(networkName);
+    }
     if (networkRow == null) {
       throw const RepositoryException(
         'Network name or password is incorrect.',
@@ -205,14 +208,14 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
 
     _verifyNetworkPassword(networkRow, password);
 
-    final networkId = networkRow['id'] as String;
+    final resolvedNetworkId = networkRow['id'] as String;
     final trimmedMemberName = displayName.trim();
     final memberSalt = PasswordHashUtils.createSalt(trimmedMemberName);
 
     try {
       final client = _requireClient();
       await client.from('network_members').insert({
-        'network_id': networkId,
+        'network_id': resolvedNetworkId,
         'name': trimmedMemberName,
         'normalized_name': normalizeName(trimmedMemberName),
         'password_hash': PasswordHashUtils.createHash(
@@ -222,7 +225,8 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
         'password_salt': memberSalt,
       });
 
-      return _networkFromHydratedRow(networkRow);
+      final updatedNetworkRow = await _loadNetworkRowById(resolvedNetworkId);
+      return _networkFromHydratedRow(updatedNetworkRow ?? networkRow);
     } catch (error) {
       throw mapSupabaseError(
         error,

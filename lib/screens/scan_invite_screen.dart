@@ -95,7 +95,7 @@ class _ScanInviteScreenState extends State<ScanInviteScreen> {
             child: Container(
               width: double.infinity,
               padding: const EdgeInsets.fromLTRB(24, 20, 24, 28),
-              color: colorScheme.surface.withOpacity(0.92),
+              color: colorScheme.surface.withValues(alpha: 0.92),
               child: Text(
                 l10n.inviteScannerHint,
                 textAlign: TextAlign.center,
