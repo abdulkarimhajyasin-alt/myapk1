@@ -106,7 +106,9 @@ class AppLocalizations {
       'errorSupabasePermission':
           'Cloud access was denied. Check Supabase RLS policies and test credentials.',
       'errorSupabaseNotConfigured':
-          'Supabase is not configured for this build.',
+          'Supabase configuration missing',
+      'supabaseConfigurationMissingMessage':
+          'This build is missing the Supabase URL or anon key.',
       'logout': 'Log out',
       'karamixLabsButtonLabel': 'Karamix Labs',
       'karamixLabsButtonTooltip': 'Open Karamix Labs website',
@@ -154,6 +156,8 @@ class AppLocalizations {
       'leaveNetwork': 'Leave Network',
       'confirmLeaveNetwork':
           'Do you want to delete your account and permanently leave this expense network?',
+      'lastMemberLeaveWarning':
+          'You are the last member. Leaving will permanently delete this network.',
       'cannotLeaveBeforeSettlement':
           'You must settle accounts with your friends first. You can leave after the total expenses becomes 0.',
       'cannotLeavePendingReset':
@@ -265,7 +269,9 @@ class AppLocalizations {
       'errorSupabasePermission':
           'طھظ… ط±ظپط¶ ط§ظ„ظˆطµظˆظ„ ط§ظ„ط³ط­ط§ط¨ظٹ. طھط­ظ‚ظ‚ ظ…ظ† ط³ظٹط§ط³ط§طھ Supabase RLS ظˆط¨ظٹط§ظ†ط§طھ ط§ظ„ط§ط®طھط¨ط§ط±.',
       'errorSupabaseNotConfigured':
-          'ظˆط¶ط¹ ط§ظ„ط§ط®طھط¨ط§ط± ط§ظ„ط³ط­ط§ط¨ظٹ ط؛ظٹط± ظ…ظ‡ظٹط£ ظپظٹ ظ‡ط°ط§ ط§ظ„ط¥طµط¯ط§ط±.',
+          'إعداد Supabase مفقود',
+      'supabaseConfigurationMissingMessage':
+          'يفتقد هذا الإصدار رابط Supabase أو مفتاح anon.',
       'logout': 'طھط³ط¬ظٹظ„ ط§ظ„ط®ط±ظˆط¬',
       'karamixLabsButtonLabel': 'Karamix Labs',
       'karamixLabsButtonTooltip': 'ظپطھط­ ظ…ظˆظ‚ط¹ Karamix Labs',
@@ -310,9 +316,11 @@ class AppLocalizations {
       'joinMyMaskanNetwork': 'ط§ظ†ط¶ظ… ط¥ظ„ظ‰ ط´ط¨ظƒطھظٹ ظپظٹ Maskan:',
       'leaveNetwork': 'ظ…ط؛ط§ط¯ط±ط© ط§ظ„ط´ط¨ظƒط©',
       'confirmLeaveNetwork':
-          'ظ‡ظ„ طھط±ظٹط¯ ط­ط°ظپ ط­ط³ط§ط¨ظƒ ظˆظ…ط؛ط§ط¯ط±ط© ط´ط¨ظƒط© ط§ظ„ظ…طµط±ظˆظپ ظ†ظ‡ط§ط¦ظٹظ‹ط§طں',
+          'هل تريد حذف حسابك ومغادرة شبكة المصروف نهائيًا؟',
+      'lastMemberLeaveWarning':
+          'أنت آخر عضو في هذه الشبكة. عند المغادرة سيتم حذف الشبكة بالكامل.',
       'cannotLeaveBeforeSettlement':
-          'ظٹط¬ط¨ ط¹ظ„ظٹظƒ طھط³ظˆظٹط© ط­ط³ط§ط¨ط§طھظƒ ظ…ط¹ ط£طµط¯ظ‚ط§ط¦ظƒ ط£ظˆظ„ظ‹ط§. ظٹظ…ظƒظ†ظƒ ظ…ط؛ط§ط¯ط±ط© ط§ظ„ط´ط¨ظƒط© ط¨ط¹ط¯ ط£ظ† ظٹطµط¨ط­ ط¥ط¬ظ…ط§ظ„ظٹ ط§ظ„ظ…طµط§ط±ظٹظپ 0.',
+          'يجب عليك تسوية حساباتك مع أصدقائك أولًا. يمكنك مغادرة الشبكة بعد أن يصبح إجمالي المصاريف 0.',
       'cannotLeavePendingReset':
           'ط£ظƒظ…ظ„ ط·ظ„ط¨ ط¨ط¯ط، ط§ظ„ط¯ظˆط±ط© ط§ظ„ط¬ط¯ظٹط¯ط© ط§ظ„ظ…ط¹ظ„ظ‚ ظ‚ط¨ظ„ ظ…ط؛ط§ط¯ط±ط© ظ‡ط°ظ‡ ط§ظ„ط´ط¨ظƒط©.',
       'cannotLeaveWithHistory':
@@ -432,6 +440,8 @@ class AppLocalizations {
   String get errorWrongPersonalPassword => _text('errorWrongPersonalPassword');
   String get errorSupabasePermission => _text('errorSupabasePermission');
   String get errorSupabaseNotConfigured => _text('errorSupabaseNotConfigured');
+  String get supabaseConfigurationMissingMessage =>
+      _text('supabaseConfigurationMissingMessage');
   String get logout => _text('logout');
   String get karamixLabsButtonLabel => _text('karamixLabsButtonLabel');
   String get karamixLabsButtonTooltip => _text('karamixLabsButtonTooltip');
@@ -470,6 +480,7 @@ class AppLocalizations {
   String get joinMyMaskanNetwork => _text('joinMyMaskanNetwork');
   String get leaveNetwork => _text('leaveNetwork');
   String get confirmLeaveNetwork => _text('confirmLeaveNetwork');
+  String get lastMemberLeaveWarning => _text('lastMemberLeaveWarning');
   String get cannotLeaveBeforeSettlement => _text('cannotLeaveBeforeSettlement');
   String get cannotLeavePendingReset => _text('cannotLeavePendingReset');
   String get cannotLeaveWithHistory => _text('cannotLeaveWithHistory');

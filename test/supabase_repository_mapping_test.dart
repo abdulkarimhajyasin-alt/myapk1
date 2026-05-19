@@ -1,3 +1,5 @@
+import 'package:expense_network/models/expense.dart';
+import 'package:expense_network/models/expense_network.dart';
 import 'package:expense_network/models/member.dart';
 import 'package:expense_network/services/expense_network_repository.dart';
 import 'package:expense_network/services/supabase_expense_network_repository.dart';
@@ -173,6 +175,80 @@ void main() {
     expect(network.members.single.expenses.single.isArchived, isTrue);
   });
 
+  test('leave is blocked only by current active totals', () {
+    final activeNetwork = ExpenseNetwork(
+      id: 'network-id',
+      name: 'Flat 12',
+      password: 'network-hash',
+      createdAt: DateTime(2026),
+      members: [
+        Member(
+          id: 'ali-id',
+          name: 'Ali',
+          expenses: [
+            Expense(amountCents: 1800, createdAt: DateTime(2026)),
+          ],
+        ),
+      ],
+    );
+    final archivedNetwork = activeNetwork.copyWith(
+      members: [
+        Member(
+          id: 'ali-id',
+          name: 'Ali',
+          expenses: [
+            Expense(
+              amountCents: 1800,
+              createdAt: DateTime(2026),
+              archivedAt: DateTime(2026, 2),
+            ),
+          ],
+        ),
+      ],
+    );
+
+    expect(
+      SupabaseExpenseNetworkRepository.canMemberLeaveNetwork(activeNetwork),
+      isFalse,
+    );
+    expect(
+      SupabaseExpenseNetworkRepository.canMemberLeaveNetwork(archivedNetwork),
+      isTrue,
+    );
+  });
+
+  test('last member leave deletes the whole settled network', () {
+    final network = ExpenseNetwork(
+      id: 'network-id',
+      name: 'Flat 12',
+      password: 'network-hash',
+      createdAt: DateTime(2026),
+      members: [
+        Member(id: 'ali-id', name: 'Ali'),
+      ],
+    );
+
+    expect(
+      SupabaseExpenseNetworkRepository.shouldDeleteNetworkAfterLeave(
+        network,
+        'ali-id',
+      ),
+      isTrue,
+    );
+    expect(
+      SupabaseExpenseNetworkRepository.shouldDeleteNetworkAfterLeave(
+        network.copyWith(
+          members: [
+            Member(id: 'ali-id', name: 'Ali'),
+            Member(id: 'mona-id', name: 'Mona'),
+          ],
+        ),
+        'ali-id',
+      ),
+      isFalse,
+    );
+  });
+
   test('maps Supabase reset requests and approvals', () {
     final request = SupabaseExpenseNetworkRepository.resetRequestFromRows(
       {
@@ -198,6 +274,26 @@ void main() {
     expect(request.isPending, isTrue);
     expect(request.approvals.single.memberId, 'ali-id');
     expect(request.pendingMemberNames, ['Mona']);
+  });
+
+  test('maps reset requests after requester member deletion', () {
+    final request = SupabaseExpenseNetworkRepository.resetRequestFromRows(
+      {
+        'id': 'reset-id',
+        'network_id': 'network-id',
+        'cycle_id': 'cycle-id',
+        'requested_by_member_id': null,
+        'requested_by_member_name': 'Former member',
+        'status': 'completed',
+        'required_member_ids': ['old-member-id'],
+        'required_member_names': ['Former member'],
+        'created_at': '2026-05-14T10:40:00.000Z',
+      },
+      const [],
+    );
+
+    expect(request.requestedByMemberId, isEmpty);
+    expect(request.requestedByMemberName, 'Former member');
   });
 
   test('notification payload excludes actor member', () {

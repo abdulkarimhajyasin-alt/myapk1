@@ -35,6 +35,8 @@ void main() {
 
     expect(workflow, contains('secrets.SUPABASE_URL'));
     expect(workflow, contains('secrets.SUPABASE_ANON_KEY'));
+    expect(workflow, contains('SUPABASE_URL configured: yes'));
+    expect(workflow, contains('SUPABASE_ANON_KEY configured: yes'));
     expect(workflow, isNot(contains('https://')));
     expect(workflow.toLowerCase(), isNot(contains('service_role')));
     expect(workflow.toLowerCase(), isNot(contains('service-role')));
@@ -46,5 +48,9 @@ void main() {
     expect(schema, contains('phase5_interim_leave_network'));
     expect(schema, contains('on public.network_members'));
     expect(schema, contains('for delete'));
+    expect(schema, contains('phase5_network_has_no_active_expenses'));
+    expect(schema, contains('phase5_interim_delete_empty_networks'));
+    expect(schema, contains('phase5_interim_delete_settled_network_expenses'));
+    expect(schema, contains('on delete set null'));
   });
 }

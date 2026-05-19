@@ -273,11 +273,16 @@ class _NetworkDashboardScreenState extends State<NetworkDashboardScreen> {
 
   Future<void> _leaveNetwork() async {
     final l10n = context.l10n;
+    final isLastMember = _network.members.length == 1;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: Text(l10n.leaveNetwork),
-        content: Text(l10n.confirmLeaveNetwork),
+        content: Text(
+          isLastMember
+              ? '${l10n.confirmLeaveNetwork}\n\n${l10n.lastMemberLeaveWarning}'
+              : l10n.confirmLeaveNetwork,
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
@@ -294,10 +299,6 @@ class _NetworkDashboardScreenState extends State<NetworkDashboardScreen> {
 
     if (_network.totalExpensesCents != 0) {
       _showSnack(l10n.cannotLeaveBeforeSettlement);
-      return;
-    }
-    if (_network.activeResetRequest != null) {
-      _showSnack(l10n.cannotLeavePendingReset);
       return;
     }
 

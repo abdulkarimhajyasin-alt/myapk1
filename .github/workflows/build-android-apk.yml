@@ -40,10 +40,16 @@ jobs:
         run: |
           missing=()
           if [ -z "$SUPABASE_URL" ]; then
+            echo "SUPABASE_URL configured: no"
             missing+=("SUPABASE_URL")
+          else
+            echo "SUPABASE_URL configured: yes"
           fi
           if [ -z "$SUPABASE_ANON_KEY" ]; then
+            echo "SUPABASE_ANON_KEY configured: no"
             missing+=("SUPABASE_ANON_KEY")
+          else
+            echo "SUPABASE_ANON_KEY configured: yes"
           fi
           if [ "${#missing[@]}" -gt 0 ]; then
             echo "::error title=Missing Supabase secrets::Set repository secrets: ${missing[*]}"

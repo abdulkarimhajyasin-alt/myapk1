@@ -50,11 +50,6 @@ class _ExpenseNetworkBootstrapState extends State<ExpenseNetworkBootstrap> {
   Future<AppRepositoryBundle> _initializeCloud() async {
     supabaseConfig.requireConfigured();
     await _ensureSupabaseInitialized();
-    await Supabase.instance.client
-        .from('networks')
-        .select('id')
-        .limit(1)
-        .timeout(const Duration(seconds: 12));
     return RepositoryFactory.create();
   }
 
@@ -294,6 +289,7 @@ class _CloudInitializationFailureScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final l10n = context.l10n;
+    final isConfigurationError = error is SupabaseConfigurationException;
     return Scaffold(
       body: SafeArea(
         child: Center(
@@ -312,7 +308,9 @@ class _CloudInitializationFailureScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 18),
                   Text(
-                    l10n.cloudConnectionFailedTitle,
+                    isConfigurationError
+                        ? l10n.errorSupabaseNotConfigured
+                        : l10n.cloudConnectionFailedTitle,
                     textAlign: TextAlign.center,
                     style: theme.textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.w800,
@@ -320,7 +318,9 @@ class _CloudInitializationFailureScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 10),
                   Text(
-                    l10n.cloudConnectionFailedMessage,
+                    isConfigurationError
+                        ? l10n.supabaseConfigurationMissingMessage
+                        : l10n.cloudConnectionFailedMessage,
                     textAlign: TextAlign.center,
                     style: theme.textTheme.bodyLarge?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant,

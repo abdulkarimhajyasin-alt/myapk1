@@ -65,9 +65,9 @@ create table if not exists public.expenses (
   id uuid primary key default gen_random_uuid(),
   network_id uuid not null references public.networks(id) on delete cascade,
   cycle_id uuid,
-  paid_by_member_id uuid not null references public.network_members(id),
+  paid_by_member_id uuid references public.network_members(id) on delete set null,
   paid_by_member_name text not null,
-  added_by_member_id uuid not null references public.network_members(id),
+  added_by_member_id uuid references public.network_members(id) on delete set null,
   added_by_member_name text not null,
   amount_cents bigint not null,
   note text,
@@ -182,7 +182,7 @@ create table if not exists public.expense_reset_requests (
   id uuid primary key default gen_random_uuid(),
   network_id uuid not null references public.networks(id) on delete cascade,
   cycle_id uuid not null references public.expense_cycles(id) on delete cascade,
-  requested_by_member_id uuid not null references public.network_members(id),
+  requested_by_member_id uuid references public.network_members(id) on delete set null,
   requested_by_member_name text not null,
   status text not null default 'pending',
   required_member_ids uuid[] not null default '{}',
@@ -203,6 +203,61 @@ create table if not exists public.expense_reset_approvals (
 
 do $$
 begin
+  alter table public.expenses
+    alter column paid_by_member_id drop not null,
+    alter column added_by_member_id drop not null;
+
+  alter table public.expense_reset_requests
+    alter column requested_by_member_id drop not null;
+
+  if exists (
+    select 1
+    from pg_constraint
+    where conname = 'expenses_paid_by_member_id_fkey'
+  ) then
+    alter table public.expenses
+      drop constraint expenses_paid_by_member_id_fkey;
+  end if;
+
+  if exists (
+    select 1
+    from pg_constraint
+    where conname = 'expenses_added_by_member_id_fkey'
+  ) then
+    alter table public.expenses
+      drop constraint expenses_added_by_member_id_fkey;
+  end if;
+
+  if exists (
+    select 1
+    from pg_constraint
+    where conname = 'expense_reset_requests_requested_by_member_id_fkey'
+  ) then
+    alter table public.expense_reset_requests
+      drop constraint expense_reset_requests_requested_by_member_id_fkey;
+  end if;
+
+  alter table public.expenses
+    add constraint expenses_paid_by_member_id_fkey
+    foreign key (paid_by_member_id)
+    references public.network_members(id)
+    on delete set null
+    not valid;
+
+  alter table public.expenses
+    add constraint expenses_added_by_member_id_fkey
+    foreign key (added_by_member_id)
+    references public.network_members(id)
+    on delete set null
+    not valid;
+
+  alter table public.expense_reset_requests
+    add constraint expense_reset_requests_requested_by_member_id_fkey
+    foreign key (requested_by_member_id)
+    references public.network_members(id)
+    on delete set null
+    not valid;
+
   if not exists (
     select 1
     from pg_constraint
@@ -414,8 +469,48 @@ stable
 security definer
 set search_path = public
 as $$
-  select public.phase5_member_belongs_to_network(paid_member_id, target_network_id)
-    and public.phase5_member_belongs_to_network(added_member_id, target_network_id);
+  select (
+      paid_member_id is null
+      or public.phase5_member_belongs_to_network(paid_member_id, target_network_id)
+    )
+    and (
+      added_member_id is null
+      or public.phase5_member_belongs_to_network(added_member_id, target_network_id)
+    );
+$$;
+
+create or replace function public.phase5_network_has_no_active_expenses(
+  target_network_id uuid
+)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select not exists (
+    select 1
+    from public.expenses
+    where network_id = target_network_id
+      and archived_at is null
+  );
+$$;
+
+create or replace function public.phase5_network_can_be_deleted_after_leave(
+  target_network_id uuid
+)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select public.phase5_network_has_no_active_expenses(target_network_id)
+    and (
+      select count(*)
+      from public.network_members
+      where network_id = target_network_id
+    ) <= 1;
 $$;
 
 create or replace function public.phase5_notification_matches_network(
@@ -490,9 +585,12 @@ as $$
     where id = target_cycle_id
       and network_id = target_network_id
   )
-  and public.phase5_member_belongs_to_network(
-    requester_member_id,
-    target_network_id
+  and (
+    requester_member_id is null
+    or public.phase5_member_belongs_to_network(
+      requester_member_id,
+      target_network_id
+    )
   );
 $$;
 
@@ -567,11 +665,14 @@ drop policy if exists phase4_dev_update_notifications on public.network_notifica
 drop policy if exists phase5_interim_read_cycles on public.expense_cycles;
 drop policy if exists phase5_interim_insert_cycles on public.expense_cycles;
 drop policy if exists phase5_interim_update_cycles on public.expense_cycles;
+drop policy if exists phase5_interim_delete_cycles on public.expense_cycles;
 drop policy if exists phase5_interim_read_reset_requests on public.expense_reset_requests;
 drop policy if exists phase5_interim_insert_reset_requests on public.expense_reset_requests;
 drop policy if exists phase5_interim_update_reset_requests on public.expense_reset_requests;
+drop policy if exists phase5_interim_delete_reset_requests on public.expense_reset_requests;
 drop policy if exists phase5_interim_read_reset_approvals on public.expense_reset_approvals;
 drop policy if exists phase5_interim_insert_reset_approvals on public.expense_reset_approvals;
+drop policy if exists phase5_interim_delete_reset_approvals on public.expense_reset_approvals;
 
 drop policy if exists phase5_interim_lookup_networks on public.networks;
 create policy phase5_interim_lookup_networks
@@ -604,6 +705,14 @@ create policy phase5_interim_claim_new_network_owner
   with check (
     created_by_member_id is not null
     and public.phase5_member_belongs_to_network(created_by_member_id, id)
+  );
+
+drop policy if exists phase5_interim_delete_empty_networks on public.networks;
+create policy phase5_interim_delete_empty_networks
+  on public.networks
+  for delete
+  using (
+    public.phase5_network_can_be_deleted_after_leave(id)
   );
 
 drop policy if exists phase5_interim_read_members_for_login on public.network_members;
@@ -665,6 +774,7 @@ create policy phase5_interim_leave_network
       from public.networks
       where id = network_id
     )
+    and public.phase5_network_has_no_active_expenses(network_id)
   );
 
 drop policy if exists phase5_interim_read_network_expenses on public.expenses;
@@ -714,6 +824,15 @@ create policy phase5_interim_update_network_expenses
     )
   );
 
+drop policy if exists phase5_interim_delete_settled_network_expenses
+  on public.expenses;
+create policy phase5_interim_delete_settled_network_expenses
+  on public.expenses
+  for delete
+  using (
+    public.phase5_network_has_no_active_expenses(network_id)
+  );
+
 create policy phase5_interim_read_cycles
   on public.expense_cycles
   for select
@@ -740,6 +859,13 @@ create policy phase5_interim_update_cycles
       network_id,
       requested_by_member_id
     )
+  );
+
+create policy phase5_interim_delete_cycles
+  on public.expense_cycles
+  for delete
+  using (
+    public.phase5_network_has_no_active_expenses(network_id)
   );
 
 create policy phase5_interim_read_reset_requests
@@ -784,6 +910,13 @@ create policy phase5_interim_update_reset_requests
     )
   );
 
+create policy phase5_interim_delete_reset_requests
+  on public.expense_reset_requests
+  for delete
+  using (
+    public.phase5_network_has_no_active_expenses(network_id)
+  );
+
 create policy phase5_interim_read_reset_approvals
   on public.expense_reset_approvals
   for select
@@ -804,6 +937,13 @@ create policy phase5_interim_insert_reset_approvals
       reset_request_id,
       member_id
     )
+  );
+
+create policy phase5_interim_delete_reset_approvals
+  on public.expense_reset_approvals
+  for delete
+  using (
+    public.phase5_network_has_no_active_expenses(network_id)
   );
 
 drop policy if exists phase5_interim_read_addressed_notifications on public.network_notifications;

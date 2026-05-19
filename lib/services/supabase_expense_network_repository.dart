@@ -528,16 +528,10 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
         );
       }
       final network = await _networkFromHydratedRow(networkRow);
-      if (network.totalExpensesCents != 0) {
+      if (!canMemberLeaveNetwork(network)) {
         throw const RepositoryException(
           'Network expenses must be settled before leaving.',
           code: 'leave_unsettled_expenses',
-        );
-      }
-      if (network.activeResetRequest != null) {
-        throw const RepositoryException(
-          'Finish the pending reset request before leaving.',
-          code: 'leave_pending_reset',
         );
       }
       final leavingMember = network.findMemberById(memberId);
@@ -547,20 +541,13 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
           code: 'member_not_found',
         );
       }
-      if (leavingMember.expenses.isNotEmpty) {
-        throw const RepositoryException(
-          'Member history must be cleared before leaving.',
-          code: 'leave_member_has_history',
-        );
-      }
-      if (await _memberHasAnyExpenseReference(memberId)) {
-        throw const RepositoryException(
-          'Member history must be cleared before leaving.',
-          code: 'leave_member_has_history',
-        );
-      }
 
       final client = _requireClient();
+      if (shouldDeleteNetworkAfterLeave(network, memberId)) {
+        await _deleteNetworkCascade(networkId);
+        return;
+      }
+
       await client
           .from('network_notifications')
           .delete()
@@ -571,6 +558,21 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
           .delete()
           .eq('network_id', networkId)
           .eq('actor_member_id', memberId);
+      await client
+          .from('expense_reset_approvals')
+          .delete()
+          .eq('network_id', networkId)
+          .eq('member_id', memberId);
+      await client
+          .from('expense_reset_requests')
+          .delete()
+          .eq('network_id', networkId)
+          .eq('status', 'pending');
+      await client
+          .from('expense_reset_requests')
+          .delete()
+          .eq('network_id', networkId)
+          .eq('requested_by_member_id', memberId);
       await client.from('network_members').delete().eq('id', memberId);
     } on RepositoryException {
       rethrow;
@@ -583,14 +585,24 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
     }
   }
 
-  Future<bool> _memberHasAnyExpenseReference(String memberId) async {
+  Future<void> _deleteNetworkCascade(String networkId) async {
     final client = _requireClient();
-    final rows = await client
-        .from('expenses')
-        .select('id')
-        .or('paid_by_member_id.eq.$memberId,added_by_member_id.eq.$memberId')
-        .limit(1);
-    return rows.isNotEmpty;
+    await client
+        .from('network_notifications')
+        .delete()
+        .eq('network_id', networkId);
+    await client
+        .from('expense_reset_approvals')
+        .delete()
+        .eq('network_id', networkId);
+    await client
+        .from('expense_reset_requests')
+        .delete()
+        .eq('network_id', networkId);
+    await client.from('expenses').delete().eq('network_id', networkId);
+    await client.from('expense_cycles').delete().eq('network_id', networkId);
+    await client.from('network_members').delete().eq('network_id', networkId);
+    await client.from('networks').delete().eq('id', networkId);
   }
 
   @override
@@ -1108,6 +1120,19 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
     return value.trim().toLowerCase().replaceAll(RegExp(r'\s+'), ' ');
   }
 
+  static bool canMemberLeaveNetwork(ExpenseNetwork network) {
+    return network.totalExpensesCents == 0;
+  }
+
+  static bool shouldDeleteNetworkAfterLeave(
+    ExpenseNetwork network,
+    String memberId,
+  ) {
+    return canMemberLeaveNetwork(network) &&
+        network.members.length == 1 &&
+        network.members.single.id == memberId;
+  }
+
   SupabaseClient _requireClient() {
     final client = _client;
     if (client == null) {
@@ -1207,7 +1232,7 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
       id: row['id'] as String?,
       networkId: row['network_id'] as String,
       cycleId: row['cycle_id'] as String,
-      requestedByMemberId: row['requested_by_member_id'] as String,
+      requestedByMemberId: row['requested_by_member_id'] as String? ?? '',
       requestedByMemberName: row['requested_by_member_name'] as String,
       createdAt: _parseTimestamp(row['created_at']),
       requiredMemberIds: _stringList(row['required_member_ids']),
