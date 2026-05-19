@@ -33,15 +33,33 @@ jobs:
       - name: Run tests
         run: flutter test
 
-      - name: Build local debug APK
+      - name: Validate Supabase build secrets
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          missing=()
+          if [ -z "$SUPABASE_URL" ]; then
+            missing+=("SUPABASE_URL")
+          fi
+          if [ -z "$SUPABASE_ANON_KEY" ]; then
+            missing+=("SUPABASE_ANON_KEY")
+          fi
+          if [ "${#missing[@]}" -gt 0 ]; then
+            echo "::error title=Missing Supabase secrets::Set repository secrets: ${missing[*]}"
+            exit 1
+          fi
+
+      - name: Build debug APK
         run: |
           flutter build apk --debug \
-            --dart-define=DATA_MODE=local
+            --dart-define=SUPABASE_URL=${{ secrets.SUPABASE_URL }} \
+            --dart-define=SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}
           mkdir -p build/artifacts
           cp build/app/outputs/flutter-apk/app-debug.apk \
             build/artifacts/maskan-debug.apk
 
-      - name: Upload local debug APK
+      - name: Upload debug APK
         uses: actions/upload-artifact@v4
         with:
           name: maskan-debug-apk
@@ -49,19 +67,10 @@ jobs:
           if-no-files-found: error
 
       - name: Build Supabase debug APK
-        env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: |
-          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ]; then
-            echo "::warning title=Supabase APK skipped::Set repository secrets SUPABASE_URL and SUPABASE_ANON_KEY to build the cloud test APK."
-            exit 0
-          fi
-
           flutter build apk --debug \
-            --dart-define=DATA_MODE=supabase \
-            --dart-define=SUPABASE_URL="$SUPABASE_URL" \
-            --dart-define=SUPABASE_ANON_KEY="$SUPABASE_ANON_KEY"
+            --dart-define=SUPABASE_URL=${{ secrets.SUPABASE_URL }} \
+            --dart-define=SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}
           mkdir -p build/artifacts
           cp build/app/outputs/flutter-apk/app-debug.apk \
             build/artifacts/maskan-supabase-debug.apk
@@ -108,7 +117,8 @@ jobs:
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
           flutter build apk --release \
-            --dart-define=DATA_MODE=local
+            --dart-define=SUPABASE_URL=${{ secrets.SUPABASE_URL }} \
+            --dart-define=SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}
           mkdir -p build/artifacts
           cp build/app/outputs/flutter-apk/app-release.apk \
             build/artifacts/Maskan.apk
@@ -130,7 +140,8 @@ jobs:
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
           flutter build appbundle --release \
-            --dart-define=DATA_MODE=local
+            --dart-define=SUPABASE_URL=${{ secrets.SUPABASE_URL }} \
+            --dart-define=SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}
           mkdir -p build/artifacts
           cp build/app/outputs/bundle/release/app-release.aab \
             build/artifacts/maskan-release-signed.aab
