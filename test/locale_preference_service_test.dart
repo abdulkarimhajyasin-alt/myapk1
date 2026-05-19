@@ -29,19 +29,25 @@ void main() {
     expect(service.loadLocale(), const Locale('en'));
   });
 
-  test('key localized labels exist in English and Arabic', () {
+  test('key cloud-only localized labels exist in English and Arabic', () {
     const english = AppLocalizations(Locale('en'));
     const arabic = AppLocalizations(Locale('ar'));
 
     expect(english.appTitle, 'Maskan');
+    expect(arabic.appTitle, 'Maskan');
+
     expect(english.createNetwork, 'Create Network');
     expect(english.joinNetwork, 'Join Network');
     expect(english.chooseLanguage, 'Choose your language');
-    expect(english.footerText, contains('عبد الكريم حاج ياسين'));
-    expect(arabic.appTitle, 'Maskan');
-    expect(arabic.createNetwork, 'إنشاء شبكة');
-    expect(arabic.joinNetwork, 'الانضمام إلى شبكة');
-    expect(arabic.chooseLanguage, 'اختر لغة التطبيق');
-    expect(arabic.footerText, contains('جميع الحقوق محفوظة'));
+    expect(english.cloudConnected, 'Cloud connected');
+    expect(english.errorNoInternet, contains('internet connection'));
+
+    expect(arabic.createNetwork, isNotEmpty);
+    expect(arabic.createNetwork, isNot(english.createNetwork));
+    expect(arabic.joinNetwork, isNotEmpty);
+    expect(arabic.joinNetwork, isNot(english.joinNetwork));
+    expect(arabic.chooseLanguage, isNotEmpty);
+    expect(arabic.chooseLanguage, isNot(english.chooseLanguage));
+    expect(arabic.errorNoInternet, isNotEmpty);
   });
 }

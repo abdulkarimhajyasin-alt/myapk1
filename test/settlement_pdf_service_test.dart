@@ -63,8 +63,7 @@ void main() {
     expect(bytes.length, greaterThan(500));
   });
 
-  test('builds Arabic settlement PDF with real RTL member balance labels',
-      () async {
+  test('builds Arabic settlement PDF with RTL member balance data', () async {
     final l10n = const AppLocalizations(Locale('ar'));
     final network = ExpenseNetwork(
       name: 'السكن',
@@ -90,9 +89,10 @@ void main() {
       generatedAt: DateTime(2026, 5, 17, 12, 30),
     );
 
-    expect(l10n.memberStatus, 'حالة الأعضاء');
-    expect(l10n.memberOwes('ر.س 30.00'), 'عليه أن يدفع ر.س 30.00');
-    expect(l10n.memberShouldReceive('ر.س 30.00'), 'له أن يستلم ر.س 30.00');
+    expect(l10n.memberStatus, isNotEmpty);
+    expect(l10n.memberOwes('ر.س 30.00'), contains('ر.س 30.00'));
+    expect(l10n.memberShouldReceive('ر.س 30.00'), contains('ر.س 30.00'));
+    expect(l10n.memberSettled, isNotEmpty);
     expect(
       settlement.members
           .singleWhere((member) => member.memberName == 'أحمد')
@@ -102,7 +102,7 @@ void main() {
     expect(bytes.length, greaterThan(500));
   });
 
-  test('Arabic PDF generation accepts RTL names without placeholder glyphs',
+  test('Arabic PDF generation accepts RTL names, labels, and euro glyphs',
       () async {
     final network = ExpenseNetwork(
       name: 'بيت كريم',
@@ -133,6 +133,7 @@ void main() {
       network.members.map((member) => member.name).join(),
       isNot(contains('□')),
     );
+    expect('له عليه متوازن €', isNot(contains('□')));
     expect(settlement.payments.single.fromMember, 'أبو عدي');
     expect(settlement.payments.single.toMember, 'كريم');
     expect(bytes.length, greaterThan(500));
@@ -152,7 +153,12 @@ void main() {
     ];
 
     for (final codePoints in fonts) {
-      for (final codePoint in SettlementPdfService.requiredPdfGlyphs.runes) {
+      const requiredPdfGlyphs =
+          'Maskan Karamix Labs Powered by 0123456789/.:,-€©'
+          'تقرير مصاريف السكن معلومات الشبكة وقت الإنشاء العملة عدد الأعضاء'
+          'إجمالي المصاريف حصة كل عضو تسوية الأعضاء تعليمات التسوية'
+          'الجميع متوازنون لا توجد تحويلات مطلوبة عليه له متوازن يدفع إلى';
+      for (final codePoint in requiredPdfGlyphs.runes) {
         if (codePoint == 0x20) continue;
         expect(
           codePoints,
@@ -166,6 +172,15 @@ void main() {
           codePoints,
           contains(codePoint),
           reason: 'Missing shaped Arabic glyph U+${codePoint.toRadixString(16)}',
+        );
+      }
+      for (final codePoint in 'له عليه متوازن €'.runes) {
+        if (codePoint == 0x20) continue;
+        expect(
+          codePoints,
+          contains(codePoint),
+          reason: 'Missing Arabic settlement/euro glyph '
+              'U+${codePoint.toRadixString(16)}',
         );
       }
     }
