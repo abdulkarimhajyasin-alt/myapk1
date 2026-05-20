@@ -427,4 +427,24 @@ void main() {
     expect(error.code, 'supabase_create_network_failed');
     expect(error.message, 'Cloud network could not be created.');
   });
+
+  test('temporary create debug message includes failure stage and raw summary',
+      () {
+    final message = SupabaseExpenseNetworkRepository.createNetworkDebugMessage(
+      Exception('new row violates row-level security policy 42501'),
+      stage: 'member insert',
+      normalizedName: 'flat',
+      networkId: 'network-id',
+      memberId: 'member-id',
+      cleanupError: Exception('cleanup denied 42501'),
+    );
+
+    expect(message, contains('TEMP DEBUG: createNetwork failed.'));
+    expect(message, contains('stage: member insert'));
+    expect(message, contains('classification: policy failure'));
+    expect(message, contains('backend_code: unknown'));
+    expect(message, contains('row-level security'));
+    expect(message, contains('normalized_name: flat'));
+    expect(message, contains('cleanup_delete:'));
+  });
 }

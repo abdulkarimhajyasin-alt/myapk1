@@ -1,3 +1,4 @@
+import 'dart:developer' as developer;
 import 'dart:math';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -27,6 +28,9 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
   static const phaseNotImplementedCode = 'supabase_phase_not_implemented';
   static const maxExpenseNoteLength = 200;
   static const maxNotificationNoteSnippetLength = 80;
+  static const exposeCreateNetworkBackendErrors = bool.fromEnvironment(
+    'MASKAN_HIDE_CREATE_NETWORK_DEBUG',
+  ) == false;
 
   @override
   Future<List<ExpenseNetwork>> getNetworks() async {
@@ -134,10 +138,25 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
     final networkId = createUuid();
     final memberId = createUuid();
     final createdAt = DateTime.now().toUtc();
+    var stage = 'normalize input';
     var insertedNetwork = false;
+
+    _debugCreateNetwork(
+      'normalized input',
+      normalizedName: normalizedNetworkName,
+      networkId: networkId,
+      memberId: memberId,
+    );
 
     try {
       final client = _requireClient();
+      stage = 'network insert';
+      _debugCreateNetwork(
+        'starting network insert',
+        normalizedName: normalizedNetworkName,
+        networkId: networkId,
+        memberId: memberId,
+      );
       await client.from('networks').insert({
         'id': networkId,
         'name': trimmedNetworkName,
@@ -150,7 +169,20 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
         'updated_at': createdAt.toIso8601String(),
       });
       insertedNetwork = true;
+      _debugCreateNetwork(
+        'network insert succeeded',
+        normalizedName: normalizedNetworkName,
+        networkId: networkId,
+        memberId: memberId,
+      );
 
+      stage = 'member insert';
+      _debugCreateNetwork(
+        'starting member insert',
+        normalizedName: normalizedNetworkName,
+        networkId: networkId,
+        memberId: memberId,
+      );
       await client.from('network_members').insert({
         'id': memberId,
         'network_id': networkId,
@@ -160,18 +192,50 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
         'password_salt': memberSalt,
         'created_at': createdAt.toIso8601String(),
       });
+      _debugCreateNetwork(
+        'member insert succeeded',
+        normalizedName: normalizedNetworkName,
+        networkId: networkId,
+        memberId: memberId,
+      );
 
+      stage = 'owner update';
+      _debugCreateNetwork(
+        'starting owner update',
+        normalizedName: normalizedNetworkName,
+        networkId: networkId,
+        memberId: memberId,
+      );
       await client
           .from('networks')
           .update({'created_by_member_id': memberId})
           .eq('id', networkId);
+      _debugCreateNetwork(
+        'owner update succeeded',
+        normalizedName: normalizedNetworkName,
+        networkId: networkId,
+        memberId: memberId,
+      );
 
+      stage = 'active cycle insert';
+      _debugCreateNetwork(
+        'starting active cycle insert',
+        normalizedName: normalizedNetworkName,
+        networkId: networkId,
+        memberId: memberId,
+      );
       await client.from('expense_cycles').insert({
         'network_id': networkId,
         'cycle_number': 1,
         'status': 'active',
         'started_at': createdAt.toIso8601String(),
       });
+      _debugCreateNetwork(
+        'active cycle insert succeeded',
+        normalizedName: normalizedNetworkName,
+        networkId: networkId,
+        memberId: memberId,
+      );
 
       return ExpenseNetwork(
         id: networkId,
@@ -191,8 +255,32 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
         currencySymbol: currency.symbol,
       );
     } catch (error) {
+      _debugCreateNetwork(
+        'failed at $stage: ${backendErrorSummary(error)}',
+        normalizedName: normalizedNetworkName,
+        networkId: networkId,
+        memberId: memberId,
+      );
+      Object? cleanupError;
       if (insertedNetwork && !isDuplicateSupabaseError(error)) {
-        await _tryDeletePartialNetwork(networkId);
+        cleanupError = await _tryDeletePartialNetwork(
+          networkId,
+          normalizedName: normalizedNetworkName,
+          memberId: memberId,
+        );
+      }
+      if (exposeCreateNetworkBackendErrors) {
+        throw RepositoryException(
+          createNetworkDebugMessage(
+            error,
+            stage: stage,
+            normalizedName: normalizedNetworkName,
+            networkId: networkId,
+            memberId: memberId,
+            cleanupError: cleanupError,
+          ),
+          code: 'supabase_create_network_debug_failed',
+        );
       }
       throw mapSupabaseError(
         error,
@@ -207,11 +295,35 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
     }
   }
 
-  Future<void> _tryDeletePartialNetwork(String networkId) async {
+  Future<Object?> _tryDeletePartialNetwork(
+    String networkId, {
+    required String normalizedName,
+    required String memberId,
+  }) async {
+    _debugCreateNetwork(
+      'starting cleanup delete',
+      normalizedName: normalizedName,
+      networkId: networkId,
+      memberId: memberId,
+    );
     try {
       await _deleteNetworkCascade(networkId);
-    } catch (_) {
+      _debugCreateNetwork(
+        'cleanup delete succeeded',
+        normalizedName: normalizedName,
+        networkId: networkId,
+        memberId: memberId,
+      );
+      return null;
+    } catch (error) {
       // Best-effort cleanup only. The original create error is more useful.
+      _debugCreateNetwork(
+        'cleanup delete failed: ${backendErrorSummary(error)}',
+        normalizedName: normalizedName,
+        networkId: networkId,
+        memberId: memberId,
+      );
+      return error;
     }
   }
 
@@ -1493,6 +1605,94 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
     return message.contains('23505') ||
         message.contains('duplicate key') ||
         message.contains('unique constraint');
+  }
+
+  static String createNetworkDebugMessage(
+    Object error, {
+    required String stage,
+    required String normalizedName,
+    required String networkId,
+    required String memberId,
+    Object? cleanupError,
+  }) {
+    final cleanupSummary = cleanupError == null
+        ? 'not needed or succeeded'
+        : backendErrorSummary(cleanupError);
+    return [
+      'TEMP DEBUG: createNetwork failed.',
+      'stage: $stage',
+      'classification: ${classifyBackendError(error)}',
+      'backend_code: ${backendErrorCode(error) ?? 'unknown'}',
+      'backend_message: ${backendErrorMessage(error)}',
+      'backend_details: ${backendErrorDetails(error) ?? 'none'}',
+      'backend_hint: ${backendErrorHint(error) ?? 'none'}',
+      'normalized_name: $normalizedName',
+      'network_id: $networkId',
+      'member_id: $memberId',
+      'cleanup_delete: $cleanupSummary',
+    ].join('\n');
+  }
+
+  static String backendErrorSummary(Object error) {
+    return 'classification=${classifyBackendError(error)}; '
+        'code=${backendErrorCode(error) ?? 'unknown'}; '
+        'message=${backendErrorMessage(error)}; '
+        'details=${backendErrorDetails(error) ?? 'none'}; '
+        'hint=${backendErrorHint(error) ?? 'none'}';
+  }
+
+  static String classifyBackendError(Object error) {
+    final message = error.toString().toLowerCase();
+    if (isDuplicateSupabaseError(error)) return 'duplicate normalized_name';
+    if (message.contains('42501') ||
+        message.contains('row-level security') ||
+        message.contains('permission denied') ||
+        message.contains('rls')) {
+      return 'policy failure';
+    }
+    if (message.contains('23503') || message.contains('foreign key')) {
+      return 'foreign key';
+    }
+    if (message.contains('pgrst116') ||
+        message.contains('0 rows') ||
+        message.contains('not found')) {
+      return 'hidden insert visibility or missing row';
+    }
+    return 'unclassified backend failure';
+  }
+
+  static String? backendErrorCode(Object error) {
+    if (error is PostgrestException) return error.code;
+    return null;
+  }
+
+  static String backendErrorMessage(Object error) {
+    if (error is PostgrestException) return error.message;
+    return error.toString();
+  }
+
+  static String? backendErrorDetails(Object error) {
+    if (error is PostgrestException) return error.details?.toString();
+    return null;
+  }
+
+  static String? backendErrorHint(Object error) {
+    if (error is PostgrestException) return error.hint?.toString();
+    return null;
+  }
+
+  static void _debugCreateNetwork(
+    String message, {
+    required String normalizedName,
+    required String networkId,
+    required String memberId,
+  }) {
+    if (!exposeCreateNetworkBackendErrors) return;
+    developer.log(
+      '$message normalized_name=$normalizedName '
+      'network_id=$networkId member_id=$memberId',
+      name: 'maskan.createNetwork',
+    );
   }
 
   static DateTime _parseTimestamp(Object? value) {
