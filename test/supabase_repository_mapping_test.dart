@@ -48,6 +48,19 @@ void main() {
     );
   });
 
+  test('generates Postgres-compatible UUIDs for create inserts', () {
+    final id = SupabaseExpenseNetworkRepository.createUuid();
+
+    expect(
+      id,
+      matches(
+        RegExp(
+          r'^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$',
+        ),
+      ),
+    );
+  });
+
   test('maps Supabase expense rows into domain expenses', () {
     final expense = SupabaseExpenseNetworkRepository.expenseFromRow({
       'id': 'expense-id',

@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/expense.dart';
@@ -121,59 +123,77 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
     final currency = CurrencyCatalog.findByCode(currencyCode);
     final networkSalt = PasswordHashUtils.createSalt(trimmedNetworkName);
     final memberSalt = PasswordHashUtils.createSalt(trimmedMemberName);
+    final networkPasswordHash = PasswordHashUtils.createHash(
+      password,
+      networkSalt,
+    );
+    final memberPasswordHash = PasswordHashUtils.createHash(
+      memberPassword,
+      memberSalt,
+    );
+    final networkId = createUuid();
+    final memberId = createUuid();
+    final createdAt = DateTime.now().toUtc();
+    var insertedNetwork = false;
 
     try {
       final client = _requireClient();
-      final networkRow = await client
-          .from('networks')
-          .insert({
-            'name': trimmedNetworkName,
-            'normalized_name': normalizedNetworkName,
-            'network_password_hash': PasswordHashUtils.createHash(
-              password,
-              networkSalt,
-            ),
-            'network_password_salt': networkSalt,
-            'currency_code': currency.code,
-            'currency_symbol': currency.symbol,
-          })
-          .select()
-          .single();
+      await client.from('networks').insert({
+        'id': networkId,
+        'name': trimmedNetworkName,
+        'normalized_name': normalizedNetworkName,
+        'network_password_hash': networkPasswordHash,
+        'network_password_salt': networkSalt,
+        'currency_code': currency.code,
+        'currency_symbol': currency.symbol,
+        'created_at': createdAt.toIso8601String(),
+        'updated_at': createdAt.toIso8601String(),
+      });
+      insertedNetwork = true;
 
-      final networkId = networkRow['id'] as String;
-      final memberRow = await client
-          .from('network_members')
-          .insert({
-            'network_id': networkId,
-            'name': trimmedMemberName,
-            'normalized_name': normalizeName(trimmedMemberName),
-            'password_hash': PasswordHashUtils.createHash(
-              memberPassword,
-              memberSalt,
-            ),
-            'password_salt': memberSalt,
-          })
-          .select()
-          .single();
+      await client.from('network_members').insert({
+        'id': memberId,
+        'network_id': networkId,
+        'name': trimmedMemberName,
+        'normalized_name': normalizeName(trimmedMemberName),
+        'password_hash': memberPasswordHash,
+        'password_salt': memberSalt,
+        'created_at': createdAt.toIso8601String(),
+      });
 
-      final updatedNetworkRow = await client
+      await client
           .from('networks')
-          .update({'created_by_member_id': memberRow['id']})
-          .eq('id', networkId)
-          .select()
-          .single();
+          .update({'created_by_member_id': memberId})
+          .eq('id', networkId);
 
       await client.from('expense_cycles').insert({
         'network_id': networkId,
         'cycle_number': 1,
         'status': 'active',
-        'started_at': DateTime.now().toUtc().toIso8601String(),
+        'started_at': createdAt.toIso8601String(),
       });
 
-      return _networkFromHydratedRow(
-        Map<String, dynamic>.from(updatedNetworkRow),
+      return ExpenseNetwork(
+        id: networkId,
+        name: trimmedNetworkName,
+        password: networkPasswordHash,
+        members: [
+          Member(
+            id: memberId,
+            name: trimmedMemberName,
+            passwordHash: memberPasswordHash,
+            passwordSalt: memberSalt,
+            createdAt: createdAt,
+          ),
+        ],
+        createdAt: createdAt,
+        currencyCode: currency.code,
+        currencySymbol: currency.symbol,
       );
     } catch (error) {
+      if (insertedNetwork && !isDuplicateSupabaseError(error)) {
+        await _tryDeletePartialNetwork(networkId);
+      }
       throw mapSupabaseError(
         error,
         duplicateCode: 'duplicate_network',
@@ -184,6 +204,14 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
         fallbackCode: 'supabase_create_network_failed',
         fallbackMessage: 'Cloud network could not be created.',
       );
+    }
+  }
+
+  Future<void> _tryDeletePartialNetwork(String networkId) async {
+    try {
+      await _deleteNetworkCascade(networkId);
+    } catch (_) {
+      // Best-effort cleanup only. The original create error is more useful.
     }
   }
 
@@ -1137,6 +1165,20 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
         network.members.single.id == memberId;
   }
 
+  static String createUuid() {
+    final random = Random.secure();
+    final bytes = List<int>.generate(16, (_) => random.nextInt(256));
+    bytes[6] = (bytes[6] & 0x0f) | 0x40;
+    bytes[8] = (bytes[8] & 0x3f) | 0x80;
+    String hex(int value) => value.toRadixString(16).padLeft(2, '0');
+    final parts = bytes.map(hex).join();
+    return '${parts.substring(0, 8)}-'
+        '${parts.substring(8, 12)}-'
+        '${parts.substring(12, 16)}-'
+        '${parts.substring(16, 20)}-'
+        '${parts.substring(20)}';
+  }
+
   SupabaseClient _requireClient() {
     final client = _client;
     if (client == null) {
@@ -1416,10 +1458,9 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
       );
     }
 
-    final isDuplicate = message.contains('23505') ||
-        message.contains('duplicate key') ||
-        message.contains('unique constraint');
-    if (isDuplicate && duplicateCode != null && duplicateMessage != null) {
+    if (isDuplicateSupabaseError(error) &&
+        duplicateCode != null &&
+        duplicateMessage != null) {
       return RepositoryException(duplicateMessage, code: duplicateCode);
     }
 
@@ -1445,6 +1486,13 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
     }
 
     return RepositoryException(fallbackMessage, code: fallbackCode);
+  }
+
+  static bool isDuplicateSupabaseError(Object error) {
+    final message = error.toString().toLowerCase();
+    return message.contains('23505') ||
+        message.contains('duplicate key') ||
+        message.contains('unique constraint');
   }
 
   static DateTime _parseTimestamp(Object? value) {

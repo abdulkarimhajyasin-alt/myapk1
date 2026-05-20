@@ -54,4 +54,25 @@ void main() {
     expect(schema, contains('phase5_interim_delete_settled_network_expenses'));
     expect(schema, contains('on delete set null'));
   });
+
+  test('member create policy does not depend on network row visibility', () {
+    final schema = File('supabase/schema.sql').readAsStringSync();
+
+    expect(schema, contains('phase5_network_exists'));
+    expect(schema, contains('security definer'));
+    expect(schema, contains('public.phase5_network_exists(network_id)'));
+  });
+
+  test('repository create avoids select-return dependency during inserts', () {
+    final source =
+        File('lib/services/supabase_expense_network_repository.dart')
+            .readAsStringSync();
+    final createStart = source.indexOf('Future<ExpenseNetwork> createNetwork');
+    final createEnd = source.indexOf('Future<void> _tryDeletePartialNetwork');
+    final createSource = source.substring(createStart, createEnd);
+
+    expect(createSource, contains("'id': networkId"));
+    expect(createSource, contains("'id': memberId"));
+    expect(createSource, isNot(contains('.select()\n          .single()')));
+  });
 }

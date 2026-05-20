@@ -458,6 +458,22 @@ as $$
   );
 $$;
 
+create or replace function public.phase5_network_exists(
+  target_network_id uuid
+)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1
+    from public.networks
+    where id = target_network_id
+  );
+$$;
+
 create or replace function public.phase5_expense_members_match_network(
   target_network_id uuid,
   paid_member_id uuid,
@@ -733,11 +749,7 @@ create policy phase5_interim_join_networks
   on public.network_members
   for insert
   with check (
-    exists (
-      select 1
-      from public.networks
-      where id = network_id
-    )
+    public.phase5_network_exists(network_id)
     and length(trim(name)) > 0
     and length(trim(normalized_name)) > 0
     and password_hash is not null
@@ -750,18 +762,10 @@ create policy phase5_interim_update_member_profile
   on public.network_members
   for update
   using (
-    exists (
-      select 1
-      from public.networks
-      where id = network_id
-    )
+    public.phase5_network_exists(network_id)
   )
   with check (
-    exists (
-      select 1
-      from public.networks
-      where id = network_id
-    )
+    public.phase5_network_exists(network_id)
     and length(trim(name)) > 0
     and length(trim(normalized_name)) > 0
   );
