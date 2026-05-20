@@ -34,11 +34,21 @@ class SessionRestorationService {
         return null;
       }
       return RestoredSession(network: network, memberId: member.id);
-    } on RepositoryException {
+    } on RepositoryException catch (error) {
+      if (_isStaleSessionError(error)) {
+        await _sessionRepository.clearActiveSession();
+      }
       return null;
     } catch (_) {
       await _sessionRepository.clearActiveSession();
       return null;
     }
+  }
+
+  bool _isStaleSessionError(RepositoryException error) {
+    return switch (error.code) {
+      'supabase_not_found' || 'network_not_found' || 'member_not_found' => true,
+      _ => false,
+    };
   }
 }

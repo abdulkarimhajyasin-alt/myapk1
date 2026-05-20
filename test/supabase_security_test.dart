@@ -49,6 +49,7 @@ void main() {
     expect(schema, contains('on public.network_members'));
     expect(schema, contains('for delete'));
     expect(schema, contains('phase5_network_has_no_active_expenses'));
+    expect(schema, contains('sum(amount_cents)'));
     expect(schema, contains('phase5_interim_delete_empty_networks'));
     expect(schema, contains('phase5_interim_delete_settled_network_expenses'));
     expect(schema, contains('on delete set null'));

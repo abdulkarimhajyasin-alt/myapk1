@@ -212,6 +212,22 @@ void main() {
       isFalse,
     );
     expect(
+      SupabaseExpenseNetworkRepository.canMemberLeaveNetwork(
+        activeNetwork.copyWith(
+          members: [
+            Member(
+              id: 'ali-id',
+              name: 'Ali',
+              expenses: [
+                Expense(amountCents: 0, createdAt: DateTime(2026)),
+              ],
+            ),
+          ],
+        ),
+      ),
+      isTrue,
+    );
+    expect(
       SupabaseExpenseNetworkRepository.canMemberLeaveNetwork(archivedNetwork),
       isTrue,
     );
@@ -368,5 +384,16 @@ void main() {
     );
 
     expect(error.code, 'supabase_network_unavailable');
+  });
+
+  test('maps missing cloud rows without raw backend copy', () {
+    final error = SupabaseExpenseNetworkRepository.mapSupabaseError(
+      Exception('PGRST116: JSON object requested, multiple or no rows returned'),
+      fallbackCode: 'fallback',
+      fallbackMessage: 'Fallback message.',
+    );
+
+    expect(error.code, 'supabase_not_found');
+    expect(error.message, 'Saved cloud record is no longer available.');
   });
 }

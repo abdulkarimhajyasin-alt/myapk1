@@ -4,6 +4,7 @@ import '../l10n/app_localizations.dart';
 import '../models/expense_network.dart';
 import '../models/expense_reset_request.dart';
 import '../services/expense_network_repository.dart';
+import '../services/repository_error_messages.dart';
 import '../services/settlement_pdf_service.dart';
 import '../services/settlement_service.dart';
 import '../utils/money_utils.dart';
@@ -278,7 +279,7 @@ class _ExpenseSettlementScreenState extends State<ExpenseSettlementScreen> {
         error.code == 'reset_approval_not_required') {
       _showMessage(l10n.resetApprovalFailed);
     } else {
-      _showMessage(error.message);
+      _showMessage(RepositoryErrorMessages.fromException(context, error));
     }
   }
 

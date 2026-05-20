@@ -488,12 +488,15 @@ stable
 security definer
 set search_path = public
 as $$
-  select not exists (
-    select 1
-    from public.expenses
-    where network_id = target_network_id
-      and archived_at is null
-  );
+  select coalesce(
+    (
+      select sum(amount_cents)
+      from public.expenses
+      where network_id = target_network_id
+        and archived_at is null
+    ),
+    0
+  ) <= 0;
 $$;
 
 create or replace function public.phase5_network_can_be_deleted_after_leave(

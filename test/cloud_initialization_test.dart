@@ -50,7 +50,9 @@ void main() {
     const arabic = AppLocalizations(Locale('ar'));
 
     expect(l10n.errorSupabaseNotConfigured, 'Supabase configuration missing');
+    expect(l10n.errorCloudRecordUnavailable, contains('create or join'));
     expect(l10n.supabaseConfigurationMissingMessage, isNotEmpty);
+    expect(arabic.errorCloudRecordUnavailable, isNotEmpty);
     expect(
       arabic.confirmLeaveNetwork,
       'هل تريد حذف حسابك ومغادرة شبكة المصروف نهائيًا؟',

@@ -92,6 +92,44 @@ void main() {
     expect(sessionRepository.cleared, isTrue);
   });
 
+  testWidgets('leave flow allows an active total of exactly zero',
+      (tester) async {
+    final network = ExpenseNetwork(
+      id: 'network_1',
+      name: 'Flat',
+      password: 'network',
+      createdAt: DateTime(2026),
+      members: [
+        Member(
+          id: 'member_1',
+          name: 'Ali',
+          expenses: [
+            Expense(amountCents: 0, createdAt: DateTime(2026)),
+          ],
+        ),
+        Member(id: 'member_2', name: 'Mona'),
+      ],
+    );
+    final repository = _LeaveRepository(network);
+    final sessionRepository = _LeaveSessionRepository();
+
+    await _pumpDashboard(
+      tester,
+      network: network,
+      repository: repository,
+      sessionRepository: sessionRepository,
+    );
+
+    await tester.tap(find.byTooltip('Leave Network'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Confirm'));
+    await tester.pumpAndSettle();
+
+    expect(repository.leftNetworkId, 'network_1');
+    expect(repository.leftMemberId, 'member_1');
+    expect(sessionRepository.cleared, isTrue);
+  });
+
   testWidgets('leave flow allows archived history when active total is zero',
       (tester) async {
     final network = ExpenseNetwork(

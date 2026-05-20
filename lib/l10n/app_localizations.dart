@@ -105,6 +105,8 @@ class AppLocalizations {
       'errorWrongPersonalPassword': 'Personal password is incorrect.',
       'errorSupabasePermission':
           'Cloud access was denied. Check Supabase RLS policies and test credentials.',
+      'errorCloudRecordUnavailable':
+          'This saved network is no longer available. Please create or join a network again.',
       'errorSupabaseNotConfigured':
           'Supabase configuration missing',
       'supabaseConfigurationMissingMessage':
@@ -268,6 +270,8 @@ class AppLocalizations {
       'errorWrongPersonalPassword': 'كلمة مرور الحساب الشخصي غير صحيحة.',
       'errorSupabasePermission':
           'تم رفض الوصول السحابي. تحقق من سياسات Supabase RLS وبيانات الاختبار.',
+      'errorCloudRecordUnavailable':
+          'هذه الشبكة المحفوظة لم تعد متاحة. أنشئ شبكة أو انضم إلى شبكة مرة أخرى.',
       'errorSupabaseNotConfigured':
           'إعداد Supabase مفقود',
       'supabaseConfigurationMissingMessage':
@@ -439,6 +443,8 @@ class AppLocalizations {
   String get errorWrongNetworkPassword => _text('errorWrongNetworkPassword');
   String get errorWrongPersonalPassword => _text('errorWrongPersonalPassword');
   String get errorSupabasePermission => _text('errorSupabasePermission');
+  String get errorCloudRecordUnavailable =>
+      _text('errorCloudRecordUnavailable');
   String get errorSupabaseNotConfigured => _text('errorSupabaseNotConfigured');
   String get supabaseConfigurationMissingMessage =>
       _text('supabaseConfigurationMissingMessage');

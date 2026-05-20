@@ -1121,7 +1121,7 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
   }
 
   static bool canMemberLeaveNetwork(ExpenseNetwork network) {
-    return network.totalExpensesCents == 0;
+    return network.totalExpensesCents <= 0;
   }
 
   static bool shouldDeleteNetworkAfterLeave(
@@ -1433,7 +1433,7 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
         message.contains('0 rows');
     if (isNotFound) {
       return const RepositoryException(
-        'Cloud record was not found.',
+        'Saved cloud record is no longer available.',
         code: 'supabase_not_found',
       );
     }

@@ -15,7 +15,6 @@ import '../utils/avatar_utils.dart';
 import '../utils/money_utils.dart';
 import '../widgets/app_scaffold.dart';
 import '../widgets/member_avatar.dart';
-import '../widgets/mode_indicator.dart';
 import 'add_expense_screen.dart';
 import 'expense_settlement_screen.dart';
 import 'invite_members_screen.dart';
@@ -396,11 +395,9 @@ class _NetworkDashboardScreenState extends State<NetworkDashboardScreen> {
             ),
           ),
           const SizedBox(height: 10),
-          Row(
-            children: [
-              const Expanded(child: ModeIndicator()),
-              _SyncStatusChip(state: _realtimeState),
-            ],
+          Align(
+            alignment: AlignmentDirectional.centerEnd,
+            child: _SyncStatusChip(state: _realtimeState),
           ),
           const SizedBox(height: 12),
           Row(
@@ -511,6 +508,9 @@ class _SyncStatusChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (state == RealtimeConnectionState.connected) {
+      return const SizedBox.shrink();
+    }
     final l10n = context.l10n;
     final label = switch (state) {
       RealtimeConnectionState.connected => l10n.connected,

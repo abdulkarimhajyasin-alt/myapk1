@@ -41,4 +41,19 @@ void main() {
       contains('RLS'),
     );
   });
+
+  test('maps stale cloud records to user-friendly recovery copy', () {
+    expect(
+      RepositoryErrorMessages.fromCode(l10n, 'supabase_not_found'),
+      'This saved network is no longer available. Please create or join a network again.',
+    );
+    expect(
+      RepositoryErrorMessages.fromCode(l10n, 'network_not_found'),
+      contains('create or join'),
+    );
+    expect(
+      RepositoryErrorMessages.fromCode(l10n, 'member_not_found'),
+      contains('create or join'),
+    );
+  });
 }
