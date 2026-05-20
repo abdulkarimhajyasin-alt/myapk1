@@ -68,11 +68,20 @@ void main() {
         File('lib/services/supabase_expense_network_repository.dart')
             .readAsStringSync();
     final createStart = source.indexOf('Future<ExpenseNetwork> createNetwork');
-    final createEnd = source.indexOf('Future<void> _tryDeletePartialNetwork');
+    final createEnd = source.indexOf('@override', createStart + 1);
     final createSource = source.substring(createStart, createEnd);
 
+    expect(createSource, contains('final networkId = createUuid();'));
+    expect(createSource, contains('final memberId = createUuid();'));
     expect(createSource, contains("'id': networkId"));
     expect(createSource, contains("'id': memberId"));
+    expect(createSource, contains('insertedNetwork = true'));
+    expect(
+      createSource,
+      contains('insertedNetwork && !isDuplicateSupabaseError(error)'),
+    );
+    expect(createSource, contains('_tryDeletePartialNetwork('));
+    expect(createSource, contains("duplicateCode: 'duplicate_network'"));
     expect(createSource, isNot(contains('.select()\n          .single()')));
   });
 }
