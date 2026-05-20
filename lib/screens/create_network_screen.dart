@@ -51,6 +51,7 @@ class _CreateNetworkScreenState extends State<CreateNetworkScreen> {
     });
 
     try {
+      await _clearInvalidPersistedSession();
       final network = await widget.repository.createNetwork(
         displayName: _displayNameController.text,
         networkName: _networkNameController.text,
@@ -73,6 +74,27 @@ class _CreateNetworkScreenState extends State<CreateNetworkScreen> {
           ));
     } finally {
       if (mounted) setState(() => _isSaving = false);
+    }
+  }
+
+  Future<void> _clearInvalidPersistedSession() async {
+    final session = await widget.sessionRepository.getActiveSession();
+    if (session == null) return;
+
+    try {
+      final savedNetwork = await widget.repository.findNetwork(
+        session.networkName,
+      );
+      final savedMember = savedNetwork?.findMemberById(session.memberId);
+      if (savedNetwork == null || savedMember == null) {
+        await widget.sessionRepository.clearActiveSession();
+      }
+    } on RepositoryException catch (error) {
+      if (error.code == 'supabase_not_found' ||
+          error.code == 'network_not_found' ||
+          error.code == 'member_not_found') {
+        await widget.sessionRepository.clearActiveSession();
+      }
     }
   }
 

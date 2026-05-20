@@ -177,7 +177,10 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
       throw mapSupabaseError(
         error,
         duplicateCode: 'duplicate_network',
-        duplicateMessage: 'A network with this name already exists.',
+        duplicateMessage:
+            'This network name is already in use. Choose another name.',
+        notFoundCode: 'supabase_create_network_failed',
+        notFoundMessage: 'Cloud network could not be created.',
         fallbackCode: 'supabase_create_network_failed',
         fallbackMessage: 'Cloud network could not be created.',
       );
@@ -305,7 +308,8 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
       throw mapSupabaseError(
         error,
         duplicateCode: 'duplicate_network',
-        duplicateMessage: 'A network with this name already exists.',
+        duplicateMessage:
+            'This network name is already in use. Choose another name.',
         fallbackCode: 'supabase_save_network_failed',
         fallbackMessage: 'Cloud network could not be saved.',
       );
@@ -1387,6 +1391,8 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
     Object error, {
     String? duplicateCode,
     String? duplicateMessage,
+    String? notFoundCode,
+    String? notFoundMessage,
     required String fallbackCode,
     required String fallbackMessage,
   }) {
@@ -1432,9 +1438,9 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
         message.contains('not found') ||
         message.contains('0 rows');
     if (isNotFound) {
-      return const RepositoryException(
-        'Saved cloud record is no longer available.',
-        code: 'supabase_not_found',
+      return RepositoryException(
+        notFoundMessage ?? 'Saved cloud record is no longer available.',
+        code: notFoundCode ?? 'supabase_not_found',
       );
     }
 

@@ -378,7 +378,7 @@ class _LeaveRepository implements ExpenseNetworkRepository {
         SupabaseExpenseNetworkRepository.normalizeName(networkName) ==
             SupabaseExpenseNetworkRepository.normalizeName(network.name)) {
       throw const RepositoryException(
-        'A network with this name already exists.',
+        'This network name is already in use. Choose another name.',
         code: 'duplicate_network',
       );
     }

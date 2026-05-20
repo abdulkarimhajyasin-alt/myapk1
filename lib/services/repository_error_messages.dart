@@ -25,6 +25,7 @@ class RepositoryErrorMessages {
       'supabase_not_found' => l10n.errorCloudRecordUnavailable,
       'network_not_found' => l10n.errorCloudRecordUnavailable,
       'member_not_found' => l10n.errorCloudRecordUnavailable,
+      'supabase_create_network_failed' => l10n.errorCreateNetworkFailed,
       'supabase_not_initialized' => l10n.errorSupabaseNotConfigured,
       'reset_request_already_pending' => l10n.resetRequestAlreadyPending,
       'reset_request_not_pending' => l10n.resetApprovalFailed,

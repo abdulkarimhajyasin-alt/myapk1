@@ -341,13 +341,18 @@ void main() {
     final error = SupabaseExpenseNetworkRepository.mapSupabaseError(
       Exception('duplicate key value violates unique constraint 23505'),
       duplicateCode: 'duplicate_network',
-      duplicateMessage: 'A network with this name already exists.',
+      duplicateMessage:
+          'This network name is already in use. Choose another name.',
       fallbackCode: 'fallback',
       fallbackMessage: 'Fallback',
     );
 
     expect(error, isA<RepositoryException>());
     expect(error.code, 'duplicate_network');
+    expect(
+      error.message,
+      'This network name is already in use. Choose another name.',
+    );
   });
 
   test('maps duplicate member errors to RepositoryException', () {
@@ -395,5 +400,18 @@ void main() {
 
     expect(error.code, 'supabase_not_found');
     expect(error.message, 'Saved cloud record is no longer available.');
+  });
+
+  test('create network maps missing internal rows as create failure', () {
+    final error = SupabaseExpenseNetworkRepository.mapSupabaseError(
+      Exception('PGRST116: JSON object requested, multiple or no rows returned'),
+      notFoundCode: 'supabase_create_network_failed',
+      notFoundMessage: 'Cloud network could not be created.',
+      fallbackCode: 'fallback',
+      fallbackMessage: 'Fallback message.',
+    );
+
+    expect(error.code, 'supabase_create_network_failed');
+    expect(error.message, 'Cloud network could not be created.');
   });
 }

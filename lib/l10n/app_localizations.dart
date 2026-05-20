@@ -98,7 +98,8 @@ class AppLocalizations {
       'retry': 'Retry',
       'errorNoInternet':
           'Maskan needs an internet connection. Check your connection and try again.',
-      'errorDuplicateNetwork': 'A network with this name already exists.',
+      'errorDuplicateNetwork':
+          'This network name is already in use. Choose another name.',
       'errorDuplicateMember':
           'This member name is already used in the network.',
       'errorWrongNetworkPassword': 'Network name or password is incorrect.',
@@ -107,6 +108,8 @@ class AppLocalizations {
           'Cloud access was denied. Check Supabase RLS policies and test credentials.',
       'errorCloudRecordUnavailable':
           'This saved network is no longer available. Please create or join a network again.',
+      'errorCreateNetworkFailed':
+          'Could not create the network. Please try again.',
       'errorSupabaseNotConfigured':
           'Supabase configuration missing',
       'supabaseConfigurationMissingMessage':
@@ -264,7 +267,7 @@ class AppLocalizations {
       'newExpenseNotification': 'أضاف {actor} {amount}',
       'errorNoInternet':
           'يحتاج الوضع السحابي إلى اتصال بالإنترنت. تحقق من الاتصال وحاول مرة أخرى.',
-      'errorDuplicateNetwork': 'توجد شبكة بهذا الاسم بالفعل.',
+      'errorDuplicateNetwork': 'اسم الشبكة مستخدم بالفعل. اختر اسمًا آخر.',
       'errorDuplicateMember': 'اسم العضو مستخدم بالفعل في هذه الشبكة.',
       'errorWrongNetworkPassword': 'اسم الشبكة أو كلمة مرور الشبكة غير صحيحة.',
       'errorWrongPersonalPassword': 'كلمة مرور الحساب الشخصي غير صحيحة.',
@@ -272,6 +275,8 @@ class AppLocalizations {
           'تم رفض الوصول السحابي. تحقق من سياسات Supabase RLS وبيانات الاختبار.',
       'errorCloudRecordUnavailable':
           'هذه الشبكة المحفوظة لم تعد متاحة. أنشئ شبكة أو انضم إلى شبكة مرة أخرى.',
+      'errorCreateNetworkFailed':
+          'تعذر إنشاء الشبكة. حاول مرة أخرى.',
       'errorSupabaseNotConfigured':
           'إعداد Supabase مفقود',
       'supabaseConfigurationMissingMessage':
@@ -445,6 +450,7 @@ class AppLocalizations {
   String get errorSupabasePermission => _text('errorSupabasePermission');
   String get errorCloudRecordUnavailable =>
       _text('errorCloudRecordUnavailable');
+  String get errorCreateNetworkFailed => _text('errorCreateNetworkFailed');
   String get errorSupabaseNotConfigured => _text('errorSupabaseNotConfigured');
   String get supabaseConfigurationMissingMessage =>
       _text('supabaseConfigurationMissingMessage');

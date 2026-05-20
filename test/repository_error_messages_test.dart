@@ -19,7 +19,7 @@ void main() {
   test('maps common credential and duplicate errors', () {
     expect(
       RepositoryErrorMessages.fromCode(l10n, 'duplicate_network'),
-      'A network with this name already exists.',
+      'This network name is already in use. Choose another name.',
     );
     expect(
       RepositoryErrorMessages.fromCode(l10n, 'duplicate_member'),
@@ -54,6 +54,13 @@ void main() {
     expect(
       RepositoryErrorMessages.fromCode(l10n, 'member_not_found'),
       contains('create or join'),
+    );
+  });
+
+  test('maps create network failures without stale-session copy', () {
+    expect(
+      RepositoryErrorMessages.fromCode(l10n, 'supabase_create_network_failed'),
+      'Could not create the network. Please try again.',
     );
   });
 }
