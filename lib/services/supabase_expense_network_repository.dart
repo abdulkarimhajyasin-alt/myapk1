@@ -140,6 +140,7 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
     final createdAt = DateTime.now().toUtc();
     var stage = 'normalize input';
     var insertedNetwork = false;
+    final completedStages = <String>['normalize input'];
 
     _debugCreateNetwork(
       'normalized input',
@@ -169,8 +170,9 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
         'updated_at': createdAt.toIso8601String(),
       });
       insertedNetwork = true;
+      completedStages.add('network insert');
       _debugCreateNetwork(
-        'network insert succeeded',
+        'SUCCESS network insert',
         normalizedName: normalizedNetworkName,
         networkId: networkId,
         memberId: memberId,
@@ -192,8 +194,9 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
         'password_salt': memberSalt,
         'created_at': createdAt.toIso8601String(),
       });
+      completedStages.add('member insert');
       _debugCreateNetwork(
-        'member insert succeeded',
+        'SUCCESS member insert',
         normalizedName: normalizedNetworkName,
         networkId: networkId,
         memberId: memberId,
@@ -210,8 +213,9 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
           .from('networks')
           .update({'created_by_member_id': memberId})
           .eq('id', networkId);
+      completedStages.add('owner update');
       _debugCreateNetwork(
-        'owner update succeeded',
+        'SUCCESS owner update',
         normalizedName: normalizedNetworkName,
         networkId: networkId,
         memberId: memberId,
@@ -230,8 +234,9 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
         'status': 'active',
         'started_at': createdAt.toIso8601String(),
       });
+      completedStages.add('active cycle insert');
       _debugCreateNetwork(
-        'active cycle insert succeeded',
+        'SUCCESS active cycle insert',
         normalizedName: normalizedNetworkName,
         networkId: networkId,
         memberId: memberId,
@@ -274,6 +279,7 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
           createNetworkDebugMessage(
             error,
             stage: stage,
+            completedStages: completedStages,
             normalizedName: normalizedNetworkName,
             networkId: networkId,
             memberId: memberId,
@@ -1610,6 +1616,7 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
   static String createNetworkDebugMessage(
     Object error, {
     required String stage,
+    required List<String> completedStages,
     required String normalizedName,
     required String networkId,
     required String memberId,
@@ -1618,9 +1625,13 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
     final cleanupSummary = cleanupError == null
         ? 'not needed or succeeded'
         : backendErrorSummary(cleanupError);
+    final previousStage =
+        completedStages.isEmpty ? 'none' : completedStages.last;
     return [
       'TEMP DEBUG: createNetwork failed.',
-      'stage: $stage',
+      'current_stage: $stage',
+      'completed_stages: ${completedStages.join(' -> ')}',
+      'previous_stage_succeeded: $previousStage',
       'classification: ${classifyBackendError(error)}',
       'backend_code: ${backendErrorCode(error) ?? 'unknown'}',
       'backend_message: ${backendErrorMessage(error)}',

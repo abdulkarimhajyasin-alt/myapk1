@@ -433,6 +433,7 @@ void main() {
     final message = SupabaseExpenseNetworkRepository.createNetworkDebugMessage(
       Exception('new row violates row-level security policy 42501'),
       stage: 'member insert',
+      completedStages: const ['normalize input', 'network insert'],
       normalizedName: 'flat',
       networkId: 'network-id',
       memberId: 'member-id',
@@ -440,7 +441,12 @@ void main() {
     );
 
     expect(message, contains('TEMP DEBUG: createNetwork failed.'));
-    expect(message, contains('stage: member insert'));
+    expect(message, contains('current_stage: member insert'));
+    expect(
+      message,
+      contains('completed_stages: normalize input -> network insert'),
+    );
+    expect(message, contains('previous_stage_succeeded: network insert'));
     expect(message, contains('classification: policy failure'));
     expect(message, contains('backend_code: unknown'));
     expect(message, contains('row-level security'));
