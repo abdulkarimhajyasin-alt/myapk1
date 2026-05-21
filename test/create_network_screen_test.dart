@@ -151,7 +151,10 @@ void main() {
 
     expect(find.textContaining('TEMP DEBUG'), findsNothing);
     expect(find.textContaining('backend_code'), findsNothing);
-    expect(find.text('Cloud network could not be created.'), findsOneWidget);
+    expect(
+      find.text('Could not create the network. Please try again.'),
+      findsOneWidget,
+    );
   });
 }
 
