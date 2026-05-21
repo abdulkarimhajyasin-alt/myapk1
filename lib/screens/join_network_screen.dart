@@ -9,12 +9,18 @@ import '../widgets/app_scaffold.dart';
 import '../widgets/form_error_text.dart';
 import 'network_dashboard_screen.dart';
 
+typedef JoinNetworkDashboardBuilder = Widget Function(
+  ExpenseNetwork network,
+  String currentMemberId,
+);
+
 class JoinNetworkScreen extends StatefulWidget {
   const JoinNetworkScreen({
     required this.repository,
     required this.sessionRepository,
     this.inviteNetworkId,
     this.inviteNetworkName,
+    this.dashboardBuilder,
     super.key,
   });
 
@@ -22,6 +28,7 @@ class JoinNetworkScreen extends StatefulWidget {
   final SessionRepository sessionRepository;
   final String? inviteNetworkId;
   final String? inviteNetworkName;
+  final JoinNetworkDashboardBuilder? dashboardBuilder;
 
   @override
   State<JoinNetworkScreen> createState() => _JoinNetworkScreenState();
@@ -71,12 +78,10 @@ class _JoinNetworkScreenState extends State<JoinNetworkScreen> {
         networkId: widget.inviteNetworkId,
       );
       if (!mounted) return;
-      await widget.sessionRepository.saveActiveSession(
-        networkName: network.name,
-        memberId: network.members.last.id,
-      );
+      final currentMemberId = network.members.last.id;
+      await _saveJoinedSession(network.name, currentMemberId);
       if (!mounted) return;
-      _openDashboard(network);
+      _openDashboard(network, currentMemberId);
     } on RepositoryException catch (error) {
       if (!mounted) return;
       setState(() => _error = RepositoryErrorMessages.fromException(
@@ -88,15 +93,32 @@ class _JoinNetworkScreenState extends State<JoinNetworkScreen> {
     }
   }
 
-  void _openDashboard(ExpenseNetwork network) {
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(
-        builder: (_) => NetworkDashboardScreen(
+  Future<void> _saveJoinedSession(String networkName, String memberId) async {
+    try {
+      await widget.sessionRepository.saveActiveSession(
+        networkName: networkName,
+        memberId: memberId,
+      );
+    } catch (_) {
+      // Joining already completed in Supabase. Keep the user moving into the
+      // joined network instead of showing a false join failure.
+    }
+  }
+
+  void _openDashboard(ExpenseNetwork network, String currentMemberId) {
+    final dashboard = widget.dashboardBuilder?.call(
+          network,
+          currentMemberId,
+        ) ??
+        NetworkDashboardScreen(
           repository: widget.repository,
           sessionRepository: widget.sessionRepository,
           network: network,
-          currentMemberId: network.members.last.id,
-        ),
+          currentMemberId: currentMemberId,
+        );
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(
+        builder: (_) => dashboard,
       ),
     );
   }

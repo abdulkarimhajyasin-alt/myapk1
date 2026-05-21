@@ -13,13 +13,17 @@ void main() {
   testWidgets('invite join passes network id to cloud repository',
       (tester) async {
     final repository = _InviteJoinRepository();
+    final sessions = _SessionRepository();
 
     await tester.pumpWidget(
       _TestApp(
         child: JoinNetworkScreen(
           repository: repository,
-          sessionRepository: _SessionRepository(),
+          sessionRepository: sessions,
           inviteNetworkId: 'network_1',
+          dashboardBuilder: (network, currentMemberId) => Scaffold(
+            body: Text('Dashboard ${network.name} $currentMemberId'),
+          ),
         ),
       ),
     );
@@ -40,7 +44,110 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(repository.joinedNetworkId, 'network_1');
+    expect(sessions.saved?.networkName, 'Flat');
+    expect(sessions.saved?.memberId, 'mona-id');
+    expect(find.text('Dashboard Flat mona-id'), findsOneWidget);
+    expect(find.text('Join'), findsNothing);
   });
+
+  testWidgets('successful join still opens dashboard if session write fails',
+      (tester) async {
+    final repository = _InviteJoinRepository();
+    final sessions = _SessionRepository(
+      saveError: Exception('metadata write failed'),
+    );
+
+    await tester.pumpWidget(
+      _TestApp(
+        child: JoinNetworkScreen(
+          repository: repository,
+          sessionRepository: sessions,
+          dashboardBuilder: (network, currentMemberId) => Scaffold(
+            body: Text('Dashboard ${network.name} $currentMemberId'),
+          ),
+        ),
+      ),
+    );
+
+    await _submitJoinForm(tester);
+    await tester.pumpAndSettle();
+
+    expect(repository.joinCalls, 1);
+    expect(find.text('Dashboard Flat mona-id'), findsOneWidget);
+    expect(find.textContaining('failed'), findsNothing);
+  });
+
+  testWidgets('invalid join credentials show localized friendly error',
+      (tester) async {
+    final repository = _InviteJoinRepository(
+      joinError: const RepositoryException(
+        'Network name or password is incorrect.',
+        code: 'network_invalid_credentials',
+      ),
+    );
+
+    await tester.pumpWidget(
+      _TestApp(
+        child: JoinNetworkScreen(
+          repository: repository,
+          sessionRepository: _SessionRepository(),
+        ),
+      ),
+    );
+
+    await _submitJoinForm(tester);
+    await tester.pump();
+
+    expect(find.text('Network name or password is incorrect.'), findsOneWidget);
+    expect(find.textContaining('backend_'), findsNothing);
+  });
+
+  testWidgets('duplicate member shows localized friendly error', (tester) async {
+    final repository = _InviteJoinRepository(
+      joinError: const RepositoryException(
+        'This member name is already used in the network.',
+        code: 'duplicate_member',
+      ),
+    );
+
+    await tester.pumpWidget(
+      _TestApp(
+        child: JoinNetworkScreen(
+          repository: repository,
+          sessionRepository: _SessionRepository(),
+        ),
+      ),
+    );
+
+    await _submitJoinForm(tester);
+    await tester.pump();
+
+    expect(
+      find.text('This member name is already used in the network.'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('backend_'), findsNothing);
+  });
+}
+
+Future<void> _submitJoinForm(WidgetTester tester) async {
+  await tester.enterText(
+    find.widgetWithText(TextFormField, 'User display name'),
+    'Mona',
+  );
+  await tester.enterText(
+    find.widgetWithText(TextFormField, 'Network name'),
+    'Flat',
+  );
+  await tester.enterText(
+    find.widgetWithText(TextFormField, 'Network password'),
+    'network-pass',
+  );
+  await tester.enterText(
+    find.widgetWithText(TextFormField, 'Personal account password'),
+    'member-pass',
+  );
+  await tester.tap(find.text('Join'));
 }
 
 class _TestApp extends StatelessWidget {
@@ -59,6 +166,11 @@ class _TestApp extends StatelessWidget {
 }
 
 class _SessionRepository implements SessionRepository {
+  _SessionRepository({this.saveError});
+
+  final Object? saveError;
+  AccountSession? saved;
+
   @override
   Future<void> clearActiveSession() async {}
 
@@ -69,11 +181,19 @@ class _SessionRepository implements SessionRepository {
   Future<void> saveActiveSession({
     required String networkName,
     required String memberId,
-  }) async {}
+  }) async {
+    final error = saveError;
+    if (error != null) throw error;
+    saved = AccountSession(networkName: networkName, memberId: memberId);
+  }
 }
 
 class _InviteJoinRepository implements ExpenseNetworkRepository {
+  _InviteJoinRepository({this.joinError});
+
+  final RepositoryException? joinError;
   String? joinedNetworkId;
+  int joinCalls = 0;
 
   @override
   Future<ExpenseNetwork> joinNetwork({
@@ -83,13 +203,19 @@ class _InviteJoinRepository implements ExpenseNetworkRepository {
     required String memberPassword,
     String? networkId,
   }) async {
+    joinCalls += 1;
     joinedNetworkId = networkId;
+    final error = joinError;
+    if (error != null) throw error;
     return ExpenseNetwork(
       id: networkId ?? 'network_1',
       name: 'Flat',
       password: 'hash',
       createdAt: DateTime(2026),
-      members: [Member(name: displayName)],
+      members: [
+        Member(id: 'owner-id', name: 'Ali'),
+        Member(id: 'mona-id', name: displayName),
+      ],
     );
   }
 

@@ -340,22 +340,25 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
     final resolvedNetworkId = networkRow['id'] as String;
     final trimmedMemberName = displayName.trim();
     final memberSalt = PasswordHashUtils.createSalt(trimmedMemberName);
+    final memberId = createUuid();
+    final joinedAt = DateTime.now().toUtc();
+    final memberPasswordHash = PasswordHashUtils.createHash(
+      memberPassword,
+      memberSalt,
+    );
+    final joinedMemberRow = {
+      'id': memberId,
+      'network_id': resolvedNetworkId,
+      'name': trimmedMemberName,
+      'normalized_name': normalizeName(trimmedMemberName),
+      'password_hash': memberPasswordHash,
+      'password_salt': memberSalt,
+      'created_at': joinedAt.toIso8601String(),
+    };
 
     try {
       final client = _requireClient();
-      await client.from('network_members').insert({
-        'network_id': resolvedNetworkId,
-        'name': trimmedMemberName,
-        'normalized_name': normalizeName(trimmedMemberName),
-        'password_hash': PasswordHashUtils.createHash(
-          memberPassword,
-          memberSalt,
-        ),
-        'password_salt': memberSalt,
-      });
-
-      final updatedNetworkRow = await _loadNetworkRowById(resolvedNetworkId);
-      return _networkFromHydratedRow(updatedNetworkRow ?? networkRow);
+      await client.from('network_members').insert(joinedMemberRow);
     } catch (error) {
       throw mapSupabaseError(
         error,
@@ -364,6 +367,20 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
         fallbackCode: 'supabase_join_network_failed',
         fallbackMessage: 'Cloud network could not be joined.',
       );
+    }
+
+    try {
+      final updatedNetworkRow = await _loadNetworkRowById(resolvedNetworkId);
+      final hydrated = await _networkFromHydratedRow(
+        updatedNetworkRow ?? networkRow,
+      );
+      return _withMemberLast(hydrated, memberId);
+    } catch (error) {
+      developer.log(
+        'post-join network reload failed: ${backendErrorSummary(error)}',
+        name: 'maskan.joinNetwork',
+      );
+      return networkFromRows(networkRow, [joinedMemberRow]);
     }
   }
 
@@ -1338,6 +1355,22 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
       avatarInitials: row['avatar_initials'] as String?,
       avatarImagePath: row['avatar_image_path'] as String?,
       avatarImageUrl: row['avatar_image_url'] as String?,
+    );
+  }
+
+  static ExpenseNetwork _withMemberLast(
+    ExpenseNetwork network,
+    String memberId,
+  ) {
+    final joinedMembers = network.members.where(
+      (member) => member.id == memberId,
+    );
+    if (joinedMembers.isEmpty) return network;
+    return network.copyWith(
+      members: [
+        ...network.members.where((member) => member.id != memberId),
+        joinedMembers.last,
+      ],
     );
   }
 
