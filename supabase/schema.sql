@@ -1016,3 +1016,44 @@ comment on table public.expense_reset_approvals is
   'Member approvals captured against the request membership snapshot.';
 comment on table public.network_notifications is
   'Notification records for cloud-backed network activity.';
+
+insert into storage.buckets (
+  id,
+  name,
+  public,
+  file_size_limit,
+  allowed_mime_types
+)
+values (
+  'member-avatars',
+  'member-avatars',
+  true,
+  1048576,
+  array['image/jpeg', 'image/png', 'image/webp']
+)
+on conflict (id) do update
+set public = excluded.public,
+    file_size_limit = excluded.file_size_limit,
+    allowed_mime_types = excluded.allowed_mime_types;
+
+drop policy if exists maskan_member_avatar_public_read
+  on storage.objects;
+create policy maskan_member_avatar_public_read
+  on storage.objects
+  for select
+  using (bucket_id = 'member-avatars');
+
+drop policy if exists maskan_member_avatar_upload
+  on storage.objects;
+create policy maskan_member_avatar_upload
+  on storage.objects
+  for insert
+  with check (bucket_id = 'member-avatars');
+
+drop policy if exists maskan_member_avatar_update
+  on storage.objects;
+create policy maskan_member_avatar_update
+  on storage.objects
+  for update
+  using (bucket_id = 'member-avatars')
+  with check (bucket_id = 'member-avatars');

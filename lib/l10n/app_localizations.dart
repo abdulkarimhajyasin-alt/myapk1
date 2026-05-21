@@ -188,6 +188,10 @@ class AppLocalizations {
       'activityTimeline': 'Activity timeline',
       'noActivityYet': 'No activity yet.',
       'editAvatar': 'Edit avatar',
+      'avatarPhotoPermissionDenied':
+          'Photo access was denied. Allow gallery access and try again.',
+      'avatarPhotoUploadFailed':
+          'Could not update your profile photo. Please try again.',
       'avatarColor': 'Avatar color',
       'save': 'Save',
       'pushExpenseAddedTitle': 'New expense added',
@@ -353,6 +357,10 @@ class AppLocalizations {
       'activityTimeline': 'سجل النشاط',
       'noActivityYet': 'لا يوجد نشاط بعد.',
       'editAvatar': 'تعديل الصورة',
+      'avatarPhotoPermissionDenied':
+          'تم رفض الوصول إلى الصور. اسمح بالوصول إلى المعرض ثم حاول مرة أخرى.',
+      'avatarPhotoUploadFailed':
+          'تعذر تحديث صورة الحساب. حاول مرة أخرى.',
       'avatarColor': 'لون الصورة',
       'save': 'حفظ',
       'pushExpenseAddedTitle': 'تمت إضافة مصروف جديد',
@@ -516,6 +524,9 @@ class AppLocalizations {
   String get activityTimeline => _text('activityTimeline');
   String get noActivityYet => _text('noActivityYet');
   String get editAvatar => _text('editAvatar');
+  String get avatarPhotoPermissionDenied =>
+      _text('avatarPhotoPermissionDenied');
+  String get avatarPhotoUploadFailed => _text('avatarPhotoUploadFailed');
   String get avatarColor => _text('avatarColor');
   String get save => _text('save');
   String get pushExpenseAddedTitle => _text('pushExpenseAddedTitle');

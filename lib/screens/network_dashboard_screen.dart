@@ -8,10 +8,11 @@ import '../models/member.dart';
 import '../models/network_notification.dart';
 import '../services/dashboard_analytics_service.dart';
 import '../services/expense_network_repository.dart';
+import '../services/member_avatar_photo_service.dart';
 import '../services/push_notification_service.dart';
+import '../services/repository_error_messages.dart';
 import '../services/session_repository.dart';
 import '../services/supabase_realtime_service.dart';
-import '../utils/avatar_utils.dart';
 import '../utils/money_utils.dart';
 import '../widgets/app_scaffold.dart';
 import '../widgets/member_avatar.dart';
@@ -27,6 +28,7 @@ class NetworkDashboardScreen extends StatefulWidget {
     required this.sessionRepository,
     required this.network,
     required this.currentMemberId,
+    this.avatarPhotoService,
     super.key,
   });
 
@@ -34,6 +36,7 @@ class NetworkDashboardScreen extends StatefulWidget {
   final SessionRepository sessionRepository;
   final ExpenseNetwork network;
   final String currentMemberId;
+  final MemberAvatarPhotoService? avatarPhotoService;
 
   @override
   State<NetworkDashboardScreen> createState() => _NetworkDashboardScreenState();
@@ -206,60 +209,44 @@ class _NetworkDashboardScreenState extends State<NetworkDashboardScreen> {
 
   Future<void> _editAvatar() async {
     final member = _currentMember;
-    var selectedColor = member.avatarColor;
-    final updatedColor = await showDialog<String>(
-      context: context,
-      builder: (context) {
-        final l10n = context.l10n;
-        return StatefulBuilder(
-          builder: (context, setDialogState) => AlertDialog(
-            title: Text(l10n.editAvatar),
-            content: Wrap(
-              spacing: 10,
-              runSpacing: 10,
-              children: AvatarUtils.colorChoices.map((color) {
-                final selected = color == selectedColor;
-                return InkWell(
-                  borderRadius: BorderRadius.circular(20),
-                  onTap: () => setDialogState(() => selectedColor = color),
-                  child: CircleAvatar(
-                    backgroundColor: AvatarUtils.colorFromHex(color),
-                    child: selected
-                        ? const Icon(Icons.check_rounded, color: Colors.white)
-                        : null,
-                  ),
-                );
-              }).toList(),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: Text(l10n.cancel),
-              ),
-              FilledButton(
-                onPressed: () => Navigator.of(context).pop(selectedColor),
-                child: Text(l10n.save),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-    if (updatedColor == null) return;
-    final updatedMember = await widget.repository.updateMemberProfile(
-      networkName: _network.name,
-      memberId: member.id,
-      avatarColor: updatedColor,
-    );
-    if (!mounted) return;
-    setState(() {
-      _network = _network.copyWith(
-        members: _network.members
-            .map((candidate) =>
-                candidate.id == updatedMember.id ? updatedMember : candidate)
-            .toList(),
+    try {
+      final photoService =
+          widget.avatarPhotoService ?? SupabaseMemberAvatarPhotoService.active();
+      final photo = await photoService.pickAndUpload(
+        networkId: _network.id,
+        memberId: member.id,
       );
-    });
+      if (photo == null) return;
+      final updatedMember = await widget.repository.updateMemberProfile(
+        networkName: _network.name,
+        memberId: member.id,
+        avatarImagePath: photo.storagePath,
+        avatarImageUrl: photo.publicUrl,
+      );
+      if (!mounted) return;
+      setState(() => _replaceMember(updatedMember));
+    } on MemberAvatarPhotoException catch (error) {
+      if (!mounted) return;
+      _showSnack(
+        RepositoryErrorMessages.fromCode(context.l10n, error.code) ??
+            context.l10n.avatarPhotoUploadFailed,
+      );
+    } on RepositoryException catch (error) {
+      if (!mounted) return;
+      _showSnack(RepositoryErrorMessages.fromException(context, error));
+    } catch (_) {
+      if (!mounted) return;
+      _showSnack(context.l10n.avatarPhotoUploadFailed);
+    }
+  }
+
+  void _replaceMember(Member updatedMember) {
+    _network = _network.copyWith(
+      members: _network.members
+          .map((candidate) =>
+              candidate.id == updatedMember.id ? updatedMember : candidate)
+          .toList(),
+    );
   }
 
   Future<int> _unreadCount() async {

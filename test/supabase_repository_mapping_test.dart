@@ -24,6 +24,8 @@ void main() {
           'password_salt': 'member-salt',
           'avatar_color': '#059669',
           'avatar_initials': 'AL',
+          'avatar_image_path': 'network/member.jpg',
+          'avatar_image_url': 'https://example.com/member.jpg',
           'created_at': '2026-05-14T10:31:00.000Z',
         },
       ],
@@ -39,6 +41,11 @@ void main() {
     expect(network.members.single.passwordSalt, 'member-salt');
     expect(network.members.single.avatarColor, '#059669');
     expect(network.members.single.avatarInitials, 'AL');
+    expect(network.members.single.avatarImagePath, 'network/member.jpg');
+    expect(
+      network.members.single.avatarImageUrl,
+      'https://example.com/member.jpg',
+    );
   });
 
   test('normalizes names for cloud uniqueness', () {

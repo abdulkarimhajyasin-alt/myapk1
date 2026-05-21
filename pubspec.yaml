@@ -21,6 +21,7 @@ dependencies:
   share_plus: ^10.1.2
   mobile_scanner: ^6.0.2
   app_links: ^6.3.3
+  image_picker: ^1.1.2
 
 dev_dependencies:
   flutter_test:

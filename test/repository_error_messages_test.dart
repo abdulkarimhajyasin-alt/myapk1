@@ -63,4 +63,18 @@ void main() {
       'Could not create the network. Please try again.',
     );
   });
+
+  test('maps avatar photo errors to friendly messages', () {
+    expect(
+      RepositoryErrorMessages.fromCode(
+        l10n,
+        'avatar_photo_permission_denied',
+      ),
+      contains('Photo access was denied'),
+    );
+    expect(
+      RepositoryErrorMessages.fromCode(l10n, 'avatar_photo_upload_failed'),
+      contains('Could not update your profile photo'),
+    );
+  });
 }

@@ -113,4 +113,15 @@ void main() {
     expect(cleanupSource, contains("from('network_members')"));
     expect(cleanupSource, contains("from('networks')"));
   });
+
+  test('Supabase schema configures member avatar storage bucket', () {
+    final schema = File('supabase/schema.sql').readAsStringSync();
+
+    expect(schema, contains('member-avatars'));
+    expect(schema, contains('storage.buckets'));
+    expect(schema, contains('storage.objects'));
+    expect(schema, contains('image/jpeg'));
+    expect(schema, contains('image/png'));
+    expect(schema, contains('image/webp'));
+  });
 }
