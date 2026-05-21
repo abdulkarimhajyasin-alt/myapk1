@@ -96,4 +96,21 @@ void main() {
     expect(source, isNot(contains('TEMP DEBUG')));
     expect(source, isNot(contains('createNetworkDebugMessage')));
   });
+
+  test('final network cleanup deletes all network-owned Supabase rows', () {
+    final source =
+        File('lib/services/supabase_expense_network_repository.dart')
+            .readAsStringSync();
+    final cleanupStart = source.indexOf('Future<void> _deleteNetworkCascade');
+    final cleanupEnd = source.indexOf('@override', cleanupStart + 1);
+    final cleanupSource = source.substring(cleanupStart, cleanupEnd);
+
+    expect(cleanupSource, contains("from('network_notifications')"));
+    expect(cleanupSource, contains("from('expense_reset_approvals')"));
+    expect(cleanupSource, contains("from('expense_reset_requests')"));
+    expect(cleanupSource, contains("from('expenses')"));
+    expect(cleanupSource, contains("from('expense_cycles')"));
+    expect(cleanupSource, contains("from('network_members')"));
+    expect(cleanupSource, contains("from('networks')"));
+  });
 }

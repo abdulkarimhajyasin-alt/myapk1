@@ -11,15 +11,22 @@ import '../widgets/form_error_text.dart';
 import '../widgets/member_avatar.dart';
 import 'network_dashboard_screen.dart';
 
+typedef MyAccountDashboardBuilder = Widget Function(
+  ExpenseNetwork network,
+  String currentMemberId,
+);
+
 class MyAccountScreen extends StatefulWidget {
   const MyAccountScreen({
     required this.repository,
     required this.sessionRepository,
+    this.dashboardBuilder,
     super.key,
   });
 
   final ExpenseNetworkRepository repository;
   final SessionRepository sessionRepository;
+  final MyAccountDashboardBuilder? dashboardBuilder;
 
   @override
   State<MyAccountScreen> createState() => _MyAccountScreenState();
@@ -53,6 +60,7 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
       final session = await widget.sessionRepository.getActiveSession();
       ExpenseNetwork? selectedNetwork;
       Member? selectedMember;
+      var clearedStaleSession = false;
 
       if (session != null) {
         selectedNetwork = _firstNetworkWhere(
@@ -60,6 +68,10 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
           (network) => network.name == session.networkName,
         );
         selectedMember = selectedNetwork?.findMemberById(session.memberId);
+        if (selectedNetwork == null || selectedMember == null) {
+          await widget.sessionRepository.clearActiveSession();
+          clearedStaleSession = true;
+        }
       }
       selectedNetwork ??= networks.isEmpty ? null : networks.first;
       selectedMember ??= selectedNetwork?.members.isEmpty == true
@@ -71,6 +83,12 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
         _networks = networks;
         _selectedNetwork = selectedNetwork;
         _selectedMember = selectedMember;
+        _error = clearedStaleSession
+            ? RepositoryErrorMessages.fromCode(
+                context.l10n,
+                'network_not_found',
+              )
+            : null;
         _isLoading = false;
       });
     } on RepositoryException catch (error) {
@@ -100,23 +118,20 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
         memberPassword: _passwordController.text,
       );
       if (!mounted) return;
-      await widget.sessionRepository.saveActiveSession(
-        networkName: authenticatedNetwork.name,
-        memberId: member.id,
+      final authenticatedMember =
+          authenticatedNetwork.findMemberByName(member.name) ?? member;
+      await _saveAuthenticatedSession(
+        authenticatedNetwork.name,
+        authenticatedMember.id,
       );
       if (!mounted) return;
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (_) => NetworkDashboardScreen(
-            repository: widget.repository,
-            sessionRepository: widget.sessionRepository,
-            network: authenticatedNetwork,
-            currentMemberId: member.id,
-          ),
-        ),
-      );
+      _openDashboard(authenticatedNetwork, authenticatedMember.id);
     } on RepositoryException catch (error) {
       if (!mounted) return;
+      if (_isStaleAccountError(error)) {
+        await widget.sessionRepository.clearActiveSession();
+        if (!mounted) return;
+      }
       setState(() => _error = RepositoryErrorMessages.fromException(
             context,
             error,
@@ -124,6 +139,44 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
     } finally {
       if (mounted) setState(() => _isEntering = false);
     }
+  }
+
+  Future<void> _saveAuthenticatedSession(
+    String networkName,
+    String memberId,
+  ) async {
+    try {
+      await widget.sessionRepository.saveActiveSession(
+        networkName: networkName,
+        memberId: memberId,
+      );
+    } catch (_) {
+      // Authentication already succeeded. Do not keep the user on My Account
+      // because account metadata persistence failed after password validation.
+    }
+  }
+
+  void _openDashboard(ExpenseNetwork network, String currentMemberId) {
+    final dashboard = widget.dashboardBuilder?.call(
+          network,
+          currentMemberId,
+        ) ??
+        NetworkDashboardScreen(
+          repository: widget.repository,
+          sessionRepository: widget.sessionRepository,
+          network: network,
+          currentMemberId: currentMemberId,
+        );
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(builder: (_) => dashboard),
+    );
+  }
+
+  bool _isStaleAccountError(RepositoryException error) {
+    return switch (error.code) {
+      'supabase_not_found' || 'network_not_found' || 'member_not_found' => true,
+      _ => false,
+    };
   }
 
   @override
