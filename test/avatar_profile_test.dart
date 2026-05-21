@@ -163,7 +163,7 @@ ExpenseNetwork _network(Member member) {
 }
 
 class _AvatarPhotoService implements MemberAvatarPhotoService {
-  const _AvatarPhotoService(this.photo, {this.error});
+  _AvatarPhotoService(this.photo, {this.error});
 
   final MemberAvatarPhoto? photo;
   final Object? error;

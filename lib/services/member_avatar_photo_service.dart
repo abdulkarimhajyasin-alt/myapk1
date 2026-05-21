@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -75,7 +73,7 @@ class SupabaseMemberAvatarPhotoService implements MemberAvatarPhotoService {
           '${_safePathSegment(networkId)}/${_safePathSegment(memberId)}.$extension';
       await _client.storage.from(bucketName).uploadBinary(
             storagePath,
-            Uint8List.fromList(bytes),
+            bytes,
             fileOptions: FileOptions(
               cacheControl: '3600',
               contentType: contentType,
