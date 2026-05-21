@@ -76,8 +76,10 @@ void main() {
       photoService: _AvatarPhotoService(null),
     );
 
-    final avatar = tester.widget<CircleAvatar>(find.byType(CircleAvatar).first);
-    expect(avatar.backgroundImage, isA<NetworkImage>());
+    final avatar = tester.widget<MemberAvatar>(
+      find.byType(MemberAvatar).first,
+    );
+    expect(avatar.member.avatarImageUrl, 'https://example.com/avatar.jpg');
     expect(find.text('A'), findsNothing);
   });
 
@@ -104,8 +106,10 @@ void main() {
     expect(repository.savedAvatarImagePath, 'network_1/member_1.jpg');
     expect(repository.savedAvatarImageUrl, 'https://example.com/member_1.jpg');
     expect(photoService.uploadedMemberId, 'member_1');
-    final avatar = tester.widget<CircleAvatar>(find.byType(CircleAvatar).first);
-    expect(avatar.backgroundImage, isA<NetworkImage>());
+    final avatar = tester.widget<MemberAvatar>(
+      find.byType(MemberAvatar).first,
+    );
+    expect(avatar.member.avatarImageUrl, 'https://example.com/member_1.jpg');
   });
 
   testWidgets('avatar upload errors show friendly localized messages',

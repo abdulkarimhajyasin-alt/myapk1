@@ -36,6 +36,7 @@ class MemberAvatar extends StatelessWidget {
       backgroundColor: AvatarUtils.colorFromHex(member.avatarColor),
       foregroundColor: foreground,
       backgroundImage: backgroundImage,
+      onBackgroundImageError: backgroundImage == null ? null : (_, __) {},
       child: imageUrl?.isNotEmpty == true || imagePath?.isNotEmpty == true
           ? null
           : Text(
