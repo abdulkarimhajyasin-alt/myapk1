@@ -261,9 +261,8 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
         networkId: networkId,
         memberId: memberId,
       );
-      Object? cleanupError;
       if (insertedNetwork && !isDuplicateSupabaseError(error)) {
-        cleanupError = await _tryDeletePartialNetwork(
+        await _tryDeletePartialNetwork(
           networkId,
           normalizedName: normalizedNetworkName,
           memberId: memberId,
