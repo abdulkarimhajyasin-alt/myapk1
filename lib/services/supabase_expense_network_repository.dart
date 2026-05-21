@@ -28,9 +28,9 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
   static const phaseNotImplementedCode = 'supabase_phase_not_implemented';
   static const maxExpenseNoteLength = 200;
   static const maxNotificationNoteSnippetLength = 80;
-  static const exposeCreateNetworkBackendErrors = bool.fromEnvironment(
-    'MASKAN_HIDE_CREATE_NETWORK_DEBUG',
-  ) == false;
+  static const logCreateNetworkBackendEvents = bool.fromEnvironment(
+    'MASKAN_CREATE_NETWORK_LOGS',
+  );
 
   @override
   Future<List<ExpenseNetwork>> getNetworks() async {
@@ -140,7 +140,6 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
     final createdAt = DateTime.now().toUtc();
     var stage = 'normalize input';
     var insertedNetwork = false;
-    final completedStages = <String>['normalize input'];
 
     _debugCreateNetwork(
       'normalized input',
@@ -170,7 +169,6 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
         'updated_at': createdAt.toIso8601String(),
       });
       insertedNetwork = true;
-      completedStages.add('network insert');
       _debugCreateNetwork(
         'SUCCESS network insert',
         normalizedName: normalizedNetworkName,
@@ -194,7 +192,6 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
         'password_salt': memberSalt,
         'created_at': createdAt.toIso8601String(),
       });
-      completedStages.add('member insert');
       _debugCreateNetwork(
         'SUCCESS member insert',
         normalizedName: normalizedNetworkName,
@@ -213,7 +210,6 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
           .from('networks')
           .update({'created_by_member_id': memberId})
           .eq('id', networkId);
-      completedStages.add('owner update');
       _debugCreateNetwork(
         'SUCCESS owner update',
         normalizedName: normalizedNetworkName,
@@ -234,7 +230,6 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
         'status': 'active',
         'started_at': createdAt.toIso8601String(),
       });
-      completedStages.add('active cycle insert');
       _debugCreateNetwork(
         'SUCCESS active cycle insert',
         normalizedName: normalizedNetworkName,
@@ -272,20 +267,6 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
           networkId,
           normalizedName: normalizedNetworkName,
           memberId: memberId,
-        );
-      }
-      if (exposeCreateNetworkBackendErrors) {
-        throw RepositoryException(
-          createNetworkDebugMessage(
-            error,
-            stage: stage,
-            completedStages: completedStages,
-            normalizedName: normalizedNetworkName,
-            networkId: networkId,
-            memberId: memberId,
-            cleanupError: cleanupError,
-          ),
-          code: 'supabase_create_network_debug_failed',
         );
       }
       throw mapSupabaseError(
@@ -1613,37 +1594,6 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
         message.contains('unique constraint');
   }
 
-  static String createNetworkDebugMessage(
-    Object error, {
-    required String stage,
-    required List<String> completedStages,
-    required String normalizedName,
-    required String networkId,
-    required String memberId,
-    Object? cleanupError,
-  }) {
-    final cleanupSummary = cleanupError == null
-        ? 'not needed or succeeded'
-        : backendErrorSummary(cleanupError);
-    final previousStage =
-        completedStages.isEmpty ? 'none' : completedStages.last;
-    return [
-      'TEMP DEBUG: createNetwork failed.',
-      'current_stage: $stage',
-      'completed_stages: ${completedStages.join(' -> ')}',
-      'previous_stage_succeeded: $previousStage',
-      'classification: ${classifyBackendError(error)}',
-      'backend_code: ${backendErrorCode(error) ?? 'unknown'}',
-      'backend_message: ${backendErrorMessage(error)}',
-      'backend_details: ${backendErrorDetails(error) ?? 'none'}',
-      'backend_hint: ${backendErrorHint(error) ?? 'none'}',
-      'normalized_name: $normalizedName',
-      'network_id: $networkId',
-      'member_id: $memberId',
-      'cleanup_delete: $cleanupSummary',
-    ].join('\n');
-  }
-
   static String backendErrorSummary(Object error) {
     return 'classification=${classifyBackendError(error)}; '
         'code=${backendErrorCode(error) ?? 'unknown'}; '
@@ -1698,7 +1648,7 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
     required String networkId,
     required String memberId,
   }) {
-    if (!exposeCreateNetworkBackendErrors) return;
+    if (!logCreateNetworkBackendEvents) return;
     developer.log(
       '$message normalized_name=$normalizedName '
       'network_id=$networkId member_id=$memberId',

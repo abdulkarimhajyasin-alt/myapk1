@@ -11,7 +11,8 @@ class RepositoryErrorMessages {
     RepositoryException error,
   ) {
     final l10n = context.l10n;
-    return fromCode(l10n, error.code) ?? error.message;
+    return fromCode(l10n, error.code) ??
+        _safeFallbackMessage(l10n, error.message);
   }
 
   static String? fromCode(AppLocalizations l10n, String? code) {
@@ -34,5 +35,16 @@ class RepositoryErrorMessages {
       'supabase_reset_request_create_failed' => l10n.cycleCompletionFailed,
       _ => null,
     };
+  }
+
+  static String _safeFallbackMessage(AppLocalizations l10n, String message) {
+    final normalized = message.toLowerCase();
+    final looksLikeBackendDebug = normalized.contains('temp debug') ||
+        normalized.contains('current_stage:') ||
+        normalized.contains('backend_code:') ||
+        normalized.contains('backend_message:') ||
+        normalized.contains('normalized_name:');
+    if (looksLikeBackendDebug) return l10n.errorCreateNetworkFailed;
+    return message;
   }
 }

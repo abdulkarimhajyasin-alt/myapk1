@@ -10,15 +10,22 @@ import '../widgets/app_scaffold.dart';
 import '../widgets/form_error_text.dart';
 import 'network_dashboard_screen.dart';
 
+typedef CreateNetworkDashboardBuilder = Widget Function(
+  ExpenseNetwork network,
+  String currentMemberId,
+);
+
 class CreateNetworkScreen extends StatefulWidget {
   const CreateNetworkScreen({
     required this.repository,
     required this.sessionRepository,
+    this.dashboardBuilder,
     super.key,
   });
 
   final ExpenseNetworkRepository repository;
   final SessionRepository sessionRepository;
+  final CreateNetworkDashboardBuilder? dashboardBuilder;
 
   @override
   State<CreateNetworkScreen> createState() => _CreateNetworkScreenState();
@@ -60,12 +67,10 @@ class _CreateNetworkScreenState extends State<CreateNetworkScreen> {
         currencyCode: _selectedCurrency.code,
       );
       if (!mounted) return;
-      await widget.sessionRepository.saveActiveSession(
-        networkName: network.name,
-        memberId: network.members.first.id,
-      );
+      final currentMemberId = network.members.first.id;
+      await _saveCreatedSession(network.name, currentMemberId);
       if (!mounted) return;
-      _openDashboard(network);
+      _openDashboard(network, currentMemberId);
     } on RepositoryException catch (error) {
       if (!mounted) return;
       setState(() => _error = RepositoryErrorMessages.fromException(
@@ -98,15 +103,35 @@ class _CreateNetworkScreenState extends State<CreateNetworkScreen> {
     }
   }
 
-  void _openDashboard(ExpenseNetwork network) {
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(
-        builder: (_) => NetworkDashboardScreen(
+  Future<void> _saveCreatedSession(
+    String networkName,
+    String memberId,
+  ) async {
+    try {
+      await widget.sessionRepository.saveActiveSession(
+        networkName: networkName,
+        memberId: memberId,
+      );
+    } catch (_) {
+      // The backend create already completed. Do not turn a session metadata
+      // write problem into a duplicate-prone create failure path.
+    }
+  }
+
+  void _openDashboard(ExpenseNetwork network, String currentMemberId) {
+    final dashboard = widget.dashboardBuilder?.call(
+          network,
+          currentMemberId,
+        ) ??
+        NetworkDashboardScreen(
           repository: widget.repository,
           sessionRepository: widget.sessionRepository,
           network: network,
-          currentMemberId: network.members.first.id,
-        ),
+          currentMemberId: currentMemberId,
+        );
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(
+        builder: (_) => dashboard,
       ),
     );
   }

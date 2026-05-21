@@ -428,29 +428,19 @@ void main() {
     expect(error.message, 'Cloud network could not be created.');
   });
 
-  test('temporary create debug message includes failure stage and raw summary',
-      () {
-    final message = SupabaseExpenseNetworkRepository.createNetworkDebugMessage(
+  test('create failures map to safe user-facing RepositoryException', () {
+    final error = SupabaseExpenseNetworkRepository.mapSupabaseError(
       Exception('new row violates row-level security policy 42501'),
-      stage: 'member insert',
-      completedStages: const ['normalize input', 'network insert'],
-      normalizedName: 'flat',
-      networkId: 'network-id',
-      memberId: 'member-id',
-      cleanupError: Exception('cleanup denied 42501'),
+      duplicateCode: 'duplicate_network',
+      duplicateMessage:
+          'This network name is already in use. Choose another name.',
+      notFoundCode: 'supabase_create_network_failed',
+      notFoundMessage: 'Cloud network could not be created.',
+      fallbackCode: 'supabase_create_network_failed',
+      fallbackMessage: 'Cloud network could not be created.',
     );
 
-    expect(message, contains('TEMP DEBUG: createNetwork failed.'));
-    expect(message, contains('current_stage: member insert'));
-    expect(
-      message,
-      contains('completed_stages: normalize input -> network insert'),
-    );
-    expect(message, contains('previous_stage_succeeded: network insert'));
-    expect(message, contains('classification: policy failure'));
-    expect(message, contains('backend_code: unknown'));
-    expect(message, contains('row-level security'));
-    expect(message, contains('normalized_name: flat'));
-    expect(message, contains('cleanup_delete:'));
+    expect(error.code, 'supabase_permission_denied');
+    expect(error.message, 'Cloud permission denied.');
   });
 }

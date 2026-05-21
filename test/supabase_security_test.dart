@@ -84,4 +84,16 @@ void main() {
     expect(createSource, contains("duplicateCode: 'duplicate_network'"));
     expect(createSource, isNot(contains('.select()\n          .single()')));
   });
+
+  test('Flutter source does not expose temporary create-network debug text', () {
+    final files = Directory('lib')
+        .listSync(recursive: true)
+        .whereType<File>()
+        .where((file) => file.path.endsWith('.dart'));
+
+    final source = files.map((file) => file.readAsStringSync()).join('\n');
+
+    expect(source, isNot(contains('TEMP DEBUG')));
+    expect(source, isNot(contains('createNetworkDebugMessage')));
+  });
 }

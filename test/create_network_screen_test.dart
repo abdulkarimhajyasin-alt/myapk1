@@ -28,6 +28,59 @@ void main() {
     expect(sessions.saved?.memberId, 'member_1');
   });
 
+  testWidgets('successful create saves session and opens dashboard',
+      (tester) async {
+    final repository = _CreateRepositoryFake(
+      createdNetwork: _createdNetwork('Flat'),
+    );
+    final sessions = _CreateSessionFake(null);
+
+    await _pumpCreateScreen(
+      tester,
+      repository: repository,
+      sessions: sessions,
+      dashboardBuilder: (network, currentMemberId) => Scaffold(
+        body: Text('Dashboard ${network.name} $currentMemberId'),
+      ),
+    );
+    await _submitCreateForm(tester);
+    await tester.pumpAndSettle();
+
+    expect(sessions.saved?.networkName, 'Flat');
+    expect(sessions.saved?.memberId, 'member_1');
+    expect(find.text('Dashboard Flat member_1'), findsOneWidget);
+    expect(find.text('Create'), findsNothing);
+  });
+
+  testWidgets('successful create still opens dashboard if session write fails',
+      (tester) async {
+    final repository = _CreateRepositoryFake(
+      createdNetwork: _createdNetwork('Flat'),
+    );
+    final sessions = _CreateSessionFake(
+      null,
+      saveError: const RepositoryException(
+        'TEMP DEBUG: createNetwork failed.',
+        code: 'supabase_create_network_failed',
+      ),
+    );
+
+    await _pumpCreateScreen(
+      tester,
+      repository: repository,
+      sessions: sessions,
+      dashboardBuilder: (network, currentMemberId) => Scaffold(
+        body: Text('Dashboard ${network.name} $currentMemberId'),
+      ),
+    );
+    await _submitCreateForm(tester);
+    await tester.pumpAndSettle();
+
+    expect(repository.createdNetworkName, 'Flat');
+    expect(find.text('Dashboard Flat member_1'), findsOneWidget);
+    expect(find.textContaining('TEMP DEBUG'), findsNothing);
+  });
+
   testWidgets('create flow does not show stale session unavailable message',
       (tester) async {
     final repository = _CreateRepositoryFake(
@@ -79,6 +132,27 @@ void main() {
       findsNothing,
     );
   });
+
+  testWidgets('temporary backend debug text is not user-facing',
+      (tester) async {
+    final repository = _CreateRepositoryFake(
+      createError: const RepositoryException(
+        'TEMP DEBUG: createNetwork failed.\nbackend_code: 42501',
+      ),
+    );
+
+    await _pumpCreateScreen(
+      tester,
+      repository: repository,
+      sessions: _CreateSessionFake(null),
+    );
+    await _submitCreateForm(tester);
+    await tester.pump();
+
+    expect(find.textContaining('TEMP DEBUG'), findsNothing);
+    expect(find.textContaining('backend_code'), findsNothing);
+    expect(find.text('Cloud network could not be created.'), findsOneWidget);
+  });
 }
 
 Future<void> _pumpCreateScreen(
@@ -86,6 +160,7 @@ Future<void> _pumpCreateScreen(
   Locale locale = const Locale('en'),
   required _CreateRepositoryFake repository,
   required _CreateSessionFake sessions,
+  CreateNetworkDashboardBuilder? dashboardBuilder,
 }) {
   return tester.pumpWidget(
     MaterialApp(
@@ -95,6 +170,7 @@ Future<void> _pumpCreateScreen(
       home: CreateNetworkScreen(
         repository: repository,
         sessionRepository: sessions,
+        dashboardBuilder: dashboardBuilder,
       ),
     ),
   );
@@ -122,9 +198,10 @@ ExpenseNetwork _createdNetwork(String name) {
 }
 
 class _CreateSessionFake implements SessionRepository {
-  _CreateSessionFake(this.session);
+  _CreateSessionFake(this.session, {this.saveError});
 
   AccountSession? session;
+  final Object? saveError;
   AccountSession? saved;
   bool cleared = false;
 
@@ -142,6 +219,8 @@ class _CreateSessionFake implements SessionRepository {
     required String networkName,
     required String memberId,
   }) async {
+    final error = saveError;
+    if (error != null) throw error;
     saved = AccountSession(networkName: networkName, memberId: memberId);
     session = saved;
   }
