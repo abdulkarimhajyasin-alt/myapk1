@@ -389,14 +389,8 @@ class _NetworkDashboardScreenState extends State<NetworkDashboardScreen> {
           const SizedBox(height: 16),
           _AnalyticsGrid(
             analytics: analytics,
-            currencySymbol: _network.currencySymbol,
           ),
           const SizedBox(height: 18),
-          _ActivityTimeline(
-            analytics: analytics,
-            currencySymbol: _network.currencySymbol,
-          ),
-          const SizedBox(height: 24),
           Text(
             l10n.members,
             style: theme.textTheme.titleLarge?.copyWith(
@@ -478,11 +472,9 @@ class _SyncStatusChip extends StatelessWidget {
 class _AnalyticsGrid extends StatelessWidget {
   const _AnalyticsGrid({
     required this.analytics,
-    required this.currencySymbol,
   });
 
   final DashboardAnalytics analytics;
-  final String currencySymbol;
 
   @override
   Widget build(BuildContext context) {
@@ -541,64 +533,6 @@ class _AnalyticsCard extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-}
-
-class _ActivityTimeline extends StatelessWidget {
-  const _ActivityTimeline({
-    required this.analytics,
-    required this.currencySymbol,
-  });
-
-  final DashboardAnalytics analytics;
-  final String currencySymbol;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = context.l10n;
-    final material = MaterialLocalizations.of(context);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text(
-          l10n.activityTimeline,
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w800,
-              ),
-        ),
-        const SizedBox(height: 10),
-        if (analytics.recentActivity.isEmpty)
-          Text(l10n.noActivityYet)
-        else
-          ...analytics.recentActivity.map(
-            (entry) => Card(
-              margin: const EdgeInsets.only(bottom: 10),
-              child: ListTile(
-                leading: MemberAvatar(member: entry.member),
-                title: Text(
-                  '${entry.member.name} ${MoneyUtils.formatCents(
-                    entry.expense.amountCents,
-                    currencySymbol: currencySymbol,
-                  )}',
-                ),
-                subtitle: Text(
-                  [
-                    material.formatShortDate(entry.expense.createdAt),
-                    material.formatTimeOfDay(
-                      TimeOfDay.fromDateTime(entry.expense.createdAt),
-                    ),
-                    if (entry.expense.note?.trim().isNotEmpty == true)
-                      entry.expense.note!.trim(),
-                  ].join(' - '),
-                ),
-                trailing: entry.expense.isPendingSync
-                    ? const Icon(Icons.sync_rounded)
-                    : null,
-              ),
-            ),
-          ),
-      ],
     );
   }
 }
