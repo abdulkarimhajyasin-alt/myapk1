@@ -20,16 +20,23 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final preferences = await SharedPreferences.getInstance();
   final localeService = LocalePreferenceService(preferences);
-  runApp(ExpenseNetworkBootstrap(localeService: localeService));
+  runApp(
+    ExpenseNetworkBootstrap(
+      localeService: localeService,
+      preferences: preferences,
+    ),
+  );
 }
 
 class ExpenseNetworkBootstrap extends StatefulWidget {
   const ExpenseNetworkBootstrap({
     required this.localeService,
+    required this.preferences,
     super.key,
   });
 
   final LocalePreferenceService localeService;
+  final SharedPreferences preferences;
 
   @override
   State<ExpenseNetworkBootstrap> createState() =>
@@ -50,7 +57,7 @@ class _ExpenseNetworkBootstrapState extends State<ExpenseNetworkBootstrap> {
   Future<AppRepositoryBundle> _initializeCloud() async {
     supabaseConfig.requireConfigured();
     await _ensureSupabaseInitialized();
-    return RepositoryFactory.create();
+    return RepositoryFactory.create(preferences: widget.preferences);
   }
 
   Future<void> _ensureSupabaseInitialized() async {

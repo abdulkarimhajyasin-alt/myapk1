@@ -29,6 +29,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   bool _hasTriedRestore = false;
+  bool _isRestoringSession = true;
 
   @override
   void didChangeDependencies() {
@@ -39,12 +40,24 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _restoreSession() async {
-    final restored = await SessionRestorationService(
+    final result = await SessionRestorationService(
       repository: widget.repository,
       sessionRepository: widget.sessionRepository,
-    ).restore();
-    if (!mounted || restored == null) return;
-    Navigator.of(context).push(
+    ).restoreWithStatus();
+    if (!mounted) return;
+    if (result.status == SessionRestorationStatus.staleSessionCleared) {
+      setState(() => _isRestoringSession = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.l10n.errorCloudRecordUnavailable)),
+      );
+      return;
+    }
+    final restored = result.restoredSession;
+    if (restored == null) {
+      setState(() => _isRestoringSession = false);
+      return;
+    }
+    Navigator.of(context).pushReplacement(
       MaterialPageRoute(
         builder: (_) => NetworkDashboardScreen(
           repository: widget.repository,
@@ -59,6 +72,60 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+
+    if (_isRestoringSession) {
+      return Scaffold(
+        body: SafeArea(
+          child: Column(
+            children: [
+              Expanded(
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 420),
+                    child: Padding(
+                      padding: const EdgeInsets.all(32),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.account_balance_wallet_rounded,
+                            size: 64,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                          const SizedBox(height: 24),
+                          const CircularProgressIndicator(),
+                          const SizedBox(height: 24),
+                          Text(
+                            l10n.restoringSessionTitle,
+                            textAlign: TextAlign.center,
+                            style: Theme.of(context)
+                                .textTheme
+                                .headlineSmall
+                                ?.copyWith(fontWeight: FontWeight.w800),
+                          ),
+                          const SizedBox(height: 10),
+                          Text(
+                            l10n.restoringSessionMessage,
+                            textAlign: TextAlign.center,
+                            style:
+                                Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurfaceVariant,
+                                    ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const AppFooter(),
+            ],
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
       body: SafeArea(
@@ -107,12 +174,14 @@ class _HomeScreenState extends State<HomeScreen> {
                             Text(
                               l10n.homeSubtitle,
                               textAlign: TextAlign.center,
-                              style:
-                                  Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .onSurfaceVariant,
-                                      ),
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyLarge
+                                  ?.copyWith(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurfaceVariant,
+                                  ),
                             ),
                             const SizedBox(height: 36),
                             FilledButton.icon(

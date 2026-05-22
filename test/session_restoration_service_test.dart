@@ -86,6 +86,32 @@ void main() {
     expect(restored, isNull);
     expect(sessions.cleared, isFalse);
   });
+
+  test('valid saved session restores dashboard target without clearing',
+      () async {
+    final repository = _SessionRepositoryFake(
+      network: ExpenseNetwork(
+        id: 'network_1',
+        name: 'Flat',
+        password: 'network',
+        members: [Member(id: 'member_1', name: 'Ali')],
+        createdAt: DateTime(2026),
+      ),
+    );
+    final sessions = _SessionStoreFake(
+      const AccountSession(networkName: 'Flat', memberId: 'member_1'),
+    );
+
+    final result = await SessionRestorationService(
+      repository: repository,
+      sessionRepository: sessions,
+    ).restoreWithStatus();
+
+    expect(result.status, SessionRestorationStatus.restored);
+    expect(result.restoredSession?.network.name, 'Flat');
+    expect(result.restoredSession?.memberId, 'member_1');
+    expect(sessions.cleared, isFalse);
+  });
 }
 
 class _SessionStoreFake implements SessionRepository {

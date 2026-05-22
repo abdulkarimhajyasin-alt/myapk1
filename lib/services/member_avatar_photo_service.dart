@@ -37,6 +37,7 @@ class SupabaseMemberAvatarPhotoService implements MemberAvatarPhotoService {
         _picker = ImagePicker();
 
   static const bucketName = 'member-avatars';
+  static const _memberIdKey = 'maskan_member_id';
 
   final SupabaseClient _client;
   final ImagePicker _picker;
@@ -66,18 +67,24 @@ class SupabaseMemberAvatarPhotoService implements MemberAvatarPhotoService {
     if (image == null) return null;
 
     try {
+      await _ensureAuthMetadata(memberId);
       final bytes = await image.readAsBytes();
+      if (bytes.isEmpty) {
+        throw const MemberAvatarPhotoException('avatar_photo_upload_failed');
+      }
       final contentType = _contentTypeFor(image);
       final extension = _extensionFor(contentType);
+      final version = DateTime.now().toUtc().millisecondsSinceEpoch;
       final storagePath =
-          '${_safePathSegment(networkId)}/${_safePathSegment(memberId)}.$extension';
+          '${_safePathSegment(networkId)}/${_safePathSegment(memberId)}/'
+          '$version.$extension';
       await _client.storage.from(bucketName).uploadBinary(
             storagePath,
             bytes,
             fileOptions: FileOptions(
               cacheControl: '3600',
               contentType: contentType,
-              upsert: true,
+              upsert: false,
             ),
           );
       return MemberAvatarPhoto(
@@ -87,6 +94,18 @@ class SupabaseMemberAvatarPhotoService implements MemberAvatarPhotoService {
     } catch (_) {
       throw const MemberAvatarPhotoException('avatar_photo_upload_failed');
     }
+  }
+
+  Future<void> _ensureAuthMetadata(String memberId) async {
+    if (_client.auth.currentSession == null) {
+      await _client.auth.signInAnonymously();
+    }
+    final currentMemberId =
+        _client.auth.currentUser?.userMetadata?[_memberIdKey] as String?;
+    if (currentMemberId == memberId) return;
+    await _client.auth.updateUser(
+      UserAttributes(data: {_memberIdKey: memberId}),
+    );
   }
 
   static bool _isPermissionDenied(PlatformException error) {

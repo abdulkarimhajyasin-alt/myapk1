@@ -110,6 +110,11 @@ void main() {
       find.byType(MemberAvatar).first,
     );
     expect(avatar.member.avatarImageUrl, 'https://example.com/member_1.jpg');
+    final reloaded = await repository.findNetwork('Flat');
+    expect(
+      reloaded?.findMemberById('member_1')?.avatarImageUrl,
+      'https://example.com/member_1.jpg',
+    );
   });
 
   testWidgets('avatar upload errors show friendly localized messages',

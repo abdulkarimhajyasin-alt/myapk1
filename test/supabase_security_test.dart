@@ -123,5 +123,16 @@ void main() {
     expect(schema, contains('image/jpeg'));
     expect(schema, contains('image/png'));
     expect(schema, contains('image/webp'));
+    expect(schema, contains('storage.foldername(name))[2]'));
+    expect(schema, contains('maskan_member_id'));
+  });
+
+  test('avatar uploads use per-upload storage objects', () {
+    final source =
+        File('lib/services/member_avatar_photo_service.dart').readAsStringSync();
+
+    expect(source, contains('millisecondsSinceEpoch'));
+    expect(source, contains('upsert: false'));
+    expect(source, contains('_ensureAuthMetadata(memberId)'));
   });
 }

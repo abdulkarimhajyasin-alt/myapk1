@@ -12,6 +12,38 @@ class RestoredSession {
   final String memberId;
 }
 
+enum SessionRestorationStatus {
+  noSavedSession,
+  restored,
+  staleSessionCleared,
+  unavailable,
+}
+
+class SessionRestorationResult {
+  const SessionRestorationResult._({
+    required this.status,
+    this.restoredSession,
+  });
+
+  const SessionRestorationResult.noSavedSession()
+      : this._(status: SessionRestorationStatus.noSavedSession);
+
+  const SessionRestorationResult.restored(RestoredSession restoredSession)
+      : this._(
+          status: SessionRestorationStatus.restored,
+          restoredSession: restoredSession,
+        );
+
+  const SessionRestorationResult.staleSessionCleared()
+      : this._(status: SessionRestorationStatus.staleSessionCleared);
+
+  const SessionRestorationResult.unavailable()
+      : this._(status: SessionRestorationStatus.unavailable);
+
+  final SessionRestorationStatus status;
+  final RestoredSession? restoredSession;
+}
+
 class SessionRestorationService {
   const SessionRestorationService({
     required ExpenseNetworkRepository repository,
@@ -23,25 +55,32 @@ class SessionRestorationService {
   final SessionRepository _sessionRepository;
 
   Future<RestoredSession?> restore() async {
+    return (await restoreWithStatus()).restoredSession;
+  }
+
+  Future<SessionRestorationResult> restoreWithStatus() async {
     final session = await _sessionRepository.getActiveSession();
-    if (session == null) return null;
+    if (session == null) return const SessionRestorationResult.noSavedSession();
 
     try {
       final network = await _repository.findNetwork(session.networkName);
       final member = network?.findMemberById(session.memberId);
       if (network == null || member == null) {
         await _sessionRepository.clearActiveSession();
-        return null;
+        return const SessionRestorationResult.staleSessionCleared();
       }
-      return RestoredSession(network: network, memberId: member.id);
+      return SessionRestorationResult.restored(
+        RestoredSession(network: network, memberId: member.id),
+      );
     } on RepositoryException catch (error) {
       if (_isStaleSessionError(error)) {
         await _sessionRepository.clearActiveSession();
+        return const SessionRestorationResult.staleSessionCleared();
       }
-      return null;
+      return const SessionRestorationResult.unavailable();
     } catch (_) {
       await _sessionRepository.clearActiveSession();
-      return null;
+      return const SessionRestorationResult.staleSessionCleared();
     }
   }
 

@@ -24,6 +24,9 @@ class AppLocalizations {
       'appTitle': 'Maskan',
       'homeSubtitle':
           'Create or join a private group and settle shared costs clearly.',
+      'restoringSessionTitle': 'Restoring your session',
+      'restoringSessionMessage':
+          'Checking your saved network and taking you back in.',
       'createNetwork': 'Create Network',
       'joinNetwork': 'Join Network',
       'displayName': 'User display name',
@@ -110,8 +113,7 @@ class AppLocalizations {
           'This saved network is no longer available. Please create or join a network again.',
       'errorCreateNetworkFailed':
           'Could not create the network. Please try again.',
-      'errorSupabaseNotConfigured':
-          'Supabase configuration missing',
+      'errorSupabaseNotConfigured': 'Supabase configuration missing',
       'supabaseConfigurationMissingMessage':
           'This build is missing the Supabase URL or anon key.',
       'logout': 'Log out',
@@ -119,8 +121,7 @@ class AppLocalizations {
       'karamixLabsButtonTooltip': 'Open Karamix Labs website',
       'karamixLabsLaunchError':
           'Could not open the Karamix Labs website. Please try again later.',
-      'footerText':
-          '© 2026 عبد الكريم حاج ياسين. جميع الحقوق محفوظة.',
+      'footerText': '© 2026 عبد الكريم حاج ياسين. جميع الحقوق محفوظة.',
       'downloadPdf': 'Download PDF',
       'startNewCycle': 'Start New Cycle',
       'generatedAt': 'Generated at',
@@ -279,10 +280,8 @@ class AppLocalizations {
           'تم رفض الوصول السحابي. تحقق من سياسات Supabase RLS وبيانات الاختبار.',
       'errorCloudRecordUnavailable':
           'هذه الشبكة المحفوظة لم تعد متاحة. أنشئ شبكة أو انضم إلى شبكة مرة أخرى.',
-      'errorCreateNetworkFailed':
-          'تعذر إنشاء الشبكة. حاول مرة أخرى.',
-      'errorSupabaseNotConfigured':
-          'إعداد Supabase مفقود',
+      'errorCreateNetworkFailed': 'تعذر إنشاء الشبكة. حاول مرة أخرى.',
+      'errorSupabaseNotConfigured': 'إعداد Supabase مفقود',
       'supabaseConfigurationMissingMessage':
           'يفتقد هذا الإصدار رابط Supabase أو مفتاح anon.',
       'logout': 'تسجيل الخروج',
@@ -290,8 +289,7 @@ class AppLocalizations {
       'karamixLabsButtonTooltip': 'فتح موقع Karamix Labs',
       'karamixLabsLaunchError':
           'تعذر فتح موقع Karamix Labs. يرجى المحاولة لاحقا.',
-      'footerText':
-          '© 2026 عبد الكريم حاج ياسين. جميع الحقوق محفوظة.',
+      'footerText': '© 2026 عبد الكريم حاج ياسين. جميع الحقوق محفوظة.',
       'downloadPdf': 'تحميل PDF',
       'startNewCycle': 'بدء مصروف جديد',
       'generatedAt': 'تاريخ الإنشاء',
@@ -328,8 +326,7 @@ class AppLocalizations {
       'inviteLinkLabel': 'رابط دعوة Maskan',
       'joinMyMaskanNetwork': 'انضم إلى شبكتي في Maskan:',
       'leaveNetwork': 'مغادرة الشبكة',
-      'confirmLeaveNetwork':
-          'هل تريد حذف حسابك ومغادرة شبكة المصروف نهائيًا؟',
+      'confirmLeaveNetwork': 'هل تريد حذف حسابك ومغادرة شبكة المصروف نهائيًا؟',
       'lastMemberLeaveWarning':
           'أنت آخر عضو في هذه الشبكة. عند المغادرة سيتم حذف الشبكة بالكامل.',
       'cannotLeaveBeforeSettlement':
@@ -359,8 +356,7 @@ class AppLocalizations {
       'editAvatar': 'تعديل الصورة',
       'avatarPhotoPermissionDenied':
           'تم رفض الوصول إلى الصور. اسمح بالوصول إلى المعرض ثم حاول مرة أخرى.',
-      'avatarPhotoUploadFailed':
-          'تعذر تحديث صورة الحساب. حاول مرة أخرى.',
+      'avatarPhotoUploadFailed': 'تعذر تحديث صورة الحساب. حاول مرة أخرى.',
       'avatarColor': 'لون الصورة',
       'save': 'حفظ',
       'pushExpenseAddedTitle': 'تمت إضافة مصروف جديد',
@@ -384,6 +380,8 @@ class AppLocalizations {
 
   String get appTitle => _text('appTitle');
   String get homeSubtitle => _text('homeSubtitle');
+  String get restoringSessionTitle => _text('restoringSessionTitle');
+  String get restoringSessionMessage => _text('restoringSessionMessage');
   String get createNetwork => _text('createNetwork');
   String get joinNetwork => _text('joinNetwork');
   String get displayName => _text('displayName');
@@ -501,7 +499,8 @@ class AppLocalizations {
   String get leaveNetwork => _text('leaveNetwork');
   String get confirmLeaveNetwork => _text('confirmLeaveNetwork');
   String get lastMemberLeaveWarning => _text('lastMemberLeaveWarning');
-  String get cannotLeaveBeforeSettlement => _text('cannotLeaveBeforeSettlement');
+  String get cannotLeaveBeforeSettlement =>
+      _text('cannotLeaveBeforeSettlement');
   String get cannotLeavePendingReset => _text('cannotLeavePendingReset');
   String get cannotLeaveWithHistory => _text('cannotLeaveWithHistory');
   String get leaveNetworkSuccess => _text('leaveNetworkSuccess');
@@ -575,8 +574,7 @@ class AppLocalizations {
   }
 }
 
-class AppLocalizationsDelegate
-    extends LocalizationsDelegate<AppLocalizations> {
+class AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
   const AppLocalizationsDelegate();
 
   @override

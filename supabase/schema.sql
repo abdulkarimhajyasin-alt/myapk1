@@ -763,11 +763,19 @@ create policy phase5_interim_update_member_profile
   for update
   using (
     public.phase5_network_exists(network_id)
+    and id::text = coalesce(
+      auth.jwt() -> 'user_metadata' ->> 'maskan_member_id',
+      ''
+    )
   )
   with check (
     public.phase5_network_exists(network_id)
     and length(trim(name)) > 0
     and length(trim(normalized_name)) > 0
+    and id::text = coalesce(
+      auth.jwt() -> 'user_metadata' ->> 'maskan_member_id',
+      ''
+    )
   );
 
 drop policy if exists phase5_interim_leave_network
@@ -1048,12 +1056,30 @@ drop policy if exists maskan_member_avatar_upload
 create policy maskan_member_avatar_upload
   on storage.objects
   for insert
-  with check (bucket_id = 'member-avatars');
+  with check (
+    bucket_id = 'member-avatars'
+    and (storage.foldername(name))[2] = coalesce(
+      auth.jwt() -> 'user_metadata' ->> 'maskan_member_id',
+      ''
+    )
+  );
 
 drop policy if exists maskan_member_avatar_update
   on storage.objects;
 create policy maskan_member_avatar_update
   on storage.objects
   for update
-  using (bucket_id = 'member-avatars')
-  with check (bucket_id = 'member-avatars');
+  using (
+    bucket_id = 'member-avatars'
+    and (storage.foldername(name))[2] = coalesce(
+      auth.jwt() -> 'user_metadata' ->> 'maskan_member_id',
+      ''
+    )
+  )
+  with check (
+    bucket_id = 'member-avatars'
+    and (storage.foldername(name))[2] = coalesce(
+      auth.jwt() -> 'user_metadata' ->> 'maskan_member_id',
+      ''
+    )
+  );

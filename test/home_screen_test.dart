@@ -29,27 +29,135 @@ void main() {
     expect(find.text('Create Network'), findsOneWidget);
     expect(find.text('Join Network'), findsOneWidget);
   });
+
+  testWidgets('startup shows restoration screen before onboarding',
+      (tester) async {
+    final session = _HomeSessionFake(null, const Duration(seconds: 1));
+
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: HomeScreen(
+          repository: const _HomeRepositoryFake(),
+          sessionRepository: session,
+          onChangeLanguage: (_) {},
+        ),
+      ),
+    );
+
+    expect(find.text('Restoring your session'), findsOneWidget);
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    expect(find.text('Create Network'), findsNothing);
+    expect(find.text('Join Network'), findsNothing);
+
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pump();
+
+    expect(find.text('Restoring your session'), findsNothing);
+    expect(find.text('Create Network'), findsOneWidget);
+    expect(find.text('Join Network'), findsOneWidget);
+  });
+
+  testWidgets('valid saved session restores dashboard automatically',
+      (tester) async {
+    final network = ExpenseNetwork(
+      id: 'network_1',
+      name: 'Flat',
+      password: 'hash',
+      createdAt: DateTime(2026),
+      members: [Member(id: 'member_1', name: 'Ali')],
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: HomeScreen(
+          repository: _HomeRepositoryFake(network: network),
+          sessionRepository: _HomeSessionFake(
+            const AccountSession(networkName: 'Flat', memberId: 'member_1'),
+          ),
+          onChangeLanguage: (_) {},
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text('Flat'), findsOneWidget);
+    expect(find.text('Ali'), findsWidgets);
+    expect(find.text('Create Network'), findsNothing);
+  });
+
+  testWidgets('deleted saved session shows localized recovery message',
+      (tester) async {
+    final sessions = _HomeSessionFake(
+      const AccountSession(networkName: 'Deleted Flat', memberId: 'member_1'),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: HomeScreen(
+          repository: const _HomeRepositoryFake(),
+          sessionRepository: sessions,
+          onChangeLanguage: (_) {},
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump();
+
+    expect(sessions.cleared, isTrue);
+    expect(
+      find.text(
+        'This saved network is no longer available. Please create or join a network again.',
+      ),
+      findsOneWidget,
+    );
+  });
 }
 
 class _HomeSessionFake implements SessionRepository {
-  @override
-  Future<void> clearActiveSession() async {}
+  _HomeSessionFake([this.session, Duration delay = Duration.zero])
+      : _delay = delay;
+
+  AccountSession? session;
+  final Duration _delay;
+  bool cleared = false;
 
   @override
-  Future<AccountSession?> getActiveSession() async => null;
+  Future<void> clearActiveSession() async {
+    cleared = true;
+    session = null;
+  }
+
+  @override
+  Future<AccountSession?> getActiveSession() async {
+    if (_delay > Duration.zero) {
+      await Future<void>.delayed(_delay);
+    }
+    return session;
+  }
 
   @override
   Future<void> saveActiveSession({
     required String networkName,
     required String memberId,
-  }) async {}
+  }) async {
+    session = AccountSession(networkName: networkName, memberId: memberId);
+  }
 }
 
 class _HomeRepositoryFake implements ExpenseNetworkRepository {
-  const _HomeRepositoryFake();
+  const _HomeRepositoryFake({this.network});
+
+  final ExpenseNetwork? network;
 
   @override
-  Future<ExpenseNetwork?> findNetwork(String networkName) async => null;
+  Future<ExpenseNetwork?> findNetwork(String networkName) async => network;
 
   @override
   Future<ExpenseNetwork> addExpense({
@@ -132,7 +240,8 @@ class _HomeRepositoryFake implements ExpenseNetworkRepository {
       const [];
 
   @override
-  Future<List<ExpenseNetwork>> getNetworks() async => const [];
+  Future<List<ExpenseNetwork>> getNetworks() async =>
+      network == null ? const [] : [network!];
 
   @override
   Future<ExpenseNetwork> joinNetwork({

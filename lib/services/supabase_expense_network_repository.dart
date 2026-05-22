@@ -486,6 +486,7 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
         }
         return member;
       }
+      await _ensureAuthMemberMetadata(memberId);
       final row = await client
           .from('network_members')
           .update(payload)
@@ -1303,6 +1304,19 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
       );
     }
     return client;
+  }
+
+  Future<void> _ensureAuthMemberMetadata(String memberId) async {
+    final client = _requireClient();
+    if (client.auth.currentSession == null) {
+      await client.auth.signInAnonymously();
+    }
+    final currentMemberId =
+        client.auth.currentUser?.userMetadata?['maskan_member_id'] as String?;
+    if (currentMemberId == memberId) return;
+    await client.auth.updateUser(
+      UserAttributes(data: {'maskan_member_id': memberId}),
+    );
   }
 
   static ExpenseNetwork networkFromRows(
