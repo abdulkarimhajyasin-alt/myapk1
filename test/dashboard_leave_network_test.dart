@@ -12,7 +12,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  testWidgets('leave flow blocks when current active total is greater than zero',
+  testWidgets(
+      'leave flow blocks when current active total is greater than zero',
       (tester) async {
     final network = ExpenseNetwork(
       id: 'network_1',
@@ -280,9 +281,21 @@ class _LeaveSessionRepository implements SessionRepository {
   Future<AccountSession?> getActiveSession() async => null;
 
   @override
+  Future<AccountSessionAuthState> restoreAuthenticatedSession() async {
+    return const AccountSessionAuthState(
+      accountSession: null,
+      accountSessionExists: false,
+      supabaseSessionExists: false,
+      currentUserExists: false,
+      authRestored: false,
+    );
+  }
+
+  @override
   Future<void> saveActiveSession({
     required String networkName,
     required String memberId,
+    String? memberPassword,
   }) async {}
 }
 
@@ -308,9 +321,8 @@ class _LeaveRepository implements ExpenseNetworkRepository {
       deletedNetwork = true;
       return;
     }
-    remainingMembers = remainingMembers
-        .where((member) => member.id != memberId)
-        .toList();
+    remainingMembers =
+        remainingMembers.where((member) => member.id != memberId).toList();
   }
 
   @override
@@ -341,6 +353,17 @@ class _LeaveRepository implements ExpenseNetworkRepository {
     required int amountCents,
     String? note,
     String? clientGeneratedId,
+  }) async =>
+      throw UnimplementedError();
+
+  @override
+  Future<ExpenseNetwork> updateExpense({
+    required String networkName,
+    required String expenseId,
+    required String editedByMemberId,
+    required int amountCents,
+    String? note,
+    DateTime? createdAt,
   }) async =>
       throw UnimplementedError();
 

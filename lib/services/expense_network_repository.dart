@@ -70,6 +70,15 @@ abstract class ExpenseNetworkRepository {
     String? clientGeneratedId,
   });
 
+  Future<ExpenseNetwork> updateExpense({
+    required String networkName,
+    required String expenseId,
+    required String editedByMemberId,
+    required int amountCents,
+    String? note,
+    DateTime? createdAt,
+  });
+
   Future<List<NetworkNotification>> getNotifications({
     required String networkId,
     required String memberId,

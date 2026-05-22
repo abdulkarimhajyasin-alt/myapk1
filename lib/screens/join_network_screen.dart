@@ -79,7 +79,11 @@ class _JoinNetworkScreenState extends State<JoinNetworkScreen> {
       );
       if (!mounted) return;
       final currentMemberId = network.members.last.id;
-      await _saveJoinedSession(network.name, currentMemberId);
+      await _saveJoinedSession(
+        network.name,
+        currentMemberId,
+        _memberPasswordController.text,
+      );
       if (!mounted) return;
       _openDashboard(network, currentMemberId);
     } on RepositoryException catch (error) {
@@ -93,11 +97,16 @@ class _JoinNetworkScreenState extends State<JoinNetworkScreen> {
     }
   }
 
-  Future<void> _saveJoinedSession(String networkName, String memberId) async {
+  Future<void> _saveJoinedSession(
+    String networkName,
+    String memberId,
+    String memberPassword,
+  ) async {
     try {
       await widget.sessionRepository.saveActiveSession(
         networkName: networkName,
         memberId: memberId,
+        memberPassword: memberPassword,
       );
     } catch (_) {
       // Joining already completed in Supabase. Keep the user moving into the

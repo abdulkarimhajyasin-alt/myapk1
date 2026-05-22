@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:developer' as developer;
 
 import 'package:shared_preferences/shared_preferences.dart';
@@ -46,9 +47,46 @@ class SupabaseSessionRepository implements SessionRepository {
   }
 
   @override
+  Future<AccountSessionAuthState> restoreAuthenticatedSession() async {
+    final accountSession = await getActiveSession();
+    if (accountSession == null) {
+      return _authState(null, authRestored: false);
+    }
+
+    var authRestored = false;
+    if (_auth.currentSession != null && _auth.currentUser != null) {
+      try {
+        await _auth.updateUser(
+          UserAttributes(
+            data: {
+              _networkNameKey: accountSession.networkName,
+              _memberIdKey: accountSession.memberId,
+            },
+          ),
+        );
+        await _auth.refreshSession();
+        final jwtMemberId = _jwtMetadataMemberId(_auth.currentSession);
+        authRestored = _auth.currentSession != null &&
+            _auth.currentUser != null &&
+            jwtMemberId == accountSession.memberId;
+      } catch (error) {
+        developer.log(
+          'active session auth restore failed: $error',
+          name: 'maskan.session',
+        );
+      }
+    }
+
+    final state = _authState(accountSession, authRestored: authRestored);
+    _logAuthState(state);
+    return state;
+  }
+
+  @override
   Future<void> saveActiveSession({
     required String networkName,
     required String memberId,
+    String? memberPassword,
   }) async {
     final session = AccountSession(
       networkName: networkName.trim(),
@@ -59,7 +97,11 @@ class SupabaseSessionRepository implements SessionRepository {
       return;
     }
     await _saveLocalSession(session);
-    await _trySaveAuthMetadata(session);
+    if (memberPassword != null && memberPassword.trim().isNotEmpty) {
+      await _ensureSupabaseAuthSession(session, memberPassword);
+    } else {
+      await _trySaveAuthMetadata(session);
+    }
   }
 
   @override
@@ -82,11 +124,6 @@ class SupabaseSessionRepository implements SessionRepository {
         name: 'maskan.session',
       );
     }
-  }
-
-  Future<void> _ensureAuthSession() async {
-    if (_auth.currentSession != null) return;
-    await _auth.signInAnonymously();
   }
 
   Future<AccountSession?> _localSession() async {
@@ -116,8 +153,8 @@ class SupabaseSessionRepository implements SessionRepository {
   }
 
   Future<void> _trySaveAuthMetadata(AccountSession session) async {
+    if (_auth.currentSession == null || _auth.currentUser == null) return;
     try {
-      await _ensureAuthSession();
       await _auth.updateUser(
         UserAttributes(
           data: {
@@ -126,11 +163,81 @@ class SupabaseSessionRepository implements SessionRepository {
           },
         ),
       );
+      await _auth.refreshSession();
     } catch (error) {
       developer.log(
         'active session auth metadata save failed: $error',
         name: 'maskan.session',
       );
+    }
+  }
+
+  Future<void> _ensureSupabaseAuthSession(
+    AccountSession session,
+    String memberPassword,
+  ) async {
+    final email = _authEmailFor(session.memberId);
+    final password = _authPasswordFor(session.memberId, memberPassword);
+    try {
+      await _auth.signInWithPassword(email: email, password: password);
+    } catch (_) {
+      await _auth.signUp(email: email, password: password);
+    }
+    await _trySaveAuthMetadata(session);
+  }
+
+  AccountSessionAuthState _authState(
+    AccountSession? accountSession, {
+    required bool authRestored,
+  }) {
+    return AccountSessionAuthState(
+      accountSession: accountSession,
+      accountSessionExists: accountSession != null,
+      supabaseSessionExists: _auth.currentSession != null,
+      currentUserExists: _auth.currentUser != null,
+      authRestored: authRestored,
+      memberId: accountSession?.memberId,
+    );
+  }
+
+  void _logAuthState(AccountSessionAuthState state) {
+    developer.log(
+      'accountSessionExists=${state.accountSessionExists} '
+      'supabaseSessionExists=${state.supabaseSessionExists} '
+      'currentUserExists=${state.currentUserExists} '
+      'authRestored=${state.authRestored} memberId=${state.memberId ?? '<none>'}',
+      name: 'maskan.session',
+    );
+  }
+
+  static String _authEmailFor(String memberId) {
+    final safeMemberId = memberId.replaceAll(RegExp(r'[^A-Za-z0-9_-]'), '_');
+    return 'maskan-$safeMemberId@auth.maskan.app'.toLowerCase();
+  }
+
+  static String _authPasswordFor(String memberId, String memberPassword) {
+    return 'Maskan:$memberId:${memberPassword.trim()}:SupabaseAuth';
+  }
+
+  static String? _jwtMetadataMemberId(dynamic session) {
+    final String? accessToken;
+    try {
+      accessToken = session?.accessToken as String?;
+    } catch (_) {
+      return null;
+    }
+    if (accessToken == null) return null;
+    final parts = accessToken.split('.');
+    if (parts.length < 2) return null;
+    try {
+      final payload = utf8.decode(
+        base64Url.decode(base64Url.normalize(parts[1])),
+      );
+      final data = jsonDecode(payload) as Map<String, dynamic>;
+      final metadata = data['user_metadata'] as Map<String, dynamic>?;
+      return metadata?[_memberIdKey] as String?;
+    } catch (_) {
+      return null;
     }
   }
 }

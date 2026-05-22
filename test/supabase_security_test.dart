@@ -64,9 +64,8 @@ void main() {
   });
 
   test('repository create avoids select-return dependency during inserts', () {
-    final source =
-        File('lib/services/supabase_expense_network_repository.dart')
-            .readAsStringSync();
+    final source = File('lib/services/supabase_expense_network_repository.dart')
+        .readAsStringSync();
     final createStart = source.indexOf('Future<ExpenseNetwork> createNetwork');
     final createEnd = source.indexOf('@override', createStart + 1);
     final createSource = source.substring(createStart, createEnd);
@@ -85,7 +84,8 @@ void main() {
     expect(createSource, isNot(contains('.select()\n          .single()')));
   });
 
-  test('Flutter source does not expose temporary create-network debug text', () {
+  test('Flutter source does not expose temporary create-network debug text',
+      () {
     final files = Directory('lib')
         .listSync(recursive: true)
         .whereType<File>()
@@ -98,9 +98,8 @@ void main() {
   });
 
   test('final network cleanup deletes all network-owned Supabase rows', () {
-    final source =
-        File('lib/services/supabase_expense_network_repository.dart')
-            .readAsStringSync();
+    final source = File('lib/services/supabase_expense_network_repository.dart')
+        .readAsStringSync();
     final cleanupStart = source.indexOf('Future<void> _deleteNetworkCascade');
     final cleanupEnd = source.indexOf('@override', cleanupStart + 1);
     final cleanupSource = source.substring(cleanupStart, cleanupEnd);
@@ -128,11 +127,28 @@ void main() {
   });
 
   test('avatar uploads use per-upload storage objects', () {
-    final source =
-        File('lib/services/member_avatar_photo_service.dart').readAsStringSync();
+    final source = File('lib/services/member_avatar_photo_service.dart')
+        .readAsStringSync();
+    final sessionSource = File('lib/services/supabase_session_repository.dart')
+        .readAsStringSync();
 
     expect(source, contains('millisecondsSinceEpoch'));
     expect(source, contains('upsert: false'));
-    expect(source, contains('_ensureAuthMetadata(memberId)'));
+    expect(source, contains('_verifyExistingAuth(memberId)'));
+    expect(source, isNot(contains('updateUser(')));
+    expect(source, isNot(contains('refreshSession()')));
+    expect(sessionSource, contains('updateUser('));
+    expect(sessionSource, contains('refreshSession()'));
+  });
+
+  test('Flutter source does not create anonymous Supabase sessions', () {
+    final files = Directory('lib')
+        .listSync(recursive: true)
+        .whereType<File>()
+        .where((file) => file.path.endsWith('.dart'));
+
+    final source = files.map((file) => file.readAsStringSync()).join('\n');
+
+    expect(source, isNot(contains('signInAnonymously')));
   });
 }

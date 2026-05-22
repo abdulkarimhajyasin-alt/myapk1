@@ -124,7 +124,8 @@ void main() {
     await _submitCreateForm(tester);
     await tester.pump();
 
-    expect(find.text('اسم الشبكة مستخدم بالفعل. اختر اسمًا آخر.'), findsOneWidget);
+    expect(
+        find.text('اسم الشبكة مستخدم بالفعل. اختر اسمًا آخر.'), findsOneWidget);
     expect(
       find.text(
         'هذه الشبكة المحفوظة لم تعد متاحة. أنشئ شبكة أو انضم إلى شبكة مرة أخرى.',
@@ -218,9 +219,22 @@ class _CreateSessionFake implements SessionRepository {
   Future<AccountSession?> getActiveSession() async => session;
 
   @override
+  Future<AccountSessionAuthState> restoreAuthenticatedSession() async {
+    return AccountSessionAuthState(
+      accountSession: session,
+      accountSessionExists: session != null,
+      supabaseSessionExists: session != null,
+      currentUserExists: session != null,
+      authRestored: session != null,
+      memberId: session?.memberId,
+    );
+  }
+
+  @override
   Future<void> saveActiveSession({
     required String networkName,
     required String memberId,
+    String? memberPassword,
   }) async {
     final error = saveError;
     if (error != null) throw error;
@@ -273,6 +287,17 @@ class _CreateRepositoryFake implements ExpenseNetworkRepository {
     required int amountCents,
     String? note,
     String? clientGeneratedId,
+  }) async =>
+      throw UnimplementedError();
+
+  @override
+  Future<ExpenseNetwork> updateExpense({
+    required String networkName,
+    required String expenseId,
+    required String editedByMemberId,
+    required int amountCents,
+    String? note,
+    DateTime? createdAt,
   }) async =>
       throw UnimplementedError();
 

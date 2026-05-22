@@ -123,6 +123,7 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
       await _saveAuthenticatedSession(
         authenticatedNetwork.name,
         authenticatedMember.id,
+        _passwordController.text,
       );
       if (!mounted) return;
       _openDashboard(authenticatedNetwork, authenticatedMember.id);
@@ -144,11 +145,13 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
   Future<void> _saveAuthenticatedSession(
     String networkName,
     String memberId,
+    String memberPassword,
   ) async {
     try {
       await widget.sessionRepository.saveActiveSession(
         networkName: networkName,
         memberId: memberId,
+        memberPassword: memberPassword,
       );
     } catch (_) {
       // Authentication already succeeded. Do not keep the user on My Account

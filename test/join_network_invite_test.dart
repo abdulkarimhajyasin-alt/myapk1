@@ -102,7 +102,8 @@ void main() {
     expect(find.textContaining('backend_'), findsNothing);
   });
 
-  testWidgets('duplicate member shows localized friendly error', (tester) async {
+  testWidgets('duplicate member shows localized friendly error',
+      (tester) async {
     final repository = _InviteJoinRepository(
       joinError: const RepositoryException(
         'This member name is already used in the network.',
@@ -178,9 +179,21 @@ class _SessionRepository implements SessionRepository {
   Future<AccountSession?> getActiveSession() async => null;
 
   @override
+  Future<AccountSessionAuthState> restoreAuthenticatedSession() async {
+    return const AccountSessionAuthState(
+      accountSession: null,
+      accountSessionExists: false,
+      supabaseSessionExists: false,
+      currentUserExists: false,
+      authRestored: false,
+    );
+  }
+
+  @override
   Future<void> saveActiveSession({
     required String networkName,
     required String memberId,
+    String? memberPassword,
   }) async {
     final error = saveError;
     if (error != null) throw error;
@@ -233,6 +246,17 @@ class _InviteJoinRepository implements ExpenseNetworkRepository {
     required int amountCents,
     String? note,
     String? clientGeneratedId,
+  }) async =>
+      throw UnimplementedError();
+
+  @override
+  Future<ExpenseNetwork> updateExpense({
+    required String networkName,
+    required String expenseId,
+    required String editedByMemberId,
+    required int amountCents,
+    String? note,
+    DateTime? createdAt,
   }) async =>
       throw UnimplementedError();
 

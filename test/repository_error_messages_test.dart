@@ -74,7 +74,51 @@ void main() {
     );
     expect(
       RepositoryErrorMessages.fromCode(l10n, 'avatar_photo_upload_failed'),
-      contains('Could not update your profile photo'),
+      contains('Could not upload your profile photo'),
+    );
+    expect(
+      RepositoryErrorMessages.fromCode(l10n, 'avatar_photo_auth_required'),
+      contains('secure session is not ready'),
+    );
+    expect(
+      RepositoryErrorMessages.fromCode(l10n, 'avatar_photo_missing'),
+      contains('No photo was selected'),
+    );
+    expect(
+      RepositoryErrorMessages.fromCode(l10n, 'avatar_photo_pick_failed'),
+      contains('Could not open the photo picker'),
+    );
+    expect(
+      RepositoryErrorMessages.fromCode(l10n, 'avatar_photo_too_large'),
+      contains('too large'),
+    );
+    expect(
+      RepositoryErrorMessages.fromCode(
+        l10n,
+        'avatar_photo_storage_not_configured',
+      ),
+      contains('storage is not configured'),
+    );
+    expect(
+      RepositoryErrorMessages.fromCode(
+        l10n,
+        'avatar_photo_storage_permission_denied',
+      ),
+      contains('Cloud storage denied'),
+    );
+    expect(
+      RepositoryErrorMessages.fromCode(
+        l10n,
+        'supabase_member_profile_update_failed',
+      ),
+      contains('account could not be updated'),
+    );
+    expect(
+      RepositoryErrorMessages.fromCode(
+        l10n,
+        'supabase_member_profile_update_auth_required',
+      ),
+      contains('secure session is not ready'),
     );
   });
 }

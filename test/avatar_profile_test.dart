@@ -5,7 +5,6 @@ import 'package:expense_network/models/member.dart';
 import 'package:expense_network/models/network_notification.dart';
 import 'package:expense_network/screens/network_dashboard_screen.dart';
 import 'package:expense_network/services/expense_network_repository.dart';
-import 'package:expense_network/services/member_avatar_photo_service.dart';
 import 'package:expense_network/services/session_repository.dart';
 import 'package:expense_network/widgets/member_avatar.dart';
 import 'package:flutter/material.dart';
@@ -73,7 +72,6 @@ void main() {
       tester,
       network: network,
       repository: _AvatarRepository(network),
-      photoService: _AvatarPhotoService(null),
     );
 
     final avatar = tester.widget<MemberAvatar>(
@@ -83,41 +81,7 @@ void main() {
     expect(find.text('A'), findsNothing);
   });
 
-  testWidgets('selected image updates current member avatar', (tester) async {
-    final network = _network(Member(id: 'member_1', name: 'Ali'));
-    final repository = _AvatarRepository(network);
-    final photoService = _AvatarPhotoService(
-      const MemberAvatarPhoto(
-        storagePath: 'network_1/member_1.jpg',
-        publicUrl: 'https://example.com/member_1.jpg',
-      ),
-    );
-
-    await _pumpDashboard(
-      tester,
-      network: network,
-      repository: repository,
-      photoService: photoService,
-    );
-
-    await tester.tap(find.text('Edit avatar'));
-    await tester.pumpAndSettle();
-
-    expect(repository.savedAvatarImagePath, 'network_1/member_1.jpg');
-    expect(repository.savedAvatarImageUrl, 'https://example.com/member_1.jpg');
-    expect(photoService.uploadedMemberId, 'member_1');
-    final avatar = tester.widget<MemberAvatar>(
-      find.byType(MemberAvatar).first,
-    );
-    expect(avatar.member.avatarImageUrl, 'https://example.com/member_1.jpg');
-    final reloaded = await repository.findNetwork('Flat');
-    expect(
-      reloaded?.findMemberById('member_1')?.avatarImageUrl,
-      'https://example.com/member_1.jpg',
-    );
-  });
-
-  testWidgets('avatar upload errors show friendly localized messages',
+  testWidgets('dashboard does not expose avatar editing while disabled',
       (tester) async {
     final network = _network(Member(id: 'member_1', name: 'Ali'));
 
@@ -125,18 +89,10 @@ void main() {
       tester,
       network: network,
       repository: _AvatarRepository(network),
-      photoService: _AvatarPhotoService(
-        null,
-        error: const MemberAvatarPhotoException(
-          'avatar_photo_permission_denied',
-        ),
-      ),
     );
 
-    await tester.tap(find.text('Edit avatar'));
-    await tester.pumpAndSettle();
-
-    expect(find.textContaining('Photo access was denied'), findsOneWidget);
+    expect(find.text('Edit avatar'), findsNothing);
+    expect(find.byIcon(Icons.palette_rounded), findsNothing);
   });
 }
 
@@ -144,21 +100,22 @@ Future<void> _pumpDashboard(
   WidgetTester tester, {
   required ExpenseNetwork network,
   required _AvatarRepository repository,
-  required MemberAvatarPhotoService photoService,
-}) {
-  return tester.pumpWidget(
+}) async {
+  await tester.pumpWidget(
     MaterialApp(
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       home: NetworkDashboardScreen(
         repository: repository,
-        sessionRepository: _AvatarSessionRepository(),
+        sessionRepository: _AvatarSessionRepository(
+          const AccountSession(networkName: 'Flat', memberId: 'member_1'),
+        ),
         network: network,
         currentMemberId: 'member_1',
-        avatarPhotoService: photoService,
       ),
     ),
   );
+  await tester.pump();
 }
 
 ExpenseNetwork _network(Member member) {
@@ -171,36 +128,37 @@ ExpenseNetwork _network(Member member) {
   );
 }
 
-class _AvatarPhotoService implements MemberAvatarPhotoService {
-  _AvatarPhotoService(this.photo, {this.error});
-
-  final MemberAvatarPhoto? photo;
-  final Object? error;
-  String? uploadedMemberId;
-
-  @override
-  Future<MemberAvatarPhoto?> pickAndUpload({
-    required String networkId,
-    required String memberId,
-  }) async {
-    uploadedMemberId = memberId;
-    final failure = error;
-    if (failure != null) throw failure;
-    return photo;
-  }
-}
-
 class _AvatarSessionRepository implements SessionRepository {
+  _AvatarSessionRepository([this.session]);
+
+  AccountSession? session;
+
   @override
   Future<void> clearActiveSession() async {}
 
   @override
-  Future<AccountSession?> getActiveSession() async => null;
+  Future<AccountSession?> getActiveSession() async {
+    return session;
+  }
+
+  @override
+  Future<AccountSessionAuthState> restoreAuthenticatedSession() async {
+    final activeSession = await getActiveSession();
+    return AccountSessionAuthState(
+      accountSession: activeSession,
+      accountSessionExists: activeSession != null,
+      supabaseSessionExists: activeSession != null,
+      currentUserExists: activeSession != null,
+      authRestored: activeSession != null,
+      memberId: activeSession?.memberId,
+    );
+  }
 
   @override
   Future<void> saveActiveSession({
     required String networkName,
     required String memberId,
+    String? memberPassword,
   }) async {}
 }
 
@@ -223,9 +181,9 @@ class _AvatarRepository implements ExpenseNetworkRepository {
     savedAvatarImagePath = avatarImagePath;
     savedAvatarImageUrl = avatarImageUrl;
     final updated = network.findMemberById(memberId)!.copyWith(
-      avatarImagePath: avatarImagePath,
-      avatarImageUrl: avatarImageUrl,
-    );
+          avatarImagePath: avatarImagePath,
+          avatarImageUrl: avatarImageUrl,
+        );
     network = network.copyWith(members: [updated]);
     return updated;
   }
@@ -255,6 +213,17 @@ class _AvatarRepository implements ExpenseNetworkRepository {
     required int amountCents,
     String? note,
     String? clientGeneratedId,
+  }) async =>
+      throw UnimplementedError();
+
+  @override
+  Future<ExpenseNetwork> updateExpense({
+    required String networkName,
+    required String expenseId,
+    required String editedByMemberId,
+    required int amountCents,
+    String? note,
+    DateTime? createdAt,
   }) async =>
       throw UnimplementedError();
 

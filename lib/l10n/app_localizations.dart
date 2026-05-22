@@ -191,8 +191,21 @@ class AppLocalizations {
       'editAvatar': 'Edit avatar',
       'avatarPhotoPermissionDenied':
           'Photo access was denied. Allow gallery access and try again.',
+      'avatarPhotoMissing': 'No photo was selected. Choose a photo to update.',
+      'avatarPhotoPickFailed':
+          'Could not open the photo picker. Please try again.',
+      'avatarPhotoTooLarge':
+          'This photo is too large. Choose a smaller photo and try again.',
       'avatarPhotoUploadFailed':
-          'Could not update your profile photo. Please try again.',
+          'Could not upload your profile photo. Please try again.',
+      'avatarPhotoAuthRequired':
+          'Your secure session is not ready. Please reopen the app and try again.',
+      'avatarPhotoStorageNotConfigured':
+          'Profile photo storage is not configured. Contact support.',
+      'avatarPhotoStoragePermissionDenied':
+          'Cloud storage denied this photo update. Contact support.',
+      'avatarPhotoProfileUpdateFailed':
+          'Photo uploaded, but your account could not be updated. Please try again.',
       'avatarColor': 'Avatar color',
       'save': 'Save',
       'pushExpenseAddedTitle': 'New expense added',
@@ -356,7 +369,11 @@ class AppLocalizations {
       'editAvatar': 'تعديل الصورة',
       'avatarPhotoPermissionDenied':
           'تم رفض الوصول إلى الصور. اسمح بالوصول إلى المعرض ثم حاول مرة أخرى.',
-      'avatarPhotoUploadFailed': 'تعذر تحديث صورة الحساب. حاول مرة أخرى.',
+      'avatarPhotoMissing': 'لم يتم اختيار صورة. اختر صورة لتحديث الحساب.',
+      'avatarPhotoPickFailed': 'تعذر فتح منتقي الصور. حاول مرة أخرى.',
+      'avatarPhotoUploadFailed': 'تعذر رفع صورة الحساب. حاول مرة أخرى.',
+      'avatarPhotoProfileUpdateFailed':
+          'تم رفع الصورة، لكن تعذر تحديث الحساب. حاول مرة أخرى.',
       'avatarColor': 'لون الصورة',
       'save': 'حفظ',
       'pushExpenseAddedTitle': 'تمت إضافة مصروف جديد',
@@ -525,7 +542,17 @@ class AppLocalizations {
   String get editAvatar => _text('editAvatar');
   String get avatarPhotoPermissionDenied =>
       _text('avatarPhotoPermissionDenied');
+  String get avatarPhotoMissing => _text('avatarPhotoMissing');
+  String get avatarPhotoPickFailed => _text('avatarPhotoPickFailed');
+  String get avatarPhotoTooLarge => _text('avatarPhotoTooLarge');
   String get avatarPhotoUploadFailed => _text('avatarPhotoUploadFailed');
+  String get avatarPhotoAuthRequired => _text('avatarPhotoAuthRequired');
+  String get avatarPhotoStorageNotConfigured =>
+      _text('avatarPhotoStorageNotConfigured');
+  String get avatarPhotoStoragePermissionDenied =>
+      _text('avatarPhotoStoragePermissionDenied');
+  String get avatarPhotoProfileUpdateFailed =>
+      _text('avatarPhotoProfileUpdateFailed');
   String get avatarColor => _text('avatarColor');
   String get save => _text('save');
   String get pushExpenseAddedTitle => _text('pushExpenseAddedTitle');

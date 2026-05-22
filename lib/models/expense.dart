@@ -30,6 +30,10 @@ class Expense {
   bool get isArchived => archivedAt != null;
 
   Expense copyWith({
+    int? amountCents,
+    String? note,
+    bool clearNote = false,
+    DateTime? createdAt,
     String? cycleId,
     DateTime? archivedAt,
     String? clientGeneratedId,
@@ -37,9 +41,9 @@ class Expense {
   }) {
     return Expense(
       id: id,
-      amountCents: amountCents,
-      note: note,
-      createdAt: createdAt,
+      amountCents: amountCents ?? this.amountCents,
+      note: clearNote ? null : note ?? this.note,
+      createdAt: createdAt ?? this.createdAt,
       addedByMemberId: addedByMemberId,
       addedByMemberName: addedByMemberName,
       cycleId: cycleId ?? this.cycleId,
@@ -69,7 +73,8 @@ class Expense {
     final amountCents = json['amountCents'] as int;
     return Expense(
       id: json['id'] as String? ??
-          IdUtils.legacyId('expense', '$amountCents-${createdAt.toIso8601String()}'),
+          IdUtils.legacyId(
+              'expense', '$amountCents-${createdAt.toIso8601String()}'),
       amountCents: amountCents,
       note: json['note'] as String?,
       createdAt: createdAt,

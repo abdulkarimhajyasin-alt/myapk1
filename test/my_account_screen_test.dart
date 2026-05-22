@@ -59,7 +59,8 @@ void main() {
     expect(find.textContaining('metadata'), findsNothing);
   });
 
-  testWidgets('wrong personal password stays on account screen', (tester) async {
+  testWidgets('wrong personal password stays on account screen',
+      (tester) async {
     final repository = _AccountRepository(
       authenticateError: const RepositoryException(
         'Member password is incorrect.',
@@ -198,9 +199,22 @@ class _AccountSessionRepository implements SessionRepository {
   Future<AccountSession?> getActiveSession() async => session;
 
   @override
+  Future<AccountSessionAuthState> restoreAuthenticatedSession() async {
+    return AccountSessionAuthState(
+      accountSession: session,
+      accountSessionExists: session != null,
+      supabaseSessionExists: session != null,
+      currentUserExists: session != null,
+      authRestored: session != null,
+      memberId: session?.memberId,
+    );
+  }
+
+  @override
   Future<void> saveActiveSession({
     required String networkName,
     required String memberId,
+    String? memberPassword,
   }) async {
     final error = saveError;
     if (error != null) throw error;
@@ -238,6 +252,17 @@ class _AccountRepository implements ExpenseNetworkRepository {
     required int amountCents,
     String? note,
     String? clientGeneratedId,
+  }) async =>
+      throw UnimplementedError();
+
+  @override
+  Future<ExpenseNetwork> updateExpense({
+    required String networkName,
+    required String expenseId,
+    required String editedByMemberId,
+    required int amountCents,
+    String? note,
+    DateTime? createdAt,
   }) async =>
       throw UnimplementedError();
 

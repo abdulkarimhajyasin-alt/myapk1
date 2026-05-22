@@ -28,8 +28,19 @@ class RepositoryErrorMessages {
       'member_not_found' => l10n.errorCloudRecordUnavailable,
       'supabase_create_network_failed' => l10n.errorCreateNetworkFailed,
       'avatar_photo_permission_denied' => l10n.avatarPhotoPermissionDenied,
-      'avatar_photo_pick_failed' => l10n.avatarPhotoUploadFailed,
+      'avatar_photo_missing' => l10n.avatarPhotoMissing,
+      'avatar_photo_pick_failed' => l10n.avatarPhotoPickFailed,
+      'avatar_photo_too_large' => l10n.avatarPhotoTooLarge,
       'avatar_photo_upload_failed' => l10n.avatarPhotoUploadFailed,
+      'avatar_photo_auth_required' => l10n.avatarPhotoAuthRequired,
+      'avatar_photo_storage_not_configured' =>
+        l10n.avatarPhotoStorageNotConfigured,
+      'avatar_photo_storage_permission_denied' =>
+        l10n.avatarPhotoStoragePermissionDenied,
+      'supabase_member_profile_update_failed' =>
+        l10n.avatarPhotoProfileUpdateFailed,
+      'supabase_member_profile_update_auth_required' =>
+        l10n.avatarPhotoAuthRequired,
       'supabase_not_initialized' => l10n.errorSupabaseNotConfigured,
       'reset_request_already_pending' => l10n.resetRequestAlreadyPending,
       'reset_request_not_pending' => l10n.resetApprovalFailed,

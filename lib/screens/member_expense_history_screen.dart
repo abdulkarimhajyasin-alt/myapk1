@@ -1,21 +1,68 @@
 import 'package:flutter/material.dart';
 
 import '../l10n/app_localizations.dart';
+import '../models/expense.dart';
 import '../models/expense_network.dart';
 import '../models/member.dart';
+import '../services/expense_network_repository.dart';
 import '../utils/money_utils.dart';
 import '../widgets/app_scaffold.dart';
 import '../widgets/member_avatar.dart';
 
-class MemberExpenseHistoryScreen extends StatelessWidget {
+class MemberExpenseHistoryScreen extends StatefulWidget {
   const MemberExpenseHistoryScreen({
+    required this.repository,
     required this.network,
     required this.member,
+    required this.currentMemberId,
     super.key,
   });
 
+  final ExpenseNetworkRepository repository;
   final ExpenseNetwork network;
   final Member member;
+  final String currentMemberId;
+
+  @override
+  State<MemberExpenseHistoryScreen> createState() =>
+      _MemberExpenseHistoryScreenState();
+}
+
+class _MemberExpenseHistoryScreenState
+    extends State<MemberExpenseHistoryScreen> {
+  late ExpenseNetwork _network = widget.network;
+  late Member _member = widget.member;
+
+  Future<void> _editExpense(Expense expense) async {
+    final updated = await showModalBottomSheet<Expense>(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) => _EditExpenseSheet(
+        expense: expense,
+        currencySymbol: _network.currencySymbol,
+      ),
+    );
+    if (updated == null || !mounted) return;
+
+    final network = await widget.repository.updateExpense(
+      networkName: _network.name,
+      expenseId: expense.id,
+      editedByMemberId: widget.currentMemberId,
+      amountCents: updated.amountCents,
+      note: updated.note,
+      createdAt: updated.createdAt,
+    );
+    final refreshedMember = await widget.repository.getMemberHistory(
+          networkName: network.name,
+          memberId: _member.id,
+        ) ??
+        network.findMemberById(_member.id);
+    if (!mounted) return;
+    setState(() {
+      _network = network;
+      if (refreshedMember != null) _member = refreshedMember;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -29,11 +76,11 @@ class MemberExpenseHistoryScreen extends StatelessWidget {
         children: [
           Row(
             children: [
-              MemberAvatar(member: member, radius: 26),
+              MemberAvatar(member: _member, radius: 26),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  member.name,
+                  _member.name,
                   style: theme.textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.w800,
                   ),
@@ -45,19 +92,19 @@ class MemberExpenseHistoryScreen extends StatelessWidget {
           Text(
             '${l10n.totalPaid}: '
             '${MoneyUtils.formatCents(
-              member.totalPaidCents,
-              currencySymbol: network.currencySymbol,
+              _member.totalPaidCents,
+              currencySymbol: _network.currencySymbol,
             )}',
             style: theme.textTheme.titleMedium,
           ),
           const SizedBox(height: 18),
-          if (member.expenses.isEmpty)
+          if (_member.expenses.isEmpty)
             _EmptyHistory(
               title: l10n.noExpensesYet,
               subtitle: l10n.noExpensesSubtitle,
             )
           else
-            ...member.expenses.reversed.map(
+            ..._member.expenses.reversed.map(
               (expense) => Card(
                 margin: const EdgeInsets.only(bottom: 10),
                 child: Padding(
@@ -65,14 +112,26 @@ class MemberExpenseHistoryScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        MoneyUtils.formatCents(
-                          expense.amountCents,
-                          currencySymbol: network.currencySymbol,
-                        ),
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w800,
-                        ),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              MoneyUtils.formatCents(
+                                expense.amountCents,
+                                currencySymbol: _network.currencySymbol,
+                              ),
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ),
+                          if (expense.addedByMemberId == widget.currentMemberId)
+                            IconButton(
+                              tooltip: 'Edit expense',
+                              onPressed: () => _editExpense(expense),
+                              icon: const Icon(Icons.edit_rounded),
+                            ),
+                        ],
                       ),
                       const SizedBox(height: 6),
                       Text(
@@ -93,6 +152,135 @@ class MemberExpenseHistoryScreen extends StatelessWidget {
                 ),
               ),
             ),
+        ],
+      ),
+    );
+  }
+}
+
+class _EditExpenseSheet extends StatefulWidget {
+  const _EditExpenseSheet({
+    required this.expense,
+    required this.currencySymbol,
+  });
+
+  final Expense expense;
+  final String currencySymbol;
+
+  @override
+  State<_EditExpenseSheet> createState() => _EditExpenseSheetState();
+}
+
+class _EditExpenseSheetState extends State<_EditExpenseSheet> {
+  late final TextEditingController _amountController = TextEditingController(
+    text: (widget.expense.amountCents / 100).toStringAsFixed(2),
+  );
+  late final TextEditingController _noteController = TextEditingController(
+    text: widget.expense.note ?? '',
+  );
+  late DateTime _createdAt = widget.expense.createdAt;
+  String? _error;
+
+  @override
+  void dispose() {
+    _amountController.dispose();
+    _noteController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _pickDate() async {
+    final date = await showDatePicker(
+      context: context,
+      initialDate: _createdAt,
+      firstDate: DateTime(2020),
+      lastDate: DateTime.now().add(const Duration(days: 1)),
+    );
+    if (date == null || !mounted) return;
+    setState(() {
+      _createdAt = DateTime(
+        date.year,
+        date.month,
+        date.day,
+        _createdAt.hour,
+        _createdAt.minute,
+      );
+    });
+  }
+
+  void _save() {
+    final l10n = context.l10n;
+    final amount = MoneyUtils.parseToCents(_amountController.text);
+    if (amount == null || amount <= 0) {
+      setState(() => _error = l10n.invalidAmount);
+      return;
+    }
+    final note = _noteController.text.trim();
+    if (note.length > 200) {
+      setState(() => _error = l10n.noteTooLong);
+      return;
+    }
+    Navigator.of(context).pop(
+      widget.expense.copyWith(
+        amountCents: amount,
+        note: note.isEmpty ? null : note,
+        clearNote: note.isEmpty,
+        createdAt: _createdAt,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+    return Padding(
+      padding: EdgeInsets.fromLTRB(20, 20, 20, bottomInset + 20),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            'Edit expense',
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w800,
+                ),
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: _amountController,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            decoration: InputDecoration(
+              labelText: l10n.amount,
+              prefixText: '${widget.currencySymbol} ',
+            ),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _noteController,
+            maxLength: 200,
+            decoration: InputDecoration(labelText: l10n.noteOptional),
+          ),
+          const SizedBox(height: 4),
+          OutlinedButton.icon(
+            onPressed: _pickDate,
+            icon: const Icon(Icons.event_rounded),
+            label: Text(
+              MaterialLocalizations.of(context).formatFullDate(_createdAt),
+            ),
+          ),
+          if (_error != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              _error!,
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
+            ),
+          ],
+          const SizedBox(height: 16),
+          FilledButton.icon(
+            onPressed: _save,
+            icon: const Icon(Icons.save_rounded),
+            label: Text(l10n.save),
+          ),
         ],
       ),
     );

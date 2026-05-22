@@ -208,8 +208,7 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
       );
       await client
           .from('networks')
-          .update({'created_by_member_id': memberId})
-          .eq('id', networkId);
+          .update({'created_by_member_id': memberId}).eq('id', networkId);
       _debugCreateNetwork(
         'SUCCESS owner update',
         normalizedName: normalizedNetworkName,
@@ -437,16 +436,13 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
   Future<void> saveNetwork(ExpenseNetwork network) async {
     try {
       final client = _requireClient();
-      await client
-          .from('networks')
-          .update({
-            'name': network.name.trim(),
-            'normalized_name': normalizeName(network.name),
-            'currency_code': network.currencyCode,
-            'currency_symbol': network.currencySymbol,
-            'updated_at': DateTime.now().toUtc().toIso8601String(),
-          })
-          .eq('id', network.id);
+      await client.from('networks').update({
+        'name': network.name.trim(),
+        'normalized_name': normalizeName(network.name),
+        'currency_code': network.currencyCode,
+        'currency_symbol': network.currencySymbol,
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
+      }).eq('id', network.id);
     } catch (error) {
       throw mapSupabaseError(
         error,
@@ -529,7 +525,8 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
 
     final networkId = networkRow['id'] as String;
     final members = await _loadMemberRows(networkId);
-    final actorRows = members.where((member) => member['id'] == addedByMemberId);
+    final actorRows =
+        members.where((member) => member['id'] == addedByMemberId);
     if (actorRows.isEmpty) {
       throw const RepositoryException(
         'Member not found.',
@@ -591,6 +588,79 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
         duplicateMessage: 'This expense was already synced.',
         fallbackCode: 'supabase_add_expense_failed',
         fallbackMessage: 'Cloud expense could not be added.',
+      );
+    }
+  }
+
+  @override
+  Future<ExpenseNetwork> updateExpense({
+    required String networkName,
+    required String expenseId,
+    required String editedByMemberId,
+    required int amountCents,
+    String? note,
+    DateTime? createdAt,
+  }) async {
+    if (amountCents <= 0) {
+      throw const RepositoryException(
+        'Expense amount must be greater than zero.',
+        code: 'invalid_amount',
+      );
+    }
+
+    final networkRow = await _loadNetworkRowByName(networkName);
+    if (networkRow == null) {
+      throw const RepositoryException(
+        'Network not found.',
+        code: 'network_not_found',
+      );
+    }
+
+    final client = _requireClient();
+    final existing = await client
+        .from('expenses')
+        .select()
+        .eq('id', expenseId)
+        .eq('network_id', networkRow['id'] as String)
+        .maybeSingle();
+    if (existing == null) {
+      throw const RepositoryException(
+        'Expense not found.',
+        code: 'expense_not_found',
+      );
+    }
+    final expenseRow = Map<String, dynamic>.from(existing);
+    if (expenseRow['added_by_member_id'] != editedByMemberId) {
+      throw const RepositoryException(
+        'Only the member who created this expense can edit it.',
+        code: 'expense_edit_forbidden',
+      );
+    }
+    if (expenseRow['archived_at'] != null) {
+      throw const RepositoryException(
+        'Archived expenses cannot be edited.',
+        code: 'expense_edit_archived',
+      );
+    }
+
+    try {
+      await client
+          .from('expenses')
+          .update(
+            buildExpenseUpdatePayload(
+              amountCents: amountCents,
+              note: note,
+              createdAt: createdAt,
+            ),
+          )
+          .eq('id', expenseId)
+          .eq('added_by_member_id', editedByMemberId);
+      return _networkFromHydratedRow(networkRow);
+    } catch (error) {
+      throw mapSupabaseError(
+        error,
+        fallbackCode: 'supabase_update_expense_failed',
+        fallbackMessage: 'Cloud expense could not be updated.',
       );
     }
   }
@@ -831,14 +901,11 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
         'member_name': requester.name,
         'approved_at': now,
       });
-      await client
-          .from('expense_cycles')
-          .update({
-            'status': 'pending_reset',
-            'requested_by_member_id': requester.id,
-            'requested_by_member_name': requester.name,
-          })
-          .eq('id', cycle.id);
+      await client.from('expense_cycles').update({
+        'status': 'pending_reset',
+        'requested_by_member_id': requester.id,
+        'requested_by_member_name': requester.name,
+      }).eq('id', cycle.id);
       await _createResetNotificationsSafely(
         networkId: networkId,
         members: members.map(memberFromRow).toList(),
@@ -946,7 +1013,8 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
     }
   }
 
-  Future<Map<String, dynamic>?> _loadNetworkRowByName(String networkName) async {
+  Future<Map<String, dynamic>?> _loadNetworkRowByName(
+      String networkName) async {
     try {
       final client = _requireClient();
       final row = await client
@@ -990,9 +1058,7 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
           .select()
           .eq('network_id', networkId)
           .order('created_at');
-      return rows
-          .map((row) => Map<String, dynamic>.from(row as Map))
-          .toList();
+      return rows.map((row) => Map<String, dynamic>.from(row as Map)).toList();
     } catch (error) {
       throw mapSupabaseError(
         error,
@@ -1010,9 +1076,7 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
           .select()
           .eq('network_id', networkId)
           .order('created_at');
-      return rows
-          .map((row) => Map<String, dynamic>.from(row as Map))
-          .toList();
+      return rows.map((row) => Map<String, dynamic>.from(row as Map)).toList();
     } catch (error) {
       throw mapSupabaseError(
         error,
@@ -1032,9 +1096,7 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
           .select()
           .eq('paid_by_member_id', memberId)
           .order('created_at');
-      return rows
-          .map((row) => Map<String, dynamic>.from(row as Map))
-          .toList();
+      return rows.map((row) => Map<String, dynamic>.from(row as Map)).toList();
     } catch (error) {
       throw mapSupabaseError(
         error,
@@ -1052,9 +1114,7 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
           .select()
           .eq('network_id', networkId)
           .order('cycle_number');
-      return rows
-          .map((row) => Map<String, dynamic>.from(row as Map))
-          .toList();
+      return rows.map((row) => Map<String, dynamic>.from(row as Map)).toList();
     } catch (error) {
       throw mapSupabaseError(
         error,
@@ -1225,20 +1285,16 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
         .eq('network_id', networkId)
         .or('cycle_id.eq.${request.cycleId},cycle_id.is.null')
         .filter('archived_at', 'is', null);
-    await client
-        .from('expense_cycles')
-        .update({'status': 'closed', 'closed_at': now})
-        .eq('id', request.cycleId);
+    await client.from('expense_cycles').update(
+        {'status': 'closed', 'closed_at': now}).eq('id', request.cycleId);
     await client.from('expense_cycles').insert({
       'network_id': networkId,
       'cycle_number': (await _loadCycleRows(networkId)).length + 1,
       'status': 'active',
       'started_at': now,
     });
-    await client
-        .from('expense_reset_requests')
-        .update({'status': 'completed', 'completed_at': now})
-        .eq('id', resetRequestId);
+    await client.from('expense_reset_requests').update(
+        {'status': 'completed', 'completed_at': now}).eq('id', resetRequestId);
     return true;
   }
 
@@ -1308,21 +1364,25 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
 
   Future<void> _ensureAuthMemberMetadata(String memberId) async {
     final client = _requireClient();
-    if (client.auth.currentSession == null) {
-      await client.auth.signInAnonymously();
+    if (client.auth.currentSession == null || client.auth.currentUser == null) {
+      throw const RepositoryException(
+        'Profile updates require an authenticated Supabase session.',
+        code: 'supabase_member_profile_update_auth_required',
+      );
     }
     final currentMemberId =
         client.auth.currentUser?.userMetadata?['maskan_member_id'] as String?;
-    if (currentMemberId == memberId) return;
-    await client.auth.updateUser(
-      UserAttributes(data: {'maskan_member_id': memberId}),
-    );
+    if (currentMemberId != memberId) {
+      throw const RepositoryException(
+        'Profile updates require the restored authenticated member session.',
+        code: 'supabase_member_profile_update_auth_required',
+      );
+    }
   }
 
   static ExpenseNetwork networkFromRows(
     Map<String, dynamic> networkRow,
-    List<Map<String, dynamic>> memberRows,
-    {
+    List<Map<String, dynamic>> memberRows, {
     List<Map<String, dynamic>> expenseRows = const [],
     List<Map<String, dynamic>> cycleRows = const [],
     List<ExpenseResetRequest> resetRequests = const [],
@@ -1481,6 +1541,18 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
     };
   }
 
+  static Map<String, dynamic> buildExpenseUpdatePayload({
+    required int amountCents,
+    String? note,
+    DateTime? createdAt,
+  }) {
+    return {
+      'amount_cents': amountCents,
+      'note': sanitizeExpenseNote(note),
+      if (createdAt != null) 'created_at': createdAt.toUtc().toIso8601String(),
+    };
+  }
+
   static List<Map<String, dynamic>> buildNotificationInsertPayloads({
     required String networkId,
     required List<Member> members,
@@ -1540,7 +1612,8 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
         .toList();
   }
 
-  static List<Map<String, dynamic>> buildCycleStartedNotificationInsertPayloads({
+  static List<Map<String, dynamic>>
+      buildCycleStartedNotificationInsertPayloads({
     required String networkId,
     required List<Member> members,
     required String resetRequestId,

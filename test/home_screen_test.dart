@@ -143,9 +143,23 @@ class _HomeSessionFake implements SessionRepository {
   }
 
   @override
+  Future<AccountSessionAuthState> restoreAuthenticatedSession() async {
+    final activeSession = await getActiveSession();
+    return AccountSessionAuthState(
+      accountSession: activeSession,
+      accountSessionExists: activeSession != null,
+      supabaseSessionExists: activeSession != null,
+      currentUserExists: activeSession != null,
+      authRestored: activeSession != null,
+      memberId: activeSession?.memberId,
+    );
+  }
+
+  @override
   Future<void> saveActiveSession({
     required String networkName,
     required String memberId,
+    String? memberPassword,
   }) async {
     session = AccountSession(networkName: networkName, memberId: memberId);
   }
@@ -167,6 +181,17 @@ class _HomeRepositoryFake implements ExpenseNetworkRepository {
     required int amountCents,
     String? note,
     String? clientGeneratedId,
+  }) async =>
+      throw UnimplementedError();
+
+  @override
+  Future<ExpenseNetwork> updateExpense({
+    required String networkName,
+    required String expenseId,
+    required String editedByMemberId,
+    required int amountCents,
+    String? note,
+    DateTime? createdAt,
   }) async =>
       throw UnimplementedError();
 

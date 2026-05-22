@@ -68,7 +68,11 @@ class _CreateNetworkScreenState extends State<CreateNetworkScreen> {
       );
       if (!mounted) return;
       final currentMemberId = network.members.first.id;
-      await _saveCreatedSession(network.name, currentMemberId);
+      await _saveCreatedSession(
+        network.name,
+        currentMemberId,
+        _memberPasswordController.text,
+      );
       if (!mounted) return;
       _openDashboard(network, currentMemberId);
     } on RepositoryException catch (error) {
@@ -106,11 +110,13 @@ class _CreateNetworkScreenState extends State<CreateNetworkScreen> {
   Future<void> _saveCreatedSession(
     String networkName,
     String memberId,
+    String memberPassword,
   ) async {
     try {
       await widget.sessionRepository.saveActiveSession(
         networkName: networkName,
         memberId: memberId,
+        memberPassword: memberPassword,
       );
     } catch (_) {
       // The backend create already completed. Do not turn a session metadata

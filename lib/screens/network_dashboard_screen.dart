@@ -8,9 +8,7 @@ import '../models/member.dart';
 import '../models/network_notification.dart';
 import '../services/dashboard_analytics_service.dart';
 import '../services/expense_network_repository.dart';
-import '../services/member_avatar_photo_service.dart';
 import '../services/push_notification_service.dart';
-import '../services/repository_error_messages.dart';
 import '../services/session_repository.dart';
 import '../services/supabase_realtime_service.dart';
 import '../utils/money_utils.dart';
@@ -28,7 +26,6 @@ class NetworkDashboardScreen extends StatefulWidget {
     required this.sessionRepository,
     required this.network,
     required this.currentMemberId,
-    this.avatarPhotoService,
     super.key,
   });
 
@@ -36,7 +33,6 @@ class NetworkDashboardScreen extends StatefulWidget {
   final SessionRepository sessionRepository;
   final ExpenseNetwork network;
   final String currentMemberId;
-  final MemberAvatarPhotoService? avatarPhotoService;
 
   @override
   State<NetworkDashboardScreen> createState() => _NetworkDashboardScreenState();
@@ -51,9 +47,7 @@ class _NetworkDashboardScreenState extends State<NetworkDashboardScreen> {
 
   Member get _currentMember {
     return _network.findMemberById(widget.currentMemberId) ??
-        (_network.members.isEmpty
-            ? Member(name: '')
-            : _network.members.first);
+        (_network.members.isEmpty ? Member(name: '') : _network.members.first);
   }
 
   Future<void> _refreshNetwork() async {
@@ -175,11 +169,14 @@ class _NetworkDashboardScreenState extends State<NetworkDashboardScreen> {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => MemberExpenseHistoryScreen(
+          repository: widget.repository,
           network: _network,
           member: historyMember,
+          currentMemberId: widget.currentMemberId,
         ),
       ),
     );
+    await _refreshNetwork();
   }
 
   Future<void> _openNotifications() async {
@@ -204,48 +201,6 @@ class _NetworkDashboardScreenState extends State<NetworkDashboardScreen> {
           networkId: _network.id,
         ),
       ),
-    );
-  }
-
-  Future<void> _editAvatar() async {
-    final member = _currentMember;
-    try {
-      final photoService =
-          widget.avatarPhotoService ?? SupabaseMemberAvatarPhotoService.active();
-      final photo = await photoService.pickAndUpload(
-        networkId: _network.id,
-        memberId: member.id,
-      );
-      if (photo == null) return;
-      final updatedMember = await widget.repository.updateMemberProfile(
-        networkName: _network.name,
-        memberId: member.id,
-        avatarImagePath: photo.storagePath,
-        avatarImageUrl: photo.publicUrl,
-      );
-      if (!mounted) return;
-      setState(() => _replaceMember(updatedMember));
-    } on MemberAvatarPhotoException catch (error) {
-      if (!mounted) return;
-      _showSnack(
-        RepositoryErrorMessages.fromCode(context.l10n, error.code) ??
-            context.l10n.avatarPhotoUploadFailed,
-      );
-    } on RepositoryException catch (error) {
-      if (!mounted) return;
-      _showSnack(RepositoryErrorMessages.fromException(context, error));
-    } catch (_) {
-      if (!mounted) return;
-      _showSnack(context.l10n.avatarPhotoUploadFailed);
-    }
-  }
-
-  void _replaceMember(Member updatedMember) {
-    _network = _network.copyWith(
-      members: _network.members
-          .map((candidate) =>
-              candidate.id == updatedMember.id ? updatedMember : candidate)
-          .toList(),
     );
   }
 
@@ -392,10 +347,11 @@ class _NetworkDashboardScreenState extends State<NetworkDashboardScreen> {
               MemberAvatar(member: _currentMember, radius: 24),
               const SizedBox(width: 10),
               Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: _editAvatar,
-                  icon: const Icon(Icons.palette_rounded),
-                  label: Text(l10n.editAvatar),
+                child: Text(
+                  _currentMember.name,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
               ),
             ],
@@ -536,31 +492,6 @@ class _AnalyticsGrid extends StatelessWidget {
       spacing: 10,
       runSpacing: 10,
       children: [
-        _AnalyticsCard(
-          label: l10n.currentCycleTotal,
-          value: MoneyUtils.formatCents(
-            analytics.currentCycleTotalCents,
-            currencySymbol: currencySymbol,
-          ),
-        ),
-        _AnalyticsCard(
-          label: l10n.averageExpense,
-          value: MoneyUtils.formatCents(
-            analytics.averageExpenseCents,
-            currencySymbol: currencySymbol,
-          ),
-        ),
-        _AnalyticsCard(
-          label: l10n.expenseCount,
-          value: analytics.expenseCount.toString(),
-        ),
-        _AnalyticsCard(
-          label: l10n.monthlySpend,
-          value: MoneyUtils.formatCents(
-            analytics.monthlyTotalCents,
-            currencySymbol: currencySymbol,
-          ),
-        ),
         _AnalyticsCard(
           label: l10n.topPayer,
           value: topPayer == null ? '-' : topPayer.name,

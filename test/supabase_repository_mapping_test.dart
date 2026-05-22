@@ -163,6 +163,19 @@ void main() {
     expect(payload['created_at'], isA<String>());
   });
 
+  test('update expense payload includes editable fields only', () {
+    final payload = SupabaseExpenseNetworkRepository.buildExpenseUpdatePayload(
+      amountCents: 1550,
+      note: '  Updated  ',
+      createdAt: DateTime.utc(2026, 5, 22, 10, 30),
+    );
+
+    expect(payload['amount_cents'], 1550);
+    expect(payload['note'], 'Updated');
+    expect(payload['created_at'], '2026-05-22T10:30:00.000Z');
+    expect(payload, isNot(contains('added_by_member_id')));
+  });
+
   test('maps archived Supabase expenses without counting active totals', () {
     final network = SupabaseExpenseNetworkRepository.networkFromRows(
       {
@@ -413,7 +426,8 @@ void main() {
 
   test('maps missing cloud rows without raw backend copy', () {
     final error = SupabaseExpenseNetworkRepository.mapSupabaseError(
-      Exception('PGRST116: JSON object requested, multiple or no rows returned'),
+      Exception(
+          'PGRST116: JSON object requested, multiple or no rows returned'),
       fallbackCode: 'fallback',
       fallbackMessage: 'Fallback message.',
     );
@@ -424,7 +438,8 @@ void main() {
 
   test('create network maps missing internal rows as create failure', () {
     final error = SupabaseExpenseNetworkRepository.mapSupabaseError(
-      Exception('PGRST116: JSON object requested, multiple or no rows returned'),
+      Exception(
+          'PGRST116: JSON object requested, multiple or no rows returned'),
       notFoundCode: 'supabase_create_network_failed',
       notFoundMessage: 'Cloud network could not be created.',
       fallbackCode: 'fallback',
