@@ -792,6 +792,77 @@ create policy phase5_interim_leave_network
     and public.phase5_network_has_no_active_expenses(network_id)
   );
 
+create or replace function public.phase5_reset_member_password(
+  target_network_id uuid,
+  admin_member_id uuid,
+  target_member_id uuid,
+  new_password_hash text,
+  new_password_salt text
+)
+returns public.network_members
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  jwt_member_id text;
+  updated_member public.network_members%rowtype;
+begin
+  jwt_member_id := coalesce(
+    auth.jwt() -> 'user_metadata' ->> 'maskan_member_id',
+    ''
+  );
+
+  if admin_member_id::text <> jwt_member_id then
+    raise exception 'Admin member auth mismatch' using errcode = '42501';
+  end if;
+
+  if admin_member_id = target_member_id then
+    raise exception 'Admin cannot reset own password through this flow'
+      using errcode = '42501';
+  end if;
+
+  if length(trim(coalesce(new_password_hash, ''))) = 0
+    or length(trim(coalesce(new_password_salt, ''))) = 0 then
+    raise exception 'Password hash and salt are required'
+      using errcode = '23514';
+  end if;
+
+  if not exists (
+    select 1
+    from public.networks
+    where id = target_network_id
+      and created_by_member_id = admin_member_id
+  ) then
+    raise exception 'Only the network owner can reset member passwords'
+      using errcode = '42501';
+  end if;
+
+  update public.network_members
+  set
+    password_hash = new_password_hash,
+    password_salt = new_password_salt
+  where id = target_member_id
+    and network_id = target_network_id
+  returning * into updated_member;
+
+  if not found then
+    raise exception 'Target member not found in this network'
+      using errcode = 'P0002';
+  end if;
+
+  return updated_member;
+end;
+$$;
+
+grant execute on function public.phase5_reset_member_password(
+  uuid,
+  uuid,
+  uuid,
+  text,
+  text
+) to anon, authenticated;
+
 drop policy if exists phase5_interim_read_network_expenses on public.expenses;
 create policy phase5_interim_read_network_expenses
   on public.expenses

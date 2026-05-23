@@ -55,6 +55,15 @@ abstract class ExpenseNetworkRepository {
     String? avatarImageUrl,
   });
 
+  Future<Member> resetMemberPassword({
+    required String networkId,
+    required String adminMemberId,
+    required String targetMemberId,
+    required String newPassword,
+  }) {
+    throw UnimplementedError();
+  }
+
   Future<ExpenseNetwork> authenticateMember({
     required String networkName,
     required String memberName,

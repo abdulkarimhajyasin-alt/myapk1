@@ -255,6 +255,7 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
           ),
         ],
         createdAt: createdAt,
+        createdByMemberId: memberId,
         currencyCode: currency.code,
         currencySymbol: currency.symbol,
       );
@@ -500,6 +501,72 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
         error,
         fallbackCode: 'supabase_member_profile_update_failed',
         fallbackMessage: 'Cloud member profile could not be updated.',
+      );
+    }
+  }
+
+  @override
+  Future<Member> resetMemberPassword({
+    required String networkId,
+    required String adminMemberId,
+    required String targetMemberId,
+    required String newPassword,
+  }) async {
+    final trimmedPassword = newPassword.trim();
+    if (trimmedPassword.length < 4) {
+      throw const RepositoryException(
+        'Password must be at least 4 characters.',
+        code: 'member_password_too_short',
+      );
+    }
+
+    final networkRow = await _loadNetworkRowById(networkId);
+    if (networkRow == null) {
+      throw const RepositoryException(
+        'Network not found.',
+        code: 'network_not_found',
+      );
+    }
+    verifyMemberPasswordResetAllowed(
+      networkRow,
+      adminMemberId: adminMemberId,
+      targetMemberId: targetMemberId,
+    );
+
+    final members = await _loadMemberRows(networkId);
+    final targetRows =
+        members.where((member) => member['id'] == targetMemberId);
+    if (targetRows.isEmpty) {
+      throw const RepositoryException(
+        'Member not found.',
+        code: 'member_not_found',
+      );
+    }
+
+    final passwordSalt = PasswordHashUtils.createSalt(targetMemberId);
+    final passwordHash = PasswordHashUtils.createHash(
+      trimmedPassword,
+      passwordSalt,
+    );
+
+    try {
+      final client = _requireClient();
+      final row = await client.rpc(
+        'phase5_reset_member_password',
+        params: {
+          'target_network_id': networkId,
+          'admin_member_id': adminMemberId,
+          'target_member_id': targetMemberId,
+          'new_password_hash': passwordHash,
+          'new_password_salt': passwordSalt,
+        },
+      );
+      return memberFromRow(Map<String, dynamic>.from(row as Map));
+    } catch (error) {
+      throw mapSupabaseError(
+        error,
+        fallbackCode: 'supabase_member_password_reset_failed',
+        fallbackMessage: 'Cloud member password could not be reset.',
       );
     }
   }
@@ -1004,6 +1071,31 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
     final requester = memberFromRow(requesterRows.first);
     final cycle = await _ensureActiveCycle(networkId);
     final now = DateTime.now().toUtc().toIso8601String();
+    if (isNetworkOwnerMember(networkRow, requestedByMemberId)) {
+      try {
+        verifyDirectCycleStartAllowed(networkRow, requestedByMemberId);
+        await _startNewCycleDirectly(
+          networkId: networkId,
+          cycleId: cycle.id,
+        );
+        await _createCycleStartedNotificationsSafely(
+          networkId: networkId,
+          members: members.map(memberFromRow).toList(),
+          resetRequestId: null,
+          currencySymbol: networkRow['currency_symbol'] as String? ?? r'$',
+          actorMemberName: requester.name,
+        );
+        return _networkFromHydratedRow(networkRow);
+      } on RepositoryException {
+        rethrow;
+      } catch (error) {
+        throw mapSupabaseError(
+          error,
+          fallbackCode: 'supabase_cycle_direct_start_failed',
+          fallbackMessage: 'Cloud cycle could not be started.',
+        );
+      }
+    }
 
     try {
       final client = _requireClient();
@@ -1356,7 +1448,7 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
   Future<void> _createCycleStartedNotificationsSafely({
     required String networkId,
     required List<Member> members,
-    required String resetRequestId,
+    required String? resetRequestId,
     required String currencySymbol,
     required String actorMemberName,
   }) async {
@@ -1430,6 +1522,32 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
     return true;
   }
 
+  Future<void> _startNewCycleDirectly({
+    required String networkId,
+    required String cycleId,
+  }) async {
+    final client = _requireClient();
+    final now = DateTime.now().toUtc().toIso8601String();
+    await client
+        .from('expenses')
+        .update({
+          'cycle_id': cycleId,
+          'archived_at': now,
+        })
+        .eq('network_id', networkId)
+        .or('cycle_id.eq.$cycleId,cycle_id.is.null')
+        .filter('archived_at', 'is', null);
+    await client
+        .from('expense_cycles')
+        .update({'status': 'closed', 'closed_at': now}).eq('id', cycleId);
+    await client.from('expense_cycles').insert({
+      'network_id': networkId,
+      'cycle_number': (await _loadCycleRows(networkId)).length + 1,
+      'status': 'active',
+      'started_at': now,
+    });
+  }
+
   void _verifyNetworkPassword(
     Map<String, dynamic> networkRow,
     String password,
@@ -1458,6 +1576,44 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
 
   static bool canMemberLeaveNetwork(ExpenseNetwork network) {
     return network.totalExpensesCents <= 0;
+  }
+
+  static bool isNetworkOwnerMember(
+    Map<String, dynamic> networkRow,
+    String memberId,
+  ) {
+    return networkRow['created_by_member_id'] == memberId;
+  }
+
+  static void verifyDirectCycleStartAllowed(
+    Map<String, dynamic> networkRow,
+    String memberId,
+  ) {
+    if (!isNetworkOwnerMember(networkRow, memberId)) {
+      throw const RepositoryException(
+        'Only the network owner can start a cycle directly.',
+        code: 'direct_cycle_start_not_owner',
+      );
+    }
+  }
+
+  static void verifyMemberPasswordResetAllowed(
+    Map<String, dynamic> networkRow, {
+    required String adminMemberId,
+    required String targetMemberId,
+  }) {
+    if (!isNetworkOwnerMember(networkRow, adminMemberId)) {
+      throw const RepositoryException(
+        'Only the network owner can reset member passwords.',
+        code: 'member_password_reset_not_owner',
+      );
+    }
+    if (adminMemberId == targetMemberId) {
+      throw const RepositoryException(
+        'The network owner cannot reset their own password here.',
+        code: 'member_password_reset_self_forbidden',
+      );
+    }
   }
 
   static bool shouldDeleteNetworkAfterLeave(
@@ -1624,6 +1780,7 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
         return member.copyWith(expenses: expensesByMemberId[member.id] ?? []);
       }).toList(),
       createdAt: _parseTimestamp(networkRow['created_at']),
+      createdByMemberId: networkRow['created_by_member_id'] as String?,
       currencyCode: currency.code,
       currencySymbol: currencySymbol?.trim().isNotEmpty == true
           ? currencySymbol!.trim()
@@ -1831,7 +1988,7 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
       buildCycleStartedNotificationInsertPayloads({
     required String networkId,
     required List<Member> members,
-    required String resetRequestId,
+    required String? resetRequestId,
     required String currencySymbol,
     required String actorMemberName,
   }) {

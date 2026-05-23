@@ -155,6 +155,19 @@ void main() {
     expect(sessionSource, contains('refreshSession()'));
   });
 
+  test('admin member password reset uses a narrow Supabase RPC', () {
+    final schema = File('supabase/schema.sql').readAsStringSync();
+    final source = File('lib/services/supabase_expense_network_repository.dart')
+        .readAsStringSync();
+
+    expect(schema, contains('phase5_reset_member_password'));
+    expect(schema, contains('security definer'));
+    expect(schema, contains('created_by_member_id = admin_member_id'));
+    expect(schema, contains('admin_member_id::text <> jwt_member_id'));
+    expect(source, contains('phase5_reset_member_password'));
+    expect(source, isNot(contains('service_role')));
+  });
+
   test('expense update requires auth session before Supabase update', () {
     final source = File('lib/services/supabase_expense_network_repository.dart')
         .readAsStringSync();

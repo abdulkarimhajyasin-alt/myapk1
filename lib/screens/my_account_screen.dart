@@ -239,6 +239,12 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
     );
   }
 
+  void _showForgotPasswordGuidance() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(context.l10n.forgotPasswordContactAdmin)),
+    );
+  }
+
   bool _isStaleAccountError(RepositoryException error) {
     return switch (error.code) {
       'supabase_not_found' || 'network_not_found' || 'member_not_found' => true,
@@ -317,6 +323,13 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
               obscureText: true,
               validator: _required,
               onFieldSubmitted: (_) => _enterAccount(),
+            ),
+            Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: TextButton(
+                onPressed: _showForgotPasswordGuidance,
+                child: Text(l10n.forgotPassword),
+              ),
             ),
             const SizedBox(height: 22),
             FilledButton(

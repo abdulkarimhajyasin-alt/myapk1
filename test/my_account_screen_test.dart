@@ -121,6 +121,23 @@ void main() {
     expect(find.textContaining('backend_'), findsNothing);
   });
 
+  testWidgets('forgot password shows contact admin guidance', (tester) async {
+    await _pumpAccount(
+      tester,
+      repository: _AccountRepository(),
+      sessions: _AccountSessionRepository(),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('نسيت كلمة المرور؟'));
+    await tester.pump();
+
+    expect(
+      find.text('يرجى التواصل مع مشرف الشبكة لإعادة تعيين كلمة المرور.'),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('deleted saved member clears invalid session safely',
       (tester) async {
     final sessions = _AccountSessionRepository(
@@ -411,4 +428,13 @@ class _AccountRepository implements ExpenseNetworkRepository {
     String? avatarImageUrl,
   }) async =>
       _network().findMemberById(memberId)!;
+
+  @override
+  Future<Member> resetMemberPassword({
+    required String networkId,
+    required String adminMemberId,
+    required String targetMemberId,
+    required String newPassword,
+  }) async =>
+      throw UnimplementedError();
 }

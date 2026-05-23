@@ -477,4 +477,13 @@ class _LeaveRepository implements ExpenseNetworkRepository {
     String? avatarImageUrl,
   }) async =>
       network.findMemberById(memberId)!;
+
+  @override
+  Future<Member> resetMemberPassword({
+    required String networkId,
+    required String adminMemberId,
+    required String targetMemberId,
+    required String newPassword,
+  }) async =>
+      throw UnimplementedError();
 }

@@ -40,7 +40,18 @@ class AppLocalizations {
       'creating': 'Creating...',
       'joining': 'Joining...',
       'members': 'Members',
+      'adminBadge': 'مشرف',
       'memberStatus': 'Member status',
+      'forgotPassword': 'نسيت كلمة المرور؟',
+      'forgotPasswordContactAdmin':
+          'يرجى التواصل مع مشرف الشبكة لإعادة تعيين كلمة المرور.',
+      'resetMemberPassword': 'إعادة تعيين كلمة المرور',
+      'newPassword': 'كلمة المرور الجديدة',
+      'confirmNewPassword': 'تأكيد كلمة المرور الجديدة',
+      'savePasswordReset': 'حفظ',
+      'passwordsDoNotMatch': 'كلمتا المرور غير متطابقتين.',
+      'memberPasswordResetSuccess': 'تم تحديث كلمة مرور العضو بنجاح.',
+      'memberPasswordResetFailed': 'تعذر تحديث كلمة مرور العضو.',
       'addExpense': 'Add Expense',
       'expenseSettlement': 'Expense Settlement',
       'amount': 'Amount',
@@ -238,7 +249,18 @@ class AppLocalizations {
       'creating': 'جارٍ الإنشاء...',
       'joining': 'جارٍ الانضمام...',
       'members': 'الأعضاء',
+      'adminBadge': 'مشرف',
       'memberStatus': 'حالة الأعضاء',
+      'forgotPassword': 'نسيت كلمة المرور؟',
+      'forgotPasswordContactAdmin':
+          'يرجى التواصل مع مشرف الشبكة لإعادة تعيين كلمة المرور.',
+      'resetMemberPassword': 'إعادة تعيين كلمة المرور',
+      'newPassword': 'كلمة المرور الجديدة',
+      'confirmNewPassword': 'تأكيد كلمة المرور الجديدة',
+      'savePasswordReset': 'حفظ',
+      'passwordsDoNotMatch': 'كلمتا المرور غير متطابقتين.',
+      'memberPasswordResetSuccess': 'تم تحديث كلمة مرور العضو بنجاح.',
+      'memberPasswordResetFailed': 'تعذر تحديث كلمة مرور العضو.',
       'addExpense': 'إضافة مصروف',
       'expenseSettlement': 'تسوية المصاريف',
       'amount': 'المبلغ',
@@ -428,7 +450,17 @@ class AppLocalizations {
   String get creating => _text('creating');
   String get joining => _text('joining');
   String get members => _text('members');
+  String get adminBadge => _text('adminBadge');
   String get memberStatus => _text('memberStatus');
+  String get forgotPassword => _text('forgotPassword');
+  String get forgotPasswordContactAdmin => _text('forgotPasswordContactAdmin');
+  String get resetMemberPassword => _text('resetMemberPassword');
+  String get newPassword => _text('newPassword');
+  String get confirmNewPassword => _text('confirmNewPassword');
+  String get savePasswordReset => _text('savePasswordReset');
+  String get passwordsDoNotMatch => _text('passwordsDoNotMatch');
+  String get memberPasswordResetSuccess => _text('memberPasswordResetSuccess');
+  String get memberPasswordResetFailed => _text('memberPasswordResetFailed');
   String get addExpense => _text('addExpense');
   String get expenseSettlement => _text('expenseSettlement');
   String get amount => _text('amount');

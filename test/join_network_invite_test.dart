@@ -366,4 +366,13 @@ class _InviteJoinRepository implements ExpenseNetworkRepository {
     String? avatarImageUrl,
   }) async =>
       Member(name: 'Mona', id: memberId);
+
+  @override
+  Future<Member> resetMemberPassword({
+    required String networkId,
+    required String adminMemberId,
+    required String targetMemberId,
+    required String newPassword,
+  }) async =>
+      throw UnimplementedError();
 }

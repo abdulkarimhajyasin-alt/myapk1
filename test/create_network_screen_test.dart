@@ -411,4 +411,13 @@ class _CreateRepositoryFake implements ExpenseNetworkRepository {
     String? avatarImageUrl,
   }) async =>
       throw UnimplementedError();
+
+  @override
+  Future<Member> resetMemberPassword({
+    required String networkId,
+    required String adminMemberId,
+    required String targetMemberId,
+    required String newPassword,
+  }) async =>
+      throw UnimplementedError();
 }

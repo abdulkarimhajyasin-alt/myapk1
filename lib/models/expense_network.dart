@@ -12,6 +12,7 @@ class ExpenseNetwork {
     required this.password,
     required this.members,
     required this.createdAt,
+    this.createdByMemberId,
     this.currencyCode = 'USD',
     this.currencySymbol = r'$',
     List<ExpenseCycle>? cycles,
@@ -24,6 +25,7 @@ class ExpenseNetwork {
   final String password;
   final List<Member> members;
   final DateTime createdAt;
+  final String? createdByMemberId;
   final String currencyCode;
   final String currencySymbol;
   final List<ExpenseCycle> cycles;
@@ -50,7 +52,8 @@ class ExpenseNetwork {
   }
 
   int get totalExpensesCents {
-    return members.fold<int>(0, (total, member) => total + member.totalPaidCents);
+    return members.fold<int>(
+        0, (total, member) => total + member.totalPaidCents);
   }
 
   ExpenseNetwork copyWith({
@@ -59,6 +62,7 @@ class ExpenseNetwork {
     String? password,
     List<Member>? members,
     DateTime? createdAt,
+    String? createdByMemberId,
     String? currencyCode,
     String? currencySymbol,
     List<ExpenseCycle>? cycles,
@@ -70,6 +74,7 @@ class ExpenseNetwork {
       password: password ?? this.password,
       members: members ?? this.members,
       createdAt: createdAt ?? this.createdAt,
+      createdByMemberId: createdByMemberId ?? this.createdByMemberId,
       currencyCode: currencyCode ?? this.currencyCode,
       currencySymbol: currencySymbol ?? this.currencySymbol,
       cycles: cycles ?? this.cycles,
@@ -127,6 +132,10 @@ class ExpenseNetwork {
     return null;
   }
 
+  bool isOwnerMember(String memberId) {
+    return createdByMemberId != null && createdByMemberId == memberId;
+  }
+
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -134,6 +143,7 @@ class ExpenseNetwork {
       'password': password,
       'members': members.map((member) => member.toJson()).toList(),
       'createdAt': createdAt.toIso8601String(),
+      'createdByMemberId': createdByMemberId,
       'currencyCode': currencyCode,
       'currencySymbol': currencySymbol,
       'cycles': cycles.map((cycle) => cycle.toJson()).toList(),
@@ -158,11 +168,12 @@ class ExpenseNetwork {
           .map((member) => Member.fromJson(member as Map<String, dynamic>))
           .toList(),
       createdAt: DateTime.parse(json['createdAt'] as String),
+      createdByMemberId: json['createdByMemberId'] as String?,
       currencyCode: currency.code,
-      currencySymbol: hasSupportedCurrencyCode &&
-              currencySymbol?.trim().isNotEmpty == true
-          ? currencySymbol!.trim()
-          : currency.symbol,
+      currencySymbol:
+          hasSupportedCurrencyCode && currencySymbol?.trim().isNotEmpty == true
+              ? currencySymbol!.trim()
+              : currency.symbol,
       cycles: (json['cycles'] as List<dynamic>? ?? [])
           .map((cycle) => ExpenseCycle.fromJson(cycle as Map<String, dynamic>))
           .toList(),

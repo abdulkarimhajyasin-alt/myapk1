@@ -180,6 +180,26 @@ class _NetworkDashboardScreenState extends State<NetworkDashboardScreen> {
     await _refreshNetwork();
   }
 
+  Future<void> _openResetPassword(Member targetMember) async {
+    final l10n = context.l10n;
+    final didReset = await showDialog<bool>(
+      context: context,
+      builder: (_) => _ResetPasswordDialog(
+        targetMemberName: targetMember.name,
+        onSubmit: (newPassword) {
+          return widget.repository.resetMemberPassword(
+            networkId: _network.id,
+            adminMemberId: widget.currentMemberId,
+            targetMemberId: targetMember.id,
+            newPassword: newPassword,
+          );
+        },
+      ),
+    );
+    if (!mounted || didReset != true) return;
+    _showSnack(l10n.memberPasswordResetSuccess);
+  }
+
   Future<void> _openNotifications() async {
     await Navigator.of(context).push(
       MaterialPageRoute(
@@ -400,24 +420,50 @@ class _NetworkDashboardScreenState extends State<NetworkDashboardScreen> {
           ),
           const SizedBox(height: 10),
           ..._network.members.map(
-            (member) => Card(
-              margin: const EdgeInsets.only(bottom: 10),
-              child: ListTile(
-                onTap: () => _openHistory(member),
-                leading: MemberAvatar(member: member),
-                title: Text(member.name),
-                subtitle: Text(l10n.totalPaid),
-                trailing: Text(
-                  MoneyUtils.formatCents(
-                    member.totalPaidCents,
-                    currencySymbol: _network.currencySymbol,
+            (member) {
+              final isOwner = _network.isOwnerMember(member.id);
+              final canResetPassword =
+                  _network.isOwnerMember(widget.currentMemberId) &&
+                      !isOwner &&
+                      member.id != widget.currentMemberId;
+              return Card(
+                margin: const EdgeInsets.only(bottom: 10),
+                child: ListTile(
+                  onTap: () => _openHistory(member),
+                  leading: MemberAvatar(member: member),
+                  title: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Flexible(child: Text(member.name)),
+                      if (isOwner) ...[
+                        const SizedBox(width: 8),
+                        _AdminBadge(label: l10n.adminBadge),
+                      ],
+                    ],
                   ),
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w800,
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(l10n.totalPaid),
+                      if (canResetPassword)
+                        TextButton(
+                          onPressed: () => _openResetPassword(member),
+                          child: Text(l10n.resetMemberPassword),
+                        ),
+                    ],
+                  ),
+                  trailing: Text(
+                    MoneyUtils.formatCents(
+                      member.totalPaidCents,
+                      currencySymbol: _network.currencySymbol,
+                    ),
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                 ),
-              ),
-            ),
+              );
+            },
           ),
           const SizedBox(height: 18),
           FilledButton.icon(
@@ -433,6 +479,133 @@ class _NetworkDashboardScreenState extends State<NetworkDashboardScreen> {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _AdminBadge extends StatelessWidget {
+  const _AdminBadge({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: const Color(0xFFDDF6E6),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+        child: Text(
+          label,
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: const Color(0xFF166534),
+                fontWeight: FontWeight.w800,
+              ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ResetPasswordDialog extends StatefulWidget {
+  const _ResetPasswordDialog({
+    required this.targetMemberName,
+    required this.onSubmit,
+  });
+
+  final String targetMemberName;
+  final Future<Member> Function(String newPassword) onSubmit;
+
+  @override
+  State<_ResetPasswordDialog> createState() => _ResetPasswordDialogState();
+}
+
+class _ResetPasswordDialogState extends State<_ResetPasswordDialog> {
+  final _formKey = GlobalKey<FormState>();
+  final _passwordController = TextEditingController();
+  final _confirmController = TextEditingController();
+  bool _isSaving = false;
+
+  @override
+  void dispose() {
+    _passwordController.dispose();
+    _confirmController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    if (!_formKey.currentState!.validate()) return;
+    setState(() => _isSaving = true);
+    try {
+      await widget.onSubmit(_passwordController.text);
+      if (!mounted) return;
+      Navigator.of(context).pop(true);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _isSaving = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.l10n.memberPasswordResetFailed)),
+      );
+    }
+  }
+
+  String? _passwordValidator(String? value) {
+    final trimmed = value?.trim() ?? '';
+    if (trimmed.isEmpty) return context.l10n.fieldRequired;
+    if (trimmed.length < 4) return context.l10n.passwordTooShort;
+    return null;
+  }
+
+  String? _confirmPasswordValidator(String? value) {
+    final trimmed = value?.trim() ?? '';
+    if (trimmed.isEmpty) return context.l10n.fieldRequired;
+    if (trimmed != _passwordController.text.trim()) {
+      return context.l10n.passwordsDoNotMatch;
+    }
+    return null;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return AlertDialog(
+      title: Text(l10n.resetMemberPassword),
+      content: Form(
+        key: _formKey,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(widget.targetMemberName),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _passwordController,
+              decoration: InputDecoration(labelText: l10n.newPassword),
+              obscureText: true,
+              validator: _passwordValidator,
+            ),
+            const SizedBox(height: 10),
+            TextFormField(
+              controller: _confirmController,
+              decoration: InputDecoration(labelText: l10n.confirmNewPassword),
+              obscureText: true,
+              validator: _confirmPasswordValidator,
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: _isSaving ? null : () => Navigator.of(context).pop(false),
+          child: Text(l10n.cancel),
+        ),
+        FilledButton(
+          onPressed: _isSaving ? null : _submit,
+          child: Text(l10n.savePasswordReset),
+        ),
+      ],
     );
   }
 }

@@ -190,6 +190,15 @@ class _AvatarRepository implements ExpenseNetworkRepository {
   }
 
   @override
+  Future<Member> resetMemberPassword({
+    required String networkId,
+    required String adminMemberId,
+    required String targetMemberId,
+    required String newPassword,
+  }) async =>
+      throw UnimplementedError();
+
+  @override
   Future<ExpenseNetwork?> findNetwork(String networkName) async => network;
 
   @override
