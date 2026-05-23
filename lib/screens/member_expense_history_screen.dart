@@ -34,7 +34,9 @@ class _MemberExpenseHistoryScreenState
   late Member _member = widget.member;
 
   Future<void> _editExpense(Expense expense) async {
-    final updated = await showModalBottomSheet<Expense>(
+    if (expense.addedByMemberId != widget.currentMemberId) return;
+
+    final result = await showModalBottomSheet<_ExpenseEditResult>(
       context: context,
       isScrollControlled: true,
       builder: (context) => _EditExpenseSheet(
@@ -42,26 +44,50 @@ class _MemberExpenseHistoryScreenState
         currencySymbol: _network.currencySymbol,
       ),
     );
-    if (updated == null || !mounted) return;
+    if (result == null || !mounted) return;
 
-    final network = await widget.repository.updateExpense(
-      networkName: _network.name,
-      expenseId: expense.id,
-      editedByMemberId: widget.currentMemberId,
-      amountCents: updated.amountCents,
-      note: updated.note,
-      createdAt: updated.createdAt,
-    );
-    final refreshedMember = await widget.repository.getMemberHistory(
-          networkName: network.name,
-          memberId: _member.id,
-        ) ??
-        network.findMemberById(_member.id);
-    if (!mounted) return;
-    setState(() {
-      _network = network;
-      if (refreshedMember != null) _member = refreshedMember;
-    });
+    try {
+      final network = switch (result) {
+        _ExpenseEditSave(:final expense) =>
+          await widget.repository.updateExpense(
+            networkName: _network.name,
+            expenseId: expense.id,
+            editedByMemberId: widget.currentMemberId,
+            amountCents: expense.amountCents,
+            note: expense.note,
+            createdAt: expense.createdAt,
+          ),
+        _ExpenseEditDelete() => await widget.repository.deleteExpense(
+            networkName: _network.name,
+            networkId: _network.id,
+            expenseId: expense.id,
+            deletedByMemberId: widget.currentMemberId,
+          ),
+      };
+      final refreshedMember = await widget.repository.getMemberHistory(
+            networkName: network.name,
+            memberId: _member.id,
+          ) ??
+          network.findMemberById(_member.id);
+      if (!mounted) return;
+      setState(() {
+        _network = network;
+        if (refreshedMember != null) _member = refreshedMember;
+      });
+      if (result is _ExpenseEditDelete) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(context.l10n.expenseDeleted)),
+        );
+      }
+    } on RepositoryException catch (error) {
+      if (!mounted) return;
+      final message = result is _ExpenseEditDelete
+          ? context.l10n.expenseDeleteFailed
+          : error.message;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message)),
+      );
+    }
   }
 
   @override
@@ -127,7 +153,7 @@ class _MemberExpenseHistoryScreenState
                           ),
                           if (expense.addedByMemberId == widget.currentMemberId)
                             IconButton(
-                              tooltip: 'Edit expense',
+                              tooltip: l10n.editExpense,
                               onPressed: () => _editExpense(expense),
                               icon: const Icon(Icons.edit_rounded),
                             ),
@@ -156,6 +182,20 @@ class _MemberExpenseHistoryScreenState
       ),
     );
   }
+}
+
+sealed class _ExpenseEditResult {
+  const _ExpenseEditResult();
+}
+
+class _ExpenseEditSave extends _ExpenseEditResult {
+  const _ExpenseEditSave(this.expense);
+
+  final Expense expense;
+}
+
+class _ExpenseEditDelete extends _ExpenseEditResult {
+  const _ExpenseEditDelete();
 }
 
 class _EditExpenseSheet extends StatefulWidget {
@@ -220,13 +260,42 @@ class _EditExpenseSheetState extends State<_EditExpenseSheet> {
       return;
     }
     Navigator.of(context).pop(
-      widget.expense.copyWith(
-        amountCents: amount,
-        note: note.isEmpty ? null : note,
-        clearNote: note.isEmpty,
-        createdAt: _createdAt,
+      _ExpenseEditSave(
+        widget.expense.copyWith(
+          amountCents: amount,
+          note: note.isEmpty ? null : note,
+          clearNote: note.isEmpty,
+          createdAt: _createdAt,
+        ),
       ),
     );
+  }
+
+  Future<void> _confirmDelete() async {
+    final l10n = context.l10n;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.deleteExpense),
+        content: Text(l10n.deleteExpenseConfirmation),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(l10n.cancel),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+              foregroundColor: Theme.of(context).colorScheme.onError,
+            ),
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(l10n.delete),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    Navigator.of(context).pop(const _ExpenseEditDelete());
   }
 
   @override
@@ -240,7 +309,7 @@ class _EditExpenseSheetState extends State<_EditExpenseSheet> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            'Edit expense',
+            l10n.editExpense,
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.w800,
                 ),
@@ -276,10 +345,30 @@ class _EditExpenseSheetState extends State<_EditExpenseSheet> {
             ),
           ],
           const SizedBox(height: 16),
-          FilledButton.icon(
-            onPressed: _save,
-            icon: const Icon(Icons.save_rounded),
-            label: Text(l10n.save),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Theme.of(context).colorScheme.error,
+                    side: BorderSide(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                  ),
+                  onPressed: _confirmDelete,
+                  icon: const Icon(Icons.delete_rounded),
+                  label: Text(l10n.delete),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: FilledButton.icon(
+                  onPressed: _save,
+                  icon: const Icon(Icons.save_rounded),
+                  label: Text(l10n.save),
+                ),
+              ),
+            ],
           ),
         ],
       ),

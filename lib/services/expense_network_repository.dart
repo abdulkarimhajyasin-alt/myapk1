@@ -79,6 +79,13 @@ abstract class ExpenseNetworkRepository {
     DateTime? createdAt,
   });
 
+  Future<ExpenseNetwork> deleteExpense({
+    required String networkName,
+    required String networkId,
+    required String expenseId,
+    required String deletedByMemberId,
+  });
+
   Future<List<NetworkNotification>> getNotifications({
     required String networkId,
     required String memberId,

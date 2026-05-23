@@ -166,7 +166,7 @@ class _NetworkDashboardScreenState extends State<NetworkDashboardScreen> {
         ) ??
         member;
     if (!mounted) return;
-    Navigator.of(context).push(
+    await Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => MemberExpenseHistoryScreen(
           repository: widget.repository,
@@ -176,6 +176,7 @@ class _NetworkDashboardScreenState extends State<NetworkDashboardScreen> {
         ),
       ),
     );
+    if (!mounted) return;
     await _refreshNetwork();
   }
 

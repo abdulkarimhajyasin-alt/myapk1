@@ -207,6 +207,13 @@ class AppLocalizations {
       'avatarPhotoProfileUpdateFailed':
           'Photo uploaded, but your account could not be updated. Please try again.',
       'avatarColor': 'Avatar color',
+      'editExpense': 'Edit expense',
+      'delete': 'Delete',
+      'deleteExpense': 'Delete expense',
+      'deleteExpenseConfirmation':
+          'Are you sure you want to delete this expense? This action cannot be undone.',
+      'expenseDeleted': 'Expense deleted.',
+      'expenseDeleteFailed': 'Could not delete this expense. Please try again.',
       'save': 'Save',
       'pushExpenseAddedTitle': 'New expense added',
       'pushResetRequestedTitle': 'New cycle request',
@@ -375,6 +382,13 @@ class AppLocalizations {
       'avatarPhotoProfileUpdateFailed':
           'تم رفع الصورة، لكن تعذر تحديث الحساب. حاول مرة أخرى.',
       'avatarColor': 'لون الصورة',
+      'editExpense': 'تعديل المصروف',
+      'delete': 'حذف',
+      'deleteExpense': 'حذف المصروف',
+      'deleteExpenseConfirmation':
+          'هل أنت متأكد أنك تريد حذف هذا المصروف؟ لا يمكن التراجع عن هذه العملية.',
+      'expenseDeleted': 'تم حذف المصروف.',
+      'expenseDeleteFailed': 'تعذر حذف هذا المصروف. حاول مرة أخرى.',
       'save': 'حفظ',
       'pushExpenseAddedTitle': 'تمت إضافة مصروف جديد',
       'pushResetRequestedTitle': 'طلب بدء مصروف جديد',
@@ -554,6 +568,12 @@ class AppLocalizations {
   String get avatarPhotoProfileUpdateFailed =>
       _text('avatarPhotoProfileUpdateFailed');
   String get avatarColor => _text('avatarColor');
+  String get editExpense => _text('editExpense');
+  String get delete => _text('delete');
+  String get deleteExpense => _text('deleteExpense');
+  String get deleteExpenseConfirmation => _text('deleteExpenseConfirmation');
+  String get expenseDeleted => _text('expenseDeleted');
+  String get expenseDeleteFailed => _text('expenseDeleteFailed');
   String get save => _text('save');
   String get pushExpenseAddedTitle => _text('pushExpenseAddedTitle');
   String get pushResetRequestedTitle => _text('pushResetRequestedTitle');

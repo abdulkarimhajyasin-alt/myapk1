@@ -666,6 +666,65 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
   }
 
   @override
+  Future<ExpenseNetwork> deleteExpense({
+    required String networkName,
+    required String networkId,
+    required String expenseId,
+    required String deletedByMemberId,
+  }) async {
+    final networkRow = await _loadNetworkRowByName(networkName);
+    if (networkRow == null || networkRow['id'] != networkId) {
+      throw const RepositoryException(
+        'Network not found.',
+        code: 'network_not_found',
+      );
+    }
+
+    final client = _requireClient();
+    final existing = await client
+        .from('expenses')
+        .select()
+        .eq('id', expenseId)
+        .eq('network_id', networkId)
+        .maybeSingle();
+    if (existing == null) {
+      throw const RepositoryException(
+        'Expense not found.',
+        code: 'expense_not_found',
+      );
+    }
+    final expenseRow = Map<String, dynamic>.from(existing);
+    if (expenseRow['added_by_member_id'] != deletedByMemberId) {
+      throw const RepositoryException(
+        'Only the member who created this expense can delete it.',
+        code: 'expense_delete_forbidden',
+      );
+    }
+    if (expenseRow['archived_at'] != null) {
+      throw const RepositoryException(
+        'Archived expenses cannot be deleted.',
+        code: 'expense_delete_archived',
+      );
+    }
+
+    try {
+      await client
+          .from('expenses')
+          .delete()
+          .eq('id', expenseId)
+          .eq('network_id', networkId)
+          .eq('added_by_member_id', deletedByMemberId);
+      return _networkFromHydratedRow(networkRow);
+    } catch (error) {
+      throw mapSupabaseError(
+        error,
+        fallbackCode: 'supabase_delete_expense_failed',
+        fallbackMessage: 'Cloud expense could not be deleted.',
+      );
+    }
+  }
+
+  @override
   Future<List<NetworkNotification>> getNotifications({
     required String networkId,
     required String memberId,

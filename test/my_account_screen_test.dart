@@ -267,6 +267,15 @@ class _AccountRepository implements ExpenseNetworkRepository {
       throw UnimplementedError();
 
   @override
+  Future<ExpenseNetwork> deleteExpense({
+    required String networkName,
+    required String networkId,
+    required String expenseId,
+    required String deletedByMemberId,
+  }) async =>
+      throw UnimplementedError();
+
+  @override
   Future<ExpenseNetwork> approveResetRequest({
     required String networkName,
     required String resetRequestId,

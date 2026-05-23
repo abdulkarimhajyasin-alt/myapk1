@@ -74,6 +74,80 @@ void main() {
     expect(repository.editedNote, 'Updated');
     expect(find.textContaining('15.50'), findsWidgets);
   });
+
+  testWidgets('delete button appears in own expense edit flow', (tester) async {
+    final expense = Expense(
+      id: 'expense_1',
+      amountCents: 1200,
+      createdAt: DateTime(2026),
+      addedByMemberId: 'member_1',
+      addedByMemberName: 'Ali',
+    );
+    final member = Member(id: 'member_1', name: 'Ali', expenses: [expense]);
+    final network = _network(member);
+
+    await _pumpHistory(tester, network: network, member: member);
+
+    await tester.tap(find.byIcon(Icons.edit_rounded));
+    await tester.pumpAndSettle();
+
+    expect(find.widgetWithText(OutlinedButton, 'Delete'), findsOneWidget);
+  });
+
+  testWidgets('delete confirmation calls repository with current member',
+      (tester) async {
+    final expense = Expense(
+      id: 'expense_1',
+      amountCents: 1200,
+      createdAt: DateTime(2026),
+      addedByMemberId: 'member_1',
+      addedByMemberName: 'Ali',
+    );
+    final member = Member(id: 'member_1', name: 'Ali', expenses: [expense]);
+    final network = _network(member);
+    final repository = _HistoryRepository(network);
+
+    await _pumpHistory(
+      tester,
+      network: network,
+      member: member,
+      repository: repository,
+    );
+
+    await tester.tap(find.byIcon(Icons.edit_rounded));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(OutlinedButton, 'Delete'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Delete expense'), findsOneWidget);
+
+    await tester.tap(find.widgetWithText(FilledButton, 'Delete'));
+    await tester.pumpAndSettle();
+
+    expect(repository.deletedNetworkId, 'network_1');
+    expect(repository.deletedExpenseId, 'expense_1');
+    expect(repository.deletedByMemberId, 'member_1');
+    expect(find.text('Expense deleted.'), findsOneWidget);
+    expect(find.textContaining('12.00'), findsNothing);
+  });
+
+  testWidgets('other members cannot delete another member expense',
+      (tester) async {
+    final expense = Expense(
+      id: 'expense_2',
+      amountCents: 900,
+      createdAt: DateTime(2026),
+      addedByMemberId: 'member_2',
+      addedByMemberName: 'Mona',
+    );
+    final member = Member(id: 'member_1', name: 'Ali', expenses: [expense]);
+    final network = _network(member);
+
+    await _pumpHistory(tester, network: network, member: member);
+
+    expect(find.byIcon(Icons.edit_rounded), findsNothing);
+    expect(find.widgetWithText(OutlinedButton, 'Delete'), findsNothing);
+  });
 }
 
 Future<void> _pumpHistory(
@@ -114,6 +188,9 @@ class _HistoryRepository implements ExpenseNetworkRepository {
   String? editedByMemberId;
   int? editedAmountCents;
   String? editedNote;
+  String? deletedNetworkId;
+  String? deletedExpenseId;
+  String? deletedByMemberId;
 
   @override
   Future<ExpenseNetwork> updateExpense({
@@ -139,6 +216,29 @@ class _HistoryRepository implements ExpenseNetworkRepository {
             createdAt: createdAt,
           );
         }).toList(),
+      );
+    }).toList();
+    network = network.copyWith(members: updatedMembers);
+    return network;
+  }
+
+  @override
+  Future<ExpenseNetwork> deleteExpense({
+    required String networkName,
+    required String networkId,
+    required String expenseId,
+    required String deletedByMemberId,
+  }) async {
+    deletedNetworkId = networkId;
+    deletedExpenseId = expenseId;
+    this.deletedByMemberId = deletedByMemberId;
+    final updatedMembers = network.members.map((member) {
+      return member.copyWith(
+        expenses: member.expenses
+            .where((expense) =>
+                expense.id != expenseId ||
+                expense.addedByMemberId != deletedByMemberId)
+            .toList(),
       );
     }).toList();
     network = network.copyWith(members: updatedMembers);
