@@ -77,7 +77,14 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(repository.createdNetworkName, 'Flat');
-    expect(find.text('Dashboard Flat member_1'), findsOneWidget);
+    expect(find.text('Dashboard Flat member_1'), findsNothing);
+    expect(
+      find.text(
+        'Your secure session needs to be restored. Please open My Account and re-enter your personal password, or join the network again once.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Create'), findsOneWidget);
     expect(find.textContaining('TEMP DEBUG'), findsNothing);
   });
 

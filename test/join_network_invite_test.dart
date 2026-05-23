@@ -73,7 +73,14 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(repository.joinCalls, 1);
-    expect(find.text('Dashboard Flat mona-id'), findsOneWidget);
+    expect(find.text('Dashboard Flat mona-id'), findsNothing);
+    expect(
+      find.text(
+        'Your secure session needs to be restored. Please open My Account and re-enter your personal password, or join the network again once.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Join'), findsOneWidget);
     expect(find.textContaining('failed'), findsNothing);
   });
 
