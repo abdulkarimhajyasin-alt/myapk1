@@ -90,6 +90,44 @@ void main() {
     expect(find.text('Create Network'), findsNothing);
   });
 
+  testWidgets('saved session without Supabase auth asks user to re-enter',
+      (tester) async {
+    final network = ExpenseNetwork(
+      id: 'network_1',
+      name: 'Flat',
+      password: 'hash',
+      createdAt: DateTime(2026),
+      members: [Member(id: 'member_1', name: 'Ali')],
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: HomeScreen(
+          repository: _HomeRepositoryFake(network: network),
+          sessionRepository: _HomeSessionFake(
+            const AccountSession(networkName: 'Flat', memberId: 'member_1'),
+            Duration.zero,
+            false,
+          ),
+          onChangeLanguage: (_) {},
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text('Flat'), findsNothing);
+    expect(find.text('Create Network'), findsOneWidget);
+    expect(
+      find.text(
+        'Your secure session needs to be restored. Please open My Account and re-enter your personal password, or join the network again once.',
+      ),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('deleted saved session shows localized recovery message',
       (tester) async {
     final sessions = _HomeSessionFake(
@@ -121,11 +159,15 @@ void main() {
 }
 
 class _HomeSessionFake implements SessionRepository {
-  _HomeSessionFake([this.session, Duration delay = Duration.zero])
-      : _delay = delay;
+  _HomeSessionFake([
+    this.session,
+    Duration delay = Duration.zero,
+    this.authRestored = true,
+  ]) : _delay = delay;
 
   AccountSession? session;
   final Duration _delay;
+  final bool authRestored;
   bool cleared = false;
 
   @override
@@ -148,9 +190,9 @@ class _HomeSessionFake implements SessionRepository {
     return AccountSessionAuthState(
       accountSession: activeSession,
       accountSessionExists: activeSession != null,
-      supabaseSessionExists: activeSession != null,
-      currentUserExists: activeSession != null,
-      authRestored: activeSession != null,
+      supabaseSessionExists: activeSession != null && authRestored,
+      currentUserExists: activeSession != null && authRestored,
+      authRestored: activeSession != null && authRestored,
       memberId: activeSession?.memberId,
     );
   }
@@ -160,6 +202,7 @@ class _HomeSessionFake implements SessionRepository {
     required String networkName,
     required String memberId,
     String? memberPassword,
+    String? networkId,
   }) async {
     session = AccountSession(networkName: networkName, memberId: memberId);
   }
@@ -187,6 +230,7 @@ class _HomeRepositoryFake implements ExpenseNetworkRepository {
   @override
   Future<ExpenseNetwork> updateExpense({
     required String networkName,
+    required String networkId,
     required String expenseId,
     required String editedByMemberId,
     required int amountCents,

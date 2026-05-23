@@ -52,6 +52,13 @@ class _HomeScreenState extends State<HomeScreen> {
       );
       return;
     }
+    if (result.status == SessionRestorationStatus.unavailable) {
+      setState(() => _isRestoringSession = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.l10n.secureSessionReauthRequired)),
+      );
+      return;
+    }
     final restored = result.restoredSession;
     if (restored == null) {
       setState(() => _isRestoringSession = false);

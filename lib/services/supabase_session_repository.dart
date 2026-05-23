@@ -1,10 +1,12 @@
 import 'dart:convert';
 import 'dart:developer' as developer;
 
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'session_repository.dart';
+import 'supabase_config.dart';
 
 class SupabaseSessionRepository implements SessionRepository {
   SupabaseSessionRepository({
@@ -56,15 +58,7 @@ class SupabaseSessionRepository implements SessionRepository {
     var authRestored = false;
     if (_auth.currentSession != null && _auth.currentUser != null) {
       try {
-        await _auth.updateUser(
-          UserAttributes(
-            data: {
-              _networkNameKey: accountSession.networkName,
-              _memberIdKey: accountSession.memberId,
-            },
-          ),
-        );
-        await _auth.refreshSession();
+        await _writeAuthMetadataAndRefresh(accountSession);
         final jwtMemberId = _jwtMetadataMemberId(_auth.currentSession);
         authRestored = _auth.currentSession != null &&
             _auth.currentUser != null &&
@@ -87,6 +81,7 @@ class SupabaseSessionRepository implements SessionRepository {
     required String networkName,
     required String memberId,
     String? memberPassword,
+    String? networkId,
   }) async {
     final session = AccountSession(
       networkName: networkName.trim(),
@@ -98,7 +93,11 @@ class SupabaseSessionRepository implements SessionRepository {
     }
     await _saveLocalSession(session);
     if (memberPassword != null && memberPassword.trim().isNotEmpty) {
-      await _ensureSupabaseAuthSession(session, memberPassword);
+      await _ensureSupabaseAuthSession(
+        session,
+        memberPassword,
+        networkId: networkId,
+      );
     } else {
       await _trySaveAuthMetadata(session);
     }
@@ -155,15 +154,7 @@ class SupabaseSessionRepository implements SessionRepository {
   Future<void> _trySaveAuthMetadata(AccountSession session) async {
     if (_auth.currentSession == null || _auth.currentUser == null) return;
     try {
-      await _auth.updateUser(
-        UserAttributes(
-          data: {
-            _networkNameKey: session.networkName,
-            _memberIdKey: session.memberId,
-          },
-        ),
-      );
-      await _auth.refreshSession();
+      await _writeAuthMetadataAndRefresh(session);
     } catch (error) {
       developer.log(
         'active session auth metadata save failed: $error',
@@ -174,16 +165,104 @@ class SupabaseSessionRepository implements SessionRepository {
 
   Future<void> _ensureSupabaseAuthSession(
     AccountSession session,
-    String memberPassword,
-  ) async {
+    String memberPassword, {
+    String? networkId,
+  }) async {
     final email = _authEmailFor(session.memberId);
     final password = _authPasswordFor(session.memberId, memberPassword);
+    var authMethod = 'signInWithPassword';
     try {
       await _auth.signInWithPassword(email: email, password: password);
-    } catch (_) {
-      await _auth.signUp(email: email, password: password);
+    } catch (error, stackTrace) {
+      _logAuthRestoreError(
+        networkId: networkId,
+        memberId: session.memberId,
+        email: email,
+        authMethod: authMethod,
+        error: error,
+        stackTrace: stackTrace,
+      );
+      authMethod = 'signUp';
+      try {
+        await _auth.signUp(email: email, password: password);
+      } catch (signUpError, signUpStackTrace) {
+        _logAuthRestoreError(
+          networkId: networkId,
+          memberId: session.memberId,
+          email: email,
+          authMethod: authMethod,
+          error: signUpError,
+          stackTrace: signUpStackTrace,
+        );
+        rethrow;
+      }
     }
-    await _trySaveAuthMetadata(session);
+    await _writeAuthMetadataAndRefresh(session);
+    final jwtMemberId = _jwtMetadataMemberId(_auth.currentSession);
+    final success = _auth.currentSession != null &&
+        _auth.currentUser != null &&
+        jwtMemberId == session.memberId;
+    debugPrint(
+      'maskan.accountAuth.restore '
+      'networkId=${networkId ?? '<unknown>'} '
+      'memberId=${session.memberId} '
+      'passwordProvided=true '
+      'sessionExists=${_auth.currentSession != null} '
+      'currentUserExists=${_auth.currentUser != null} '
+      'jwtMemberId=${jwtMemberId ?? '<none>'} '
+      'success=$success '
+      'failureReason=${success ? '<none>' : 'jwt_or_session_missing'}',
+    );
+    if (!success) {
+      throw StateError('Supabase Auth session was not restored.');
+    }
+  }
+
+  void _logAuthRestoreError({
+    required String? networkId,
+    required String memberId,
+    required String email,
+    required String authMethod,
+    required Object error,
+    required StackTrace stackTrace,
+  }) {
+    final authException = error is AuthException ? error : null;
+    final endpoint = switch (authMethod) {
+      'signInWithPassword' =>
+        '${SupabaseConfig.defaultConfig.url}/auth/v1/token?grant_type=password',
+      'signUp' => '${SupabaseConfig.defaultConfig.url}/auth/v1/signup',
+      _ => '${SupabaseConfig.defaultConfig.url}/auth/v1',
+    };
+    debugPrint(
+      'maskan.auth.restore.error '
+      'networkId=${networkId ?? '<unknown>'} '
+      'memberId=$memberId '
+      'authEmail=$email '
+      'signInMethod=$authMethod '
+      'supabaseUrl=${SupabaseConfig.defaultConfig.url} '
+      'endpoint=$endpoint '
+      'exceptionType=${error.runtimeType} '
+      'statusCode=${authException?.statusCode ?? '<none>'} '
+      'errorCode=${authException?.code ?? '<none>'} '
+      'message=${authException?.message ?? error.toString()} '
+      'rawResponse=${error.toString()} '
+      'stack=$stackTrace',
+    );
+  }
+
+  Future<void> _writeAuthMetadataAndRefresh(AccountSession session) async {
+    if (_auth.currentSession == null || _auth.currentUser == null) {
+      throw StateError('Supabase Auth session is missing.');
+    }
+    await _auth.updateUser(
+      UserAttributes(
+        data: {
+          _networkNameKey: session.networkName,
+          _memberIdKey: session.memberId,
+        },
+      ),
+    );
+    await _auth.refreshSession();
   }
 
   AccountSessionAuthState _authState(
@@ -197,6 +276,7 @@ class SupabaseSessionRepository implements SessionRepository {
       currentUserExists: _auth.currentUser != null,
       authRestored: authRestored,
       memberId: accountSession?.memberId,
+      jwtMemberId: _jwtMetadataMemberId(_auth.currentSession),
     );
   }
 

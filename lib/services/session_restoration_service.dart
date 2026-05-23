@@ -59,7 +59,8 @@ class SessionRestorationService {
   }
 
   Future<SessionRestorationResult> restoreWithStatus() async {
-    final session = await _sessionRepository.getActiveSession();
+    final authState = await _sessionRepository.restoreAuthenticatedSession();
+    final session = authState.accountSession;
     if (session == null) return const SessionRestorationResult.noSavedSession();
 
     try {
@@ -68,6 +69,9 @@ class SessionRestorationService {
       if (network == null || member == null) {
         await _sessionRepository.clearActiveSession();
         return const SessionRestorationResult.staleSessionCleared();
+      }
+      if (!authState.authRestored) {
+        return const SessionRestorationResult.unavailable();
       }
       return SessionRestorationResult.restored(
         RestoredSession(network: network, memberId: member.id),

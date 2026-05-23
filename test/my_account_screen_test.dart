@@ -35,7 +35,7 @@ void main() {
     expect(find.text('Continue to account'), findsNothing);
   });
 
-  testWidgets('valid account still opens dashboard if session save fails',
+  testWidgets('valid account stays on My Account if auth session save fails',
       (tester) async {
     final repository = _AccountRepository();
     final sessions = _AccountSessionRepository(
@@ -55,8 +55,43 @@ void main() {
     await tester.tap(find.text('Continue to account'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Dashboard Flat member_1'), findsOneWidget);
-    expect(find.textContaining('metadata'), findsNothing);
+    expect(find.text('Dashboard Flat member_1'), findsNothing);
+    expect(find.text('Continue to account'), findsOneWidget);
+    expect(
+      find.text(
+        'Your secure session needs to be restored. Please open My Account and re-enter your personal password, or join the network again once.',
+      ),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('valid account stays on My Account if JWT member is missing',
+      (tester) async {
+    final repository = _AccountRepository();
+    final sessions = _AccountSessionRepository(authRestored: false);
+
+    await _pumpAccount(
+      tester,
+      repository: repository,
+      sessions: sessions,
+    );
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Account password'),
+      'member-pass',
+    );
+    await tester.tap(find.text('Continue to account'));
+    await tester.pumpAndSettle();
+
+    expect(sessions.saved?.memberId, 'member_1');
+    expect(find.text('Dashboard Flat member_1'), findsNothing);
+    expect(find.text('Continue to account'), findsOneWidget);
+    expect(
+      find.text(
+        'Your secure session needs to be restored. Please open My Account and re-enter your personal password, or join the network again once.',
+      ),
+      findsOneWidget,
+    );
   });
 
   testWidgets('wrong personal password stays on account screen',
@@ -182,10 +217,15 @@ ExpenseNetwork _network() {
 }
 
 class _AccountSessionRepository implements SessionRepository {
-  _AccountSessionRepository({this.session, this.saveError});
+  _AccountSessionRepository({
+    this.session,
+    this.saveError,
+    this.authRestored = true,
+  });
 
   AccountSession? session;
   final Object? saveError;
+  final bool authRestored;
   AccountSession? saved;
   bool cleared = false;
 
@@ -203,10 +243,11 @@ class _AccountSessionRepository implements SessionRepository {
     return AccountSessionAuthState(
       accountSession: session,
       accountSessionExists: session != null,
-      supabaseSessionExists: session != null,
-      currentUserExists: session != null,
-      authRestored: session != null,
+      supabaseSessionExists: session != null && authRestored,
+      currentUserExists: session != null && authRestored,
+      authRestored: session != null && authRestored,
       memberId: session?.memberId,
+      jwtMemberId: authRestored ? session?.memberId : null,
     );
   }
 
@@ -215,6 +256,7 @@ class _AccountSessionRepository implements SessionRepository {
     required String networkName,
     required String memberId,
     String? memberPassword,
+    String? networkId,
   }) async {
     final error = saveError;
     if (error != null) throw error;
@@ -258,6 +300,7 @@ class _AccountRepository implements ExpenseNetworkRepository {
   @override
   Future<ExpenseNetwork> updateExpense({
     required String networkName,
+    required String networkId,
     required String expenseId,
     required String editedByMemberId,
     required int amountCents,

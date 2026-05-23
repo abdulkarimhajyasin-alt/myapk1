@@ -16,6 +16,7 @@ class AccountSessionAuthState {
     required this.currentUserExists,
     required this.authRestored,
     this.memberId,
+    this.jwtMemberId,
   });
 
   final AccountSession? accountSession;
@@ -24,6 +25,7 @@ class AccountSessionAuthState {
   final bool currentUserExists;
   final bool authRestored;
   final String? memberId;
+  final String? jwtMemberId;
 }
 
 abstract class SessionRepository {
@@ -35,6 +37,7 @@ abstract class SessionRepository {
     required String networkName,
     required String memberId,
     String? memberPassword,
+    String? networkId,
   });
 
   Future<void> clearActiveSession();

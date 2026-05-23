@@ -120,12 +120,14 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
       if (!mounted) return;
       final authenticatedMember =
           authenticatedNetwork.findMemberByName(member.name) ?? member;
-      await _saveAuthenticatedSession(
+      final sessionSaved = await _saveAuthenticatedSession(
+        authenticatedNetwork.id,
         authenticatedNetwork.name,
         authenticatedMember.id,
         _passwordController.text,
       );
       if (!mounted) return;
+      if (!sessionSaved) return;
       _openDashboard(authenticatedNetwork, authenticatedMember.id);
     } on RepositoryException catch (error) {
       if (!mounted) return;
@@ -142,21 +144,83 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
     }
   }
 
-  Future<void> _saveAuthenticatedSession(
+  Future<bool> _saveAuthenticatedSession(
+    String networkId,
     String networkName,
     String memberId,
     String memberPassword,
   ) async {
+    _logAccountAuthRestore(
+      networkId: networkId,
+      memberId: memberId,
+      passwordProvided: memberPassword.trim().isNotEmpty,
+      state: null,
+      success: false,
+      failureReason: 'starting',
+    );
     try {
       await widget.sessionRepository.saveActiveSession(
         networkName: networkName,
         memberId: memberId,
         memberPassword: memberPassword,
+        networkId: networkId,
       );
-    } catch (_) {
-      // Authentication already succeeded. Do not keep the user on My Account
-      // because account metadata persistence failed after password validation.
+      final state =
+          await widget.sessionRepository.restoreAuthenticatedSession();
+      final success = state.authRestored &&
+          state.supabaseSessionExists &&
+          state.currentUserExists &&
+          state.jwtMemberId == memberId;
+      _logAccountAuthRestore(
+        networkId: networkId,
+        memberId: memberId,
+        passwordProvided: memberPassword.trim().isNotEmpty,
+        state: state,
+        success: success,
+        failureReason: success ? '<none>' : 'jwt_or_session_missing',
+      );
+      if (!success) {
+        if (mounted) {
+          setState(() => _error = context.l10n.secureSessionReauthRequired);
+        }
+        return false;
+      }
+      return true;
+    } catch (error) {
+      _logAccountAuthRestore(
+        networkId: networkId,
+        memberId: memberId,
+        passwordProvided: memberPassword.trim().isNotEmpty,
+        state: null,
+        success: false,
+        failureReason: error.runtimeType.toString(),
+      );
+      if (mounted) {
+        setState(() => _error = context.l10n.secureSessionReauthRequired);
+      }
+      return false;
     }
+  }
+
+  void _logAccountAuthRestore({
+    required String networkId,
+    required String memberId,
+    required bool passwordProvided,
+    required AccountSessionAuthState? state,
+    required bool success,
+    required String failureReason,
+  }) {
+    debugPrint(
+      'maskan.accountAuth.restore '
+      'networkId=$networkId '
+      'memberId=$memberId '
+      'passwordProvided=$passwordProvided '
+      'sessionExists=${state?.supabaseSessionExists ?? false} '
+      'currentUserExists=${state?.currentUserExists ?? false} '
+      'jwtMemberId=${state?.jwtMemberId ?? '<none>'} '
+      'success=$success '
+      'failureReason=$failureReason',
+    );
   }
 
   void _openDashboard(ExpenseNetwork network, String currentMemberId) {

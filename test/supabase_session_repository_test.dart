@@ -113,6 +113,25 @@ void main() {
     expect(auth.refreshed, isTrue);
   });
 
+  test('saving with member password fails if auth metadata cannot refresh',
+      () async {
+    SharedPreferences.setMockInitialValues({});
+    final preferences = await SharedPreferences.getInstance();
+    final auth = _AuthFake(updateError: Exception('metadata failed'));
+
+    expect(
+      () => SupabaseSessionRepository(
+        auth: auth,
+        preferences: preferences,
+      ).saveActiveSession(
+        networkName: 'Flat',
+        memberId: 'member_1',
+        memberPassword: 'secret',
+      ),
+      throwsA(isA<Exception>()),
+    );
+  });
+
   test('restoring account session refreshes existing Supabase auth metadata',
       () async {
     SharedPreferences.setMockInitialValues({

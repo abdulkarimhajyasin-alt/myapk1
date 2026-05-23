@@ -68,12 +68,14 @@ class _CreateNetworkScreenState extends State<CreateNetworkScreen> {
       );
       if (!mounted) return;
       final currentMemberId = network.members.first.id;
-      await _saveCreatedSession(
+      final sessionSaved = await _saveCreatedSession(
+        network.id,
         network.name,
         currentMemberId,
         _memberPasswordController.text,
       );
       if (!mounted) return;
+      if (!sessionSaved) return;
       _openDashboard(network, currentMemberId);
     } on RepositoryException catch (error) {
       if (!mounted) return;
@@ -107,7 +109,8 @@ class _CreateNetworkScreenState extends State<CreateNetworkScreen> {
     }
   }
 
-  Future<void> _saveCreatedSession(
+  Future<bool> _saveCreatedSession(
+    String networkId,
     String networkName,
     String memberId,
     String memberPassword,
@@ -117,10 +120,14 @@ class _CreateNetworkScreenState extends State<CreateNetworkScreen> {
         networkName: networkName,
         memberId: memberId,
         memberPassword: memberPassword,
+        networkId: networkId,
       );
+      return true;
     } catch (_) {
-      // The backend create already completed. Do not turn a session metadata
-      // write problem into a duplicate-prone create failure path.
+      if (mounted) {
+        setState(() => _error = context.l10n.secureSessionReauthRequired);
+      }
+      return false;
     }
   }
 

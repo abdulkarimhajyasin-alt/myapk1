@@ -194,6 +194,7 @@ class _SessionRepository implements SessionRepository {
     required String networkName,
     required String memberId,
     String? memberPassword,
+    String? networkId,
   }) async {
     final error = saveError;
     if (error != null) throw error;
@@ -252,6 +253,7 @@ class _InviteJoinRepository implements ExpenseNetworkRepository {
   @override
   Future<ExpenseNetwork> updateExpense({
     required String networkName,
+    required String networkId,
     required String expenseId,
     required String editedByMemberId,
     required int amountCents,

@@ -1,3 +1,5 @@
+import 'dart:developer' as developer;
+
 import 'package:flutter/material.dart';
 
 import '../l10n/app_localizations.dart';
@@ -34,7 +36,12 @@ class _MemberExpenseHistoryScreenState
   late Member _member = widget.member;
 
   Future<void> _editExpense(Expense expense) async {
-    if (expense.addedByMemberId != widget.currentMemberId) return;
+    _logExpenseIdentity(
+      'open edit sheet',
+      openedExpense: expense,
+      selectedExpense: expense,
+    );
+    if (!_canModifyExpense(expense)) return;
 
     final result = await showModalBottomSheet<_ExpenseEditResult>(
       context: context,
@@ -47,47 +54,74 @@ class _MemberExpenseHistoryScreenState
     if (result == null || !mounted) return;
 
     try {
-      final network = switch (result) {
-        _ExpenseEditSave(:final expense) =>
-          await widget.repository.updateExpense(
-            networkName: _network.name,
-            expenseId: expense.id,
-            editedByMemberId: widget.currentMemberId,
-            amountCents: expense.amountCents,
-            note: expense.note,
-            createdAt: expense.createdAt,
-          ),
-        _ExpenseEditDelete() => await widget.repository.deleteExpense(
-            networkName: _network.name,
-            networkId: _network.id,
-            expenseId: expense.id,
-            deletedByMemberId: widget.currentMemberId,
-          ),
-      };
-      final refreshedMember = await widget.repository.getMemberHistory(
-            networkName: network.name,
-            memberId: _member.id,
-          ) ??
-          network.findMemberById(_member.id);
-      if (!mounted) return;
-      setState(() {
-        _network = network;
-        if (refreshedMember != null) _member = refreshedMember;
-      });
-      if (result is _ExpenseEditDelete) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(context.l10n.expenseDeleted)),
+      if (result case _ExpenseEditSave(:final expense)) {
+        _logExpenseSave(expense);
+        final network = await widget.repository.updateExpense(
+          networkName: _network.name,
+          networkId: _network.id,
+          expenseId: expense.id,
+          editedByMemberId: widget.currentMemberId,
+          amountCents: expense.amountCents,
+          note: expense.note,
+          createdAt: expense.createdAt,
         );
+        await _applyNetwork(network);
       }
     } on RepositoryException catch (error) {
       if (!mounted) return;
-      final message = result is _ExpenseEditDelete
-          ? context.l10n.expenseDeleteFailed
-          : error.message;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message)),
+        SnackBar(content: Text(error.message)),
       );
     }
+  }
+
+  bool _canModifyExpense(Expense expense) {
+    return expense.addedByMemberId == widget.currentMemberId &&
+        !expense.isArchived;
+  }
+
+  void _logExpenseIdentity(
+    String message, {
+    required Expense openedExpense,
+    required Expense selectedExpense,
+  }) {
+    developer.log(
+      '$message '
+      'openedExpenseId=${openedExpense.id} '
+      'openedExpenseAmount=${openedExpense.amountCents} '
+      'selectedExpenseId=${selectedExpense.id} '
+      'selectedExpenseAmount=${selectedExpense.amountCents} '
+      'networkId=${_network.id} '
+      'currentMemberId=${widget.currentMemberId} '
+      'isArchived=${selectedExpense.isArchived}',
+      name: 'maskan.expenseIdentity',
+    );
+  }
+
+  void _logExpenseSave(Expense expense) {
+    developer.log(
+      'save edit sheet '
+      'savedExpenseId=${expense.id} '
+      'savedAmount=${expense.amountCents} '
+      'networkId=${_network.id} '
+      'currentMemberId=${widget.currentMemberId}',
+      name: 'maskan.expenseIdentity',
+    );
+  }
+
+  Future<void> _applyNetwork(ExpenseNetwork network) async {
+    final refreshedMember = await widget.repository.getMemberHistory(
+          networkName: network.name,
+          memberId: _member.id,
+        ) ??
+        network.findMemberById(_member.id);
+    if (!mounted) return;
+    setState(() {
+      _network = network;
+      if (refreshedMember != null) {
+        _member = refreshedMember;
+      }
+    });
   }
 
   @override
@@ -151,7 +185,7 @@ class _MemberExpenseHistoryScreenState
                               ),
                             ),
                           ),
-                          if (expense.addedByMemberId == widget.currentMemberId)
+                          if (_canModifyExpense(expense))
                             IconButton(
                               tooltip: l10n.editExpense,
                               onPressed: () => _editExpense(expense),
@@ -192,10 +226,6 @@ class _ExpenseEditSave extends _ExpenseEditResult {
   const _ExpenseEditSave(this.expense);
 
   final Expense expense;
-}
-
-class _ExpenseEditDelete extends _ExpenseEditResult {
-  const _ExpenseEditDelete();
 }
 
 class _EditExpenseSheet extends StatefulWidget {
@@ -271,33 +301,6 @@ class _EditExpenseSheetState extends State<_EditExpenseSheet> {
     );
   }
 
-  Future<void> _confirmDelete() async {
-    final l10n = context.l10n;
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(l10n.deleteExpense),
-        content: Text(l10n.deleteExpenseConfirmation),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(l10n.cancel),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.error,
-              foregroundColor: Theme.of(context).colorScheme.onError,
-            ),
-            onPressed: () => Navigator.of(context).pop(true),
-            child: Text(l10n.delete),
-          ),
-        ],
-      ),
-    );
-    if (confirmed != true || !mounted) return;
-    Navigator.of(context).pop(const _ExpenseEditDelete());
-  }
-
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
@@ -345,30 +348,10 @@ class _EditExpenseSheetState extends State<_EditExpenseSheet> {
             ),
           ],
           const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Theme.of(context).colorScheme.error,
-                    side: BorderSide(
-                      color: Theme.of(context).colorScheme.error,
-                    ),
-                  ),
-                  onPressed: _confirmDelete,
-                  icon: const Icon(Icons.delete_rounded),
-                  label: Text(l10n.delete),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: FilledButton.icon(
-                  onPressed: _save,
-                  icon: const Icon(Icons.save_rounded),
-                  label: Text(l10n.save),
-                ),
-              ),
-            ],
+          FilledButton.icon(
+            onPressed: _save,
+            icon: const Icon(Icons.save_rounded),
+            label: Text(l10n.save),
           ),
         ],
       ),

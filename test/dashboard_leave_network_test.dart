@@ -296,6 +296,7 @@ class _LeaveSessionRepository implements SessionRepository {
     required String networkName,
     required String memberId,
     String? memberPassword,
+    String? networkId,
   }) async {}
 }
 
@@ -359,6 +360,7 @@ class _LeaveRepository implements ExpenseNetworkRepository {
   @override
   Future<ExpenseNetwork> updateExpense({
     required String networkName,
+    required String networkId,
     required String expenseId,
     required String editedByMemberId,
     required int amountCents,

@@ -23,6 +23,7 @@ class RepositoryErrorMessages {
       'network_invalid_credentials' => l10n.errorWrongNetworkPassword,
       'member_invalid_password' => l10n.errorWrongPersonalPassword,
       'supabase_permission_denied' => l10n.errorSupabasePermission,
+      'supabase_auth_session_required' => l10n.secureSessionReauthRequired,
       'supabase_not_found' => l10n.errorCloudRecordUnavailable,
       'network_not_found' => l10n.errorCloudRecordUnavailable,
       'member_not_found' => l10n.errorCloudRecordUnavailable,

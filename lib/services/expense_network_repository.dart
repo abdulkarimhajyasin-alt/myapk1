@@ -72,6 +72,7 @@ abstract class ExpenseNetworkRepository {
 
   Future<ExpenseNetwork> updateExpense({
     required String networkName,
+    required String networkId,
     required String expenseId,
     required String editedByMemberId,
     required int amountCents,

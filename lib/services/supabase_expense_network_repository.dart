@@ -1,6 +1,8 @@
+import 'dart:convert';
 import 'dart:developer' as developer;
 import 'dart:math';
 
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/expense.dart';
@@ -100,7 +102,10 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
       final matches = members.where((member) => member['id'] == memberId);
       if (matches.isEmpty) return null;
 
-      final expenses = await _loadMemberExpenseRows(memberId);
+      final expenses = await _loadMemberExpenseRows(
+        networkId: networkRow['id'] as String,
+        memberId: memberId,
+      );
       return memberFromRow(matches.first).copyWith(
         expenses: expenses.map(expenseFromRow).toList(),
       );
@@ -595,6 +600,7 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
   @override
   Future<ExpenseNetwork> updateExpense({
     required String networkName,
+    required String networkId,
     required String expenseId,
     required String editedByMemberId,
     required int amountCents,
@@ -609,7 +615,7 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
     }
 
     final networkRow = await _loadNetworkRowByName(networkName);
-    if (networkRow == null) {
+    if (networkRow == null || networkRow['id'] != networkId) {
       throw const RepositoryException(
         'Network not found.',
         code: 'network_not_found',
@@ -630,6 +636,15 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
       );
     }
     final expenseRow = Map<String, dynamic>.from(existing);
+    final paidByMemberId = expenseRow['paid_by_member_id'] as String?;
+    await _refreshSessionIfJwtMetadataIsStale(editedByMemberId);
+    _logExpenseUpdateAuthState(
+      expenseId: expenseId,
+      networkId: networkId,
+      editedByMemberId: editedByMemberId,
+      paidByMemberId: paidByMemberId,
+    );
+    _ensureExpenseEditAuthSession(editedByMemberId);
     if (expenseRow['added_by_member_id'] != editedByMemberId) {
       throw const RepositoryException(
         'Only the member who created this expense can edit it.',
@@ -644,7 +659,7 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
     }
 
     try {
-      await client
+      final updatedRows = await client
           .from('expenses')
           .update(
             buildExpenseUpdatePayload(
@@ -654,9 +669,39 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
             ),
           )
           .eq('id', expenseId)
-          .eq('added_by_member_id', editedByMemberId);
+          .eq('network_id', networkId)
+          .eq('added_by_member_id', editedByMemberId)
+          .select('id');
+      final updatedRowsCount = updatedRows.length;
+      developer.log(
+        'update completed '
+        'savedExpenseId=$expenseId '
+        'savedAmount=$amountCents '
+        'updatedRowsCount=$updatedRowsCount '
+        'networkId=$networkId '
+        'currentMemberId=$editedByMemberId',
+        name: 'maskan.expenseEdit',
+      );
+      if (updatedRowsCount != 1) {
+        throw const RepositoryException(
+          'Could not update this expense. Please refresh and try again.',
+          code: 'expense_update_zero_rows',
+        );
+      }
       return _networkFromHydratedRow(networkRow);
+    } on RepositoryException {
+      rethrow;
     } catch (error) {
+      developer.log(
+        'update failed '
+        'savedExpenseId=$expenseId '
+        'savedAmount=$amountCents '
+        'updatedRowsCount=0 '
+        'networkId=$networkId '
+        'currentMemberId=$editedByMemberId '
+        '${backendErrorSummary(error)}',
+        name: 'maskan.expenseEdit',
+      );
       throw mapSupabaseError(
         error,
         fallbackCode: 'supabase_update_expense_failed',
@@ -672,8 +717,18 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
     required String expenseId,
     required String deletedByMemberId,
   }) async {
+    void logDelete(String message) {
+      developer.log(
+        '$message expenseId=$expenseId networkId=$networkId '
+        'deletedByMemberId=$deletedByMemberId',
+        name: 'maskan.expenseDelete',
+      );
+    }
+
+    logDelete('delete requested');
     final networkRow = await _loadNetworkRowByName(networkName);
     if (networkRow == null || networkRow['id'] != networkId) {
+      logDelete('network lookup failed');
       throw const RepositoryException(
         'Network not found.',
         code: 'network_not_found',
@@ -688,6 +743,7 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
         .eq('network_id', networkId)
         .maybeSingle();
     if (existing == null) {
+      logDelete('expense lookup returned no rows');
       throw const RepositoryException(
         'Expense not found.',
         code: 'expense_not_found',
@@ -695,12 +751,14 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
     }
     final expenseRow = Map<String, dynamic>.from(existing);
     if (expenseRow['added_by_member_id'] != deletedByMemberId) {
+      logDelete('ownership check failed');
       throw const RepositoryException(
         'Only the member who created this expense can delete it.',
         code: 'expense_delete_forbidden',
       );
     }
     if (expenseRow['archived_at'] != null) {
+      logDelete('archived expense delete blocked');
       throw const RepositoryException(
         'Archived expenses cannot be deleted.',
         code: 'expense_delete_archived',
@@ -708,14 +766,27 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
     }
 
     try {
-      await client
+      final deletedRows = await client
           .from('expenses')
           .delete()
           .eq('id', expenseId)
           .eq('network_id', networkId)
-          .eq('added_by_member_id', deletedByMemberId);
+          .eq('added_by_member_id', deletedByMemberId)
+          .select('id');
+      final deletedRowsCount = deletedRows.length;
+      logDelete('delete completed deletedRowsCount=$deletedRowsCount');
+      if (deletedRowsCount != 1) {
+        throw const RepositoryException(
+          'Expense delete did not remove a row.',
+          code: 'expense_delete_zero_rows',
+        );
+      }
       return _networkFromHydratedRow(networkRow);
     } catch (error) {
+      logDelete(
+        'delete failed deletedRowsCount=0 ${backendErrorSummary(error)}',
+      );
+      if (error is RepositoryException) rethrow;
       throw mapSupabaseError(
         error,
         fallbackCode: 'supabase_delete_expense_failed',
@@ -1145,14 +1216,16 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
     }
   }
 
-  Future<List<Map<String, dynamic>>> _loadMemberExpenseRows(
-    String memberId,
-  ) async {
+  Future<List<Map<String, dynamic>>> _loadMemberExpenseRows({
+    required String networkId,
+    required String memberId,
+  }) async {
     try {
       final client = _requireClient();
       final rows = await client
           .from('expenses')
           .select()
+          .eq('network_id', networkId)
           .eq('paid_by_member_id', memberId)
           .order('created_at');
       return rows.map((row) => Map<String, dynamic>.from(row as Map)).toList();
@@ -1436,6 +1509,89 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
         'Profile updates require the restored authenticated member session.',
         code: 'supabase_member_profile_update_auth_required',
       );
+    }
+  }
+
+  Future<void> _refreshSessionIfJwtMetadataIsStale(String memberId) async {
+    final client = _requireClient();
+    final currentUserMetadata = client.auth.currentUser?.userMetadata;
+    final currentUserMemberId = currentUserMetadata?['maskan_member_id'];
+    final jwtMemberId =
+        _jwtUserMetadata(client.auth.currentSession)?['maskan_member_id'];
+    if (currentUserMemberId == memberId && jwtMemberId != memberId) {
+      try {
+        await client.auth.refreshSession();
+      } catch (error) {
+        developer.log(
+          'expense edit auth refresh failed error=$error',
+          name: 'maskan.expenseEdit.auth',
+        );
+      }
+    }
+  }
+
+  void _logExpenseUpdateAuthState({
+    required String expenseId,
+    required String networkId,
+    required String editedByMemberId,
+    required String? paidByMemberId,
+  }) {
+    final client = _requireClient();
+    final currentSession = client.auth.currentSession;
+    final currentUser = client.auth.currentUser;
+    final userId = currentUser?.id;
+    final userMetadata = currentUser?.userMetadata;
+    final jwtUserMetadata = _jwtUserMetadata(client.auth.currentSession);
+    final jwtMemberId = jwtUserMetadata?['maskan_member_id'];
+    debugPrint(
+      'maskan.expenseEdit.auth '
+      'before updateExpense '
+      'supabaseUserId=${userId ?? '<none>'} '
+      'currentUserUserMetadata=${userMetadata ?? '<none>'} '
+      'sessionExists=${currentSession != null} '
+      'currentJwtUserMetadata=${jwtUserMetadata ?? '<none>'} '
+      'maskan_member_id=${jwtMemberId ?? '<none>'} '
+      'expenseId=$expenseId '
+      'networkId=$networkId '
+      'editedByMemberId=$editedByMemberId '
+      'paidByMemberId=${paidByMemberId ?? '<none>'}',
+    );
+  }
+
+  void _ensureExpenseEditAuthSession(String memberId) {
+    final client = _requireClient();
+    final jwtMemberId =
+        _jwtUserMetadata(client.auth.currentSession)?['maskan_member_id'];
+    if (client.auth.currentSession == null ||
+        client.auth.currentUser == null ||
+        jwtMemberId != memberId) {
+      throw const RepositoryException(
+        'Your secure session needs to be restored. Please open My Account and re-enter your personal password, or join the network again once.',
+        code: 'supabase_auth_session_required',
+      );
+    }
+  }
+
+  static Map<String, dynamic>? _jwtUserMetadata(dynamic session) {
+    final String? accessToken;
+    try {
+      accessToken = session?.accessToken as String?;
+    } catch (_) {
+      return null;
+    }
+    if (accessToken == null) return null;
+    final parts = accessToken.split('.');
+    if (parts.length < 2) return null;
+    try {
+      final payload = utf8.decode(
+        base64Url.decode(base64Url.normalize(parts[1])),
+      );
+      final data = jsonDecode(payload) as Map<String, dynamic>;
+      final metadata = data['user_metadata'] as Map<String, dynamic>?;
+      if (metadata == null) return null;
+      return Map<String, dynamic>.from(metadata);
+    } catch (_) {
+      return null;
     }
   }
 

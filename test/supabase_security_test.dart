@@ -55,6 +55,20 @@ void main() {
     expect(schema, contains('on delete set null'));
   });
 
+  test('Supabase schema allows only JWT member to edit own active expenses',
+      () {
+    final schema = File('supabase/schema.sql').readAsStringSync();
+
+    expect(schema, contains('phase5_member_edit_own_active_expenses'));
+    expect(schema, contains('for update'));
+    expect(schema, contains('archived_at is null'));
+    expect(schema, contains('added_by_member_id::text = coalesce('));
+    expect(
+      schema,
+      contains("auth.jwt() -> 'user_metadata' ->> 'maskan_member_id'"),
+    );
+  });
+
   test('member create policy does not depend on network row visibility', () {
     final schema = File('supabase/schema.sql').readAsStringSync();
 
@@ -139,6 +153,21 @@ void main() {
     expect(source, isNot(contains('refreshSession()')));
     expect(sessionSource, contains('updateUser('));
     expect(sessionSource, contains('refreshSession()'));
+  });
+
+  test('expense update requires auth session before Supabase update', () {
+    final source = File('lib/services/supabase_expense_network_repository.dart')
+        .readAsStringSync();
+    final updateStart = source.indexOf('Future<ExpenseNetwork> updateExpense');
+    final updateEnd = source.indexOf('@override', updateStart + 1);
+    final updateSource = source.substring(updateStart, updateEnd);
+
+    expect(updateSource, contains('_ensureExpenseEditAuthSession'));
+    expect(source, contains('supabase_auth_session_required'));
+    expect(
+      updateSource.indexOf('_ensureExpenseEditAuthSession'),
+      lessThan(updateSource.indexOf(".from('expenses')\n          .update(")),
+    );
   });
 
   test('Flutter source does not create anonymous Supabase sessions', () {

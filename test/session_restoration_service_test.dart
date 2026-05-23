@@ -87,6 +87,32 @@ void main() {
     expect(sessions.cleared, isFalse);
   });
 
+  test('valid local session without Supabase auth asks for reauth', () async {
+    final repository = _SessionRepositoryFake(
+      network: ExpenseNetwork(
+        id: 'network_1',
+        name: 'Flat',
+        password: 'network',
+        members: [Member(id: 'member_1', name: 'Ali')],
+        createdAt: DateTime(2026),
+      ),
+    );
+    final sessions = _SessionStoreFake(
+      const AccountSession(networkName: 'Flat', memberId: 'member_1'),
+      authRestored: false,
+    );
+
+    final result = await SessionRestorationService(
+      repository: repository,
+      sessionRepository: sessions,
+    ).restoreWithStatus();
+
+    expect(result.status, SessionRestorationStatus.unavailable);
+    expect(result.restoredSession, isNull);
+    expect(sessions.authRestoreCalls, 1);
+    expect(sessions.cleared, isFalse);
+  });
+
   test('valid saved session restores dashboard target without clearing',
       () async {
     final repository = _SessionRepositoryFake(
@@ -110,15 +136,18 @@ void main() {
     expect(result.status, SessionRestorationStatus.restored);
     expect(result.restoredSession?.network.name, 'Flat');
     expect(result.restoredSession?.memberId, 'member_1');
+    expect(sessions.authRestoreCalls, 1);
     expect(sessions.cleared, isFalse);
   });
 }
 
 class _SessionStoreFake implements SessionRepository {
-  _SessionStoreFake(this.session);
+  _SessionStoreFake(this.session, {this.authRestored = true});
 
   AccountSession? session;
+  final bool authRestored;
   bool cleared = false;
+  int authRestoreCalls = 0;
 
   @override
   Future<void> clearActiveSession() async {
@@ -131,12 +160,13 @@ class _SessionStoreFake implements SessionRepository {
 
   @override
   Future<AccountSessionAuthState> restoreAuthenticatedSession() async {
+    authRestoreCalls += 1;
     return AccountSessionAuthState(
       accountSession: session,
       accountSessionExists: session != null,
-      supabaseSessionExists: session != null,
-      currentUserExists: session != null,
-      authRestored: session != null,
+      supabaseSessionExists: session != null && authRestored,
+      currentUserExists: session != null && authRestored,
+      authRestored: session != null && authRestored,
       memberId: session?.memberId,
     );
   }
@@ -146,6 +176,7 @@ class _SessionStoreFake implements SessionRepository {
     required String networkName,
     required String memberId,
     String? memberPassword,
+    String? networkId,
   }) async {
     session = AccountSession(networkName: networkName, memberId: memberId);
   }
@@ -181,6 +212,7 @@ class _SessionRepositoryFake implements ExpenseNetworkRepository {
   @override
   Future<ExpenseNetwork> updateExpense({
     required String networkName,
+    required String networkId,
     required String expenseId,
     required String editedByMemberId,
     required int amountCents,

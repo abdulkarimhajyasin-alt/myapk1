@@ -79,12 +79,14 @@ class _JoinNetworkScreenState extends State<JoinNetworkScreen> {
       );
       if (!mounted) return;
       final currentMemberId = network.members.last.id;
-      await _saveJoinedSession(
+      final sessionSaved = await _saveJoinedSession(
+        network.id,
         network.name,
         currentMemberId,
         _memberPasswordController.text,
       );
       if (!mounted) return;
+      if (!sessionSaved) return;
       _openDashboard(network, currentMemberId);
     } on RepositoryException catch (error) {
       if (!mounted) return;
@@ -97,7 +99,8 @@ class _JoinNetworkScreenState extends State<JoinNetworkScreen> {
     }
   }
 
-  Future<void> _saveJoinedSession(
+  Future<bool> _saveJoinedSession(
+    String networkId,
     String networkName,
     String memberId,
     String memberPassword,
@@ -107,10 +110,14 @@ class _JoinNetworkScreenState extends State<JoinNetworkScreen> {
         networkName: networkName,
         memberId: memberId,
         memberPassword: memberPassword,
+        networkId: networkId,
       );
+      return true;
     } catch (_) {
-      // Joining already completed in Supabase. Keep the user moving into the
-      // joined network instead of showing a false join failure.
+      if (mounted) {
+        setState(() => _error = context.l10n.secureSessionReauthRequired);
+      }
+      return false;
     }
   }
 

@@ -109,6 +109,8 @@ class AppLocalizations {
       'errorWrongPersonalPassword': 'Personal password is incorrect.',
       'errorSupabasePermission':
           'Cloud access was denied. Check Supabase RLS policies and test credentials.',
+      'secureSessionReauthRequired':
+          'Your secure session needs to be restored. Please open My Account and re-enter your personal password, or join the network again once.',
       'errorCloudRecordUnavailable':
           'This saved network is no longer available. Please create or join a network again.',
       'errorCreateNetworkFailed':
@@ -485,6 +487,8 @@ class AppLocalizations {
   String get errorWrongNetworkPassword => _text('errorWrongNetworkPassword');
   String get errorWrongPersonalPassword => _text('errorWrongPersonalPassword');
   String get errorSupabasePermission => _text('errorSupabasePermission');
+  String get secureSessionReauthRequired =>
+      _text('secureSessionReauthRequired');
   String get errorCloudRecordUnavailable =>
       _text('errorCloudRecordUnavailable');
   String get errorCreateNetworkFailed => _text('errorCreateNetworkFailed');

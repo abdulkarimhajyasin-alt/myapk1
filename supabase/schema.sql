@@ -839,6 +839,38 @@ create policy phase5_interim_update_network_expenses
     )
   );
 
+drop policy if exists phase5_member_edit_own_active_expenses
+  on public.expenses;
+create policy phase5_member_edit_own_active_expenses
+  on public.expenses
+  for update
+  using (
+    archived_at is null
+    and added_by_member_id::text = coalesce(
+      auth.jwt() -> 'user_metadata' ->> 'maskan_member_id',
+      ''
+    )
+    and public.phase5_expense_members_match_network(
+      network_id,
+      paid_by_member_id,
+      added_by_member_id
+    )
+  )
+  with check (
+    amount_cents > 0
+    and (note is null or char_length(note) <= 200)
+    and archived_at is null
+    and added_by_member_id::text = coalesce(
+      auth.jwt() -> 'user_metadata' ->> 'maskan_member_id',
+      ''
+    )
+    and public.phase5_expense_members_match_network(
+      network_id,
+      paid_by_member_id,
+      added_by_member_id
+    )
+  );
+
 drop policy if exists phase5_interim_delete_settled_network_expenses
   on public.expenses;
 create policy phase5_interim_delete_settled_network_expenses
