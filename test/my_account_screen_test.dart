@@ -133,7 +133,7 @@ void main() {
     await tester.pump();
 
     expect(
-      find.text('يرجى التواصل مع مشرف الشبكة لإعادة تعيين كلمة المرور.'),
+      find.text('يرجى التواصل مع مشرف المصروف لإعادة تعيين كلمة المرور.'),
       findsOneWidget,
     );
   });

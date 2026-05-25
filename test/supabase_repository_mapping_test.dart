@@ -1,6 +1,7 @@
 import 'package:expense_network/models/expense.dart';
 import 'package:expense_network/models/expense_network.dart';
 import 'package:expense_network/models/member.dart';
+import 'package:expense_network/models/network_notification.dart';
 import 'package:expense_network/services/expense_network_repository.dart';
 import 'package:expense_network/services/supabase_expense_network_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -370,6 +371,63 @@ void main() {
     expect(payloads.single['currency_symbol'], r'$');
     expect(payloads.single['note_snippet'], 'Coffee');
     expect(payloads.single['is_read'], isFalse);
+  });
+
+  test('expense update notification payload excludes editor member', () {
+    final payloads =
+        SupabaseExpenseNetworkRepository.buildNotificationInsertPayloads(
+      networkId: 'network-id',
+      members: [
+        Member(id: 'editor-id', name: 'Ali'),
+        Member(id: 'mona-id', name: 'Mona'),
+        Member(id: 'sara-id', name: 'Sara'),
+      ],
+      actor: Member(id: 'editor-id', name: 'Ali'),
+      expenseId: 'expense-id',
+      amountCents: 1450,
+      currencySymbol: r'$',
+      note: 'Updated coffee',
+      kind: NetworkNotificationKind.expenseUpdated,
+    );
+
+    expect(payloads, hasLength(2));
+    expect(
+      payloads.map((payload) => payload['recipient_member_id']),
+      unorderedEquals(['mona-id', 'sara-id']),
+    );
+    expect(
+      payloads.map((payload) => payload['actor_member_id']).toSet(),
+      {'editor-id'},
+    );
+    expect(
+      payloads.map((payload) => payload['kind']).toSet(),
+      {NetworkNotificationKind.expenseUpdated.name},
+    );
+    expect(
+      payloads.map((payload) => payload['is_read']).toSet(),
+      {false},
+    );
+  });
+
+  test('maps expense updated notification rows', () {
+    final notification = SupabaseExpenseNetworkRepository.notificationFromRow({
+      'id': 'notification-id',
+      'network_id': 'network-id',
+      'recipient_member_id': 'mona-id',
+      'actor_member_name': 'Ali',
+      'amount_cents': 1450,
+      'currency_symbol': r'$',
+      'note_snippet': 'Updated coffee',
+      'kind': 'expenseUpdated',
+      'reset_request_id': null,
+      'created_at': '2026-05-14T10:40:00.000Z',
+      'is_read': false,
+    });
+
+    expect(notification.kind, NetworkNotificationKind.expenseUpdated);
+    expect(notification.recipientMemberId, 'mona-id');
+    expect(notification.expenseAmountCents, 1450);
+    expect(notification.isRead, isFalse);
   });
 
   test('maps duplicate network errors to RepositoryException', () {

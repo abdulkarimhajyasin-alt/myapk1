@@ -32,14 +32,26 @@ void main() {
       currencySymbol: r'$',
       kind: NetworkNotificationKind.cycleStarted,
     );
+    final expenseUpdated = NetworkNotification(
+      networkId: 'network',
+      recipientMemberId: 'mona',
+      actorMemberName: 'Ali',
+      expenseAmountCents: 1200,
+      currencySymbol: r'$',
+      kind: NetworkNotificationKind.expenseUpdated,
+    );
 
     final expenseCopy = service.copyFor(notification: expense, l10n: english);
     final resetCopy = service.copyFor(notification: reset, l10n: arabic);
     final cycleCopy =
         service.copyFor(notification: cycleStarted, l10n: english);
+    final updateCopy =
+        service.copyFor(notification: expenseUpdated, l10n: arabic);
 
     expect(expenseCopy.title, english.pushExpenseAddedTitle);
     expect(expenseCopy.body, 'Ali');
+    expect(updateCopy.title, arabic.pushExpenseUpdatedTitle);
+    expect(updateCopy.body, 'Ali');
     expect(resetCopy.title, arabic.pushResetRequestedTitle);
     expect(resetCopy.body, 'Ali');
     expect(cycleCopy.title, english.pushCycleStartedTitle);

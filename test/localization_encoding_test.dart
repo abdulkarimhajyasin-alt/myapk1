@@ -9,8 +9,7 @@ void main() {
   test('localization Dart file is UTF-8 without BOM', () {
     final bytes = File('lib/l10n/app_localizations.dart').readAsBytesSync();
 
-    final hasBom =
-        bytes.length >= 3 &&
+    final hasBom = bytes.length >= 3 &&
         bytes[0] == 0xef &&
         bytes[1] == 0xbb &&
         bytes[2] == 0xbf;
@@ -41,13 +40,18 @@ void main() {
     }
 
     expect(arabic.arabic, 'العربية');
-    expect(arabic.createNetwork, 'إنشاء شبكة');
-    expect(arabic.joinNetwork, 'الانضمام إلى شبكة');
-    expect(arabic.leaveNetwork, 'مغادرة الشبكة');
+    expect(arabic.createNetwork, 'إنشاء مصروف');
+    expect(arabic.joinNetwork, 'الانضمام إلى مصروف');
+    expect(arabic.networkName, 'اسم المصروف');
+    expect(arabic.networkPassword, 'كلمة مرور المصروف');
+    expect(arabic.networkCurrency, 'عملة المصروف');
+    expect(arabic.selectNetwork, 'اختر المصروف');
+    expect(arabic.leaveNetwork, 'مغادرة المصروف');
     expect(
       arabic.confirmLeaveNetwork,
-      'هل تريد حذف حسابك ومغادرة شبكة المصروف نهائيًا؟',
+      'هل تريد حذف حسابك ومغادرة المصروف نهائيًا؟',
     );
+    expect(arabic.joinMyMaskanNetwork, 'انضم إلى مصروفي في Maskan:');
     expect(arabic.footerText, contains('عبد الكريم حاج ياسين'));
     expect(english.createNetwork, 'Create Network');
   });

@@ -44,7 +44,7 @@ class AppLocalizations {
       'memberStatus': 'Member status',
       'forgotPassword': 'نسيت كلمة المرور؟',
       'forgotPasswordContactAdmin':
-          'يرجى التواصل مع مشرف الشبكة لإعادة تعيين كلمة المرور.',
+          'يرجى التواصل مع مشرف المصروف لإعادة تعيين كلمة المرور.',
       'resetMemberPassword': 'إعادة تعيين كلمة المرور',
       'newPassword': 'كلمة المرور الجديدة',
       'confirmNewPassword': 'تأكيد كلمة المرور الجديدة',
@@ -105,6 +105,7 @@ class AppLocalizations {
       'clearAll': 'Clear all',
       'notificationRemoved': 'Notification removed',
       'newExpenseNotification': '{actor} added {amount}',
+      'expenseUpdatedNotification': '{actor} edited an expense of {amount}',
       'cloudConnected': 'Cloud connected',
       'cloudConnectionFailedTitle': 'Cloud connection unavailable',
       'cloudConnectionFailedMessage':
@@ -229,6 +230,7 @@ class AppLocalizations {
       'expenseDeleteFailed': 'Could not delete this expense. Please try again.',
       'save': 'Save',
       'pushExpenseAddedTitle': 'New expense added',
+      'pushExpenseUpdatedTitle': 'Expense edited',
       'pushResetRequestedTitle': 'New cycle request',
       'pushCycleStartedTitle': 'New cycle started',
     },
@@ -236,14 +238,14 @@ class AppLocalizations {
       'appTitle': 'Maskan',
       'homeSubtitle':
           'أنشئ مجموعة خاصة أو انضم إليها لتقسيم المصاريف وتسويتها بوضوح.',
-      'createNetwork': 'إنشاء شبكة',
-      'joinNetwork': 'الانضمام إلى شبكة',
+      'createNetwork': 'إنشاء مصروف',
+      'joinNetwork': 'الانضمام إلى مصروف',
       'displayName': 'اسم المستخدم الظاهر',
-      'networkName': 'اسم الشبكة',
-      'networkPassword': 'كلمة مرور الشبكة',
+      'networkName': 'اسم المصروف',
+      'networkPassword': 'كلمة مرور المصروف',
       'memberPassword': 'كلمة مرور الحساب الشخصي',
-      'networkCurrency': 'عملة الشبكة',
-      'currencyHelp': 'ستستخدم جميع المصاريف في هذه الشبكة هذه العملة.',
+      'networkCurrency': 'عملة المصروف',
+      'currencyHelp': 'ستستخدم جميع المصاريف في هذا المصروف هذه العملة.',
       'create': 'إنشاء',
       'join': 'انضمام',
       'creating': 'جارٍ الإنشاء...',
@@ -253,7 +255,7 @@ class AppLocalizations {
       'memberStatus': 'حالة الأعضاء',
       'forgotPassword': 'نسيت كلمة المرور؟',
       'forgotPasswordContactAdmin':
-          'يرجى التواصل مع مشرف الشبكة لإعادة تعيين كلمة المرور.',
+          'يرجى التواصل مع مشرف المصروف لإعادة تعيين كلمة المرور.',
       'resetMemberPassword': 'إعادة تعيين كلمة المرور',
       'newPassword': 'كلمة المرور الجديدة',
       'confirmNewPassword': 'تأكيد كلمة المرور الجديدة',
@@ -297,10 +299,10 @@ class AppLocalizations {
       'language': 'اللغة',
       'myAccount': 'حسابي',
       'enterAccount': 'الدخول إلى الحساب',
-      'selectNetwork': 'اختر الشبكة',
+      'selectNetwork': 'اختر المصروف',
       'selectMember': 'اختر العضو',
       'accountPassword': 'كلمة مرور الحساب',
-      'noNetworksYet': 'أنشئ شبكة أو انضم إلى شبكة أولًا.',
+      'noNetworksYet': 'أنشئ مصروفًا أو انضم إلى مصروف أولًا.',
       'continueToAccount': 'متابعة إلى الحساب',
       'expenseHistory': 'سجل المصاريف',
       'noExpensesYet': 'لا توجد مصاريف بعد.',
@@ -314,17 +316,19 @@ class AppLocalizations {
       'clearAll': 'مسح الكل',
       'notificationRemoved': 'تمت إزالة الإشعار',
       'newExpenseNotification': 'أضاف {actor} {amount}',
+      'expenseUpdatedNotification': 'عدّل {actor} مصروفًا بقيمة {amount}',
       'errorNoInternet':
           'يحتاج الوضع السحابي إلى اتصال بالإنترنت. تحقق من الاتصال وحاول مرة أخرى.',
-      'errorDuplicateNetwork': 'اسم الشبكة مستخدم بالفعل. اختر اسمًا آخر.',
-      'errorDuplicateMember': 'اسم العضو مستخدم بالفعل في هذه الشبكة.',
-      'errorWrongNetworkPassword': 'اسم الشبكة أو كلمة مرور الشبكة غير صحيحة.',
+      'errorDuplicateNetwork': 'اسم المصروف مستخدم بالفعل. اختر اسمًا آخر.',
+      'errorDuplicateMember': 'اسم العضو مستخدم بالفعل في هذا المصروف.',
+      'errorWrongNetworkPassword':
+          'اسم المصروف أو كلمة مرور المصروف غير صحيحة.',
       'errorWrongPersonalPassword': 'كلمة مرور الحساب الشخصي غير صحيحة.',
       'errorSupabasePermission':
           'تم رفض الوصول السحابي. تحقق من سياسات Supabase RLS وبيانات الاختبار.',
       'errorCloudRecordUnavailable':
-          'هذه الشبكة المحفوظة لم تعد متاحة. أنشئ شبكة أو انضم إلى شبكة مرة أخرى.',
-      'errorCreateNetworkFailed': 'تعذر إنشاء الشبكة. حاول مرة أخرى.',
+          'هذا المصروف المحفوظ لم يعد متاحًا. أنشئ مصروفًا أو انضم إلى مصروف مرة أخرى.',
+      'errorCreateNetworkFailed': 'تعذر إنشاء المصروف. حاول مرة أخرى.',
       'errorSupabaseNotConfigured': 'إعداد Supabase مفقود',
       'supabaseConfigurationMissingMessage':
           'يفتقد هذا الإصدار رابط Supabase أو مفتاح anon.',
@@ -366,24 +370,24 @@ class AppLocalizations {
       'inviteJoinPrefill':
           'تم اكتشاف الدعوة. أدخل اسمك وكلمات المرور للانضمام.',
       'inviteInstructions':
-          'ثبّت Maskan أولاً، ثم افتح رابط الدعوة. إذا ظهرت صفحة الموقع، انسخ رمز الشبكة وافتحه في Maskan.',
+          'ثبّت Maskan أولاً، ثم افتح رابط الدعوة. إذا ظهرت صفحة الموقع، انسخ رمز المصروف وافتحه في Maskan.',
       'inviteLinkLabel': 'رابط دعوة Maskan',
-      'joinMyMaskanNetwork': 'انضم إلى شبكتي في Maskan:',
-      'leaveNetwork': 'مغادرة الشبكة',
-      'confirmLeaveNetwork': 'هل تريد حذف حسابك ومغادرة شبكة المصروف نهائيًا؟',
+      'joinMyMaskanNetwork': 'انضم إلى مصروفي في Maskan:',
+      'leaveNetwork': 'مغادرة المصروف',
+      'confirmLeaveNetwork': 'هل تريد حذف حسابك ومغادرة المصروف نهائيًا؟',
       'lastMemberLeaveWarning':
-          'أنت آخر عضو في هذه الشبكة. عند المغادرة سيتم حذف الشبكة بالكامل.',
+          'أنت آخر عضو في هذا المصروف. عند المغادرة سيتم حذف المصروف بالكامل.',
       'cannotLeaveBeforeSettlement':
-          'يجب عليك تسوية حساباتك مع أصدقائك أولًا. يمكنك مغادرة الشبكة بعد أن يصبح إجمالي المصاريف 0.',
+          'يجب عليك تسوية حساباتك مع أصدقائك أولًا. يمكنك مغادرة المصروف بعد أن يصبح إجمالي المصاريف 0.',
       'cannotLeavePendingReset':
-          'أكمل طلب بدء الدورة الجديدة المعلق قبل مغادرة هذه الشبكة.',
+          'أكمل طلب بدء الدورة الجديدة المعلق قبل مغادرة هذا المصروف.',
       'cannotLeaveWithHistory':
-          'لا يزال لهذا الحساب سجل مصاريف في هذه الشبكة. صدّر السجلات أو سوّها قبل المغادرة.',
-      'leaveNetworkSuccess': 'تمت مغادرة الشبكة.',
-      'leaveNetworkFailed': 'تعذر مغادرة الشبكة.',
+          'لا يزال لهذا الحساب سجل مصاريف في هذا المصروف. صدّر السجلات أو سوّها قبل المغادرة.',
+      'leaveNetworkSuccess': 'تمت مغادرة المصروف.',
+      'leaveNetworkFailed': 'تعذر مغادرة المصروف.',
       'reportSubtitleEn': 'Shared Housing Expense Report',
       'reportSubtitleAr': 'تقرير مصاريف السكن',
-      'reportNetworkInfo': 'معلومات الشبكة',
+      'reportNetworkInfo': 'معلومات المصروف',
       'reportMemberCount': 'عدد الأعضاء',
       'reportSettlementInstructions': 'تعليمات التسوية',
       'poweredByKaramix': 'بدعم من Karamix Labs',
@@ -415,6 +419,7 @@ class AppLocalizations {
       'expenseDeleteFailed': 'تعذر حذف هذا المصروف. حاول مرة أخرى.',
       'save': 'حفظ',
       'pushExpenseAddedTitle': 'تمت إضافة مصروف جديد',
+      'pushExpenseUpdatedTitle': 'تم تعديل مصروف',
       'pushResetRequestedTitle': 'طلب بدء مصروف جديد',
       'pushCycleStartedTitle': 'تم بدء مصروف جديد',
     },
@@ -612,6 +617,7 @@ class AppLocalizations {
   String get expenseDeleteFailed => _text('expenseDeleteFailed');
   String get save => _text('save');
   String get pushExpenseAddedTitle => _text('pushExpenseAddedTitle');
+  String get pushExpenseUpdatedTitle => _text('pushExpenseUpdatedTitle');
   String get pushResetRequestedTitle => _text('pushResetRequestedTitle');
   String get pushCycleStartedTitle => _text('pushCycleStartedTitle');
 
@@ -642,6 +648,15 @@ class AppLocalizations {
     required String amount,
   }) {
     return _text('newExpenseNotification')
+        .replaceAll('{actor}', actor)
+        .replaceAll('{amount}', amount);
+  }
+
+  String expenseUpdatedNotification({
+    required String actor,
+    required String amount,
+  }) {
+    return _text('expenseUpdatedNotification')
         .replaceAll('{actor}', actor)
         .replaceAll('{amount}', amount);
   }

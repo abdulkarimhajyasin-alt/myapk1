@@ -15,7 +15,7 @@ class SettlementPdfService {
   static const pdfBoldFontAsset = 'assets/fonts/Amiri-Bold.ttf';
   static const requiredPdfGlyphs =
       'Maskan Karamix Labs Powered by 0123456789/.:,-€©'
-      'تقرير مصاريف السكن معلومات الشبكة وقت الإنشاء العملة عدد الأعضاء'
+      'تقرير مصاريف السكن معلومات المصروف وقت الإنشاء العملة عدد الأعضاء'
       'إجمالي المصاريف حصة كل عضو تسوية الأعضاء تعليمات التسوية'
       'الجميع متوازنون لا توجد تحويلات مطلوبة عليه له يدفع إلى';
   static const requiredPdfPresentationGlyphs = <int>[
@@ -692,8 +692,8 @@ class _PdfCopy {
   String get subtitle => isArabic
       ? '$arabicSubtitle | $englishSubtitle'
       : '$englishSubtitle | $arabicSubtitle';
-  String get networkInfo => isArabic ? 'معلومات الشبكة' : 'Network info';
-  String get networkName => isArabic ? 'اسم الشبكة' : 'Network name';
+  String get networkInfo => isArabic ? 'معلومات المصروف' : 'Network info';
+  String get networkName => isArabic ? 'اسم المصروف' : 'Network name';
   String get generatedAt => isArabic ? 'وقت الإنشاء' : 'Generated at';
   String get currency => isArabic ? 'العملة' : 'Currency';
   String get memberCount => isArabic ? 'عدد الأعضاء' : 'Member count';
@@ -706,8 +706,9 @@ class _PdfCopy {
   String get result => isArabic ? 'النتيجة' : 'Result';
   String get settlementInstructions =>
       isArabic ? 'تعليمات التسوية' : 'Settlement instructions';
-  String get noSettlementNeeded =>
-      isArabic ? 'الجميع متوازنون، لا توجد تحويلات مطلوبة.' : 'Everyone is settled.';
+  String get noSettlementNeeded => isArabic
+      ? 'الجميع متوازنون، لا توجد تحويلات مطلوبة.'
+      : 'Everyone is settled.';
   String get settled => isArabic ? 'متوازن' : 'Settled';
   String get poweredBy =>
       isArabic ? 'بدعم من Karamix Labs' : 'Powered by Karamix Labs';

@@ -27,9 +27,8 @@ class PushNotificationService {
     await _plugin.initialize(
       const InitializationSettings(android: android),
     );
-    final androidPlugin =
-        _plugin.resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>();
+    final androidPlugin = _plugin.resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin>();
     await androidPlugin?.requestNotificationsPermission();
     _initialized = true;
   }
@@ -71,6 +70,7 @@ class PushNotificationService {
   }) {
     final title = switch (notification.kind) {
       NetworkNotificationKind.expense => l10n.pushExpenseAddedTitle,
+      NetworkNotificationKind.expenseUpdated => l10n.pushExpenseUpdatedTitle,
       NetworkNotificationKind.resetRequest => l10n.pushResetRequestedTitle,
       NetworkNotificationKind.cycleStarted => l10n.pushCycleStartedTitle,
     };

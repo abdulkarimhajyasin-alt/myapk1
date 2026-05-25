@@ -81,6 +81,7 @@ class NetworkNotification {
 
 enum NetworkNotificationKind {
   expense,
+  expenseUpdated,
   resetRequest,
   cycleStarted;
 

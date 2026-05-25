@@ -755,6 +755,14 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
           code: 'expense_update_zero_rows',
         );
       }
+      await _createExpenseUpdatedNotificationsSafely(
+        networkId: networkId,
+        editedByMemberId: editedByMemberId,
+        expenseId: expenseId,
+        amountCents: amountCents,
+        currencySymbol: networkRow['currency_symbol'] as String? ?? r'$',
+        note: note,
+      );
       return _networkFromHydratedRow(networkRow);
     } on RepositoryException {
       rethrow;
@@ -1423,6 +1431,42 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
     }
   }
 
+  Future<void> _createExpenseUpdatedNotificationsSafely({
+    required String networkId,
+    required String editedByMemberId,
+    required String expenseId,
+    required int amountCents,
+    required String currencySymbol,
+    String? note,
+  }) async {
+    try {
+      final members = (await _loadMemberRows(networkId))
+          .map(memberFromRow)
+          .toList(growable: false);
+      final actorRows = members.where(
+        (member) => member.id == editedByMemberId,
+      );
+      if (actorRows.isEmpty) return;
+      final payloads = buildNotificationInsertPayloads(
+        networkId: networkId,
+        members: members,
+        actor: actorRows.first,
+        expenseId: expenseId,
+        amountCents: amountCents,
+        currencySymbol: currencySymbol,
+        note: note,
+        kind: NetworkNotificationKind.expenseUpdated,
+      );
+      if (payloads.isEmpty) return;
+
+      final client = _requireClient();
+      await client.from('network_notifications').insert(payloads);
+    } catch (_) {
+      // Notification delivery is best-effort. The expense update is already
+      // saved and should not be rolled back by notification fan-out failures.
+    }
+  }
+
   Future<void> _createResetNotificationsSafely({
     required String networkId,
     required List<Member> members,
@@ -1933,6 +1977,7 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
     required int amountCents,
     required String currencySymbol,
     String? note,
+    NetworkNotificationKind kind = NetworkNotificationKind.expense,
   }) {
     final snippet = _noteSnippet(note);
     return members
@@ -1947,7 +1992,7 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
             'amount_cents': amountCents,
             'currency_symbol': currencySymbol,
             'note_snippet': snippet,
-            'kind': NetworkNotificationKind.expense.name,
+            'kind': kind.name,
             'reset_request_id': null,
             'is_read': false,
             'created_at': DateTime.now().toUtc().toIso8601String(),

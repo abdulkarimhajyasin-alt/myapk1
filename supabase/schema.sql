@@ -321,16 +321,13 @@ begin
       not valid;
   end if;
 
-  if not exists (
-    select 1
-    from pg_constraint
-    where conname = 'network_notifications_kind_valid'
-  ) then
-    alter table public.network_notifications
-      add constraint network_notifications_kind_valid
-      check (kind in ('expense', 'resetRequest', 'cycleStarted'))
-      not valid;
-  end if;
+  alter table public.network_notifications
+    drop constraint if exists network_notifications_kind_valid;
+
+  alter table public.network_notifications
+    add constraint network_notifications_kind_valid
+    check (kind in ('expense', 'expenseUpdated', 'resetRequest', 'cycleStarted'))
+    not valid;
 end $$;
 
 create index if not exists networks_normalized_name_idx

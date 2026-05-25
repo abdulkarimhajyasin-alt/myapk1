@@ -119,6 +119,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     actor: notification.actorMemberName,
                     amount: amount,
                   ),
+                NetworkNotificationKind.expenseUpdated =>
+                  l10n.expenseUpdatedNotification(
+                    actor: notification.actorMemberName,
+                    amount: amount,
+                  ),
               };
               return Card(
                 margin: const EdgeInsets.only(bottom: 10),

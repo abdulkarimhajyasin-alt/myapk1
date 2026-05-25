@@ -139,7 +139,8 @@ void main() {
     expect(bytes.length, greaterThan(500));
   });
 
-  test('PDF font contains Arabic, Latin, punctuation, copyright, and euro glyphs',
+  test(
+      'PDF font contains Arabic, Latin, punctuation, copyright, and euro glyphs',
       () async {
     final regularFontData = await rootBundle.load(
       SettlementPdfService.pdfRegularFontAsset,
@@ -155,7 +156,7 @@ void main() {
     for (final codePoints in fonts) {
       const requiredPdfGlyphs =
           'Maskan Karamix Labs Powered by 0123456789/.:,-€©'
-          'تقرير مصاريف السكن معلومات الشبكة وقت الإنشاء العملة عدد الأعضاء'
+          'تقرير مصاريف السكن معلومات المصروف وقت الإنشاء العملة عدد الأعضاء'
           'إجمالي المصاريف حصة كل عضو تسوية الأعضاء تعليمات التسوية'
           'الجميع متوازنون لا توجد تحويلات مطلوبة عليه له متوازن يدفع إلى';
       for (final codePoint in requiredPdfGlyphs.runes) {
@@ -171,7 +172,8 @@ void main() {
         expect(
           codePoints,
           contains(codePoint),
-          reason: 'Missing shaped Arabic glyph U+${codePoint.toRadixString(16)}',
+          reason:
+              'Missing shaped Arabic glyph U+${codePoint.toRadixString(16)}',
         );
       }
       for (final codePoint in 'له عليه متوازن €'.runes) {
