@@ -35,13 +35,13 @@ void main() {
 
     expect(network.id, 'network-id');
     expect(network.name, 'Flat 12');
-    expect(network.password, 'network-hash');
+    expect(network.password, isEmpty);
     expect(network.createdByMemberId, 'member-id');
     expect(network.currencyCode, 'EUR');
     expect(network.currencySymbol, '€');
     expect(network.members.single.id, 'member-id');
-    expect(network.members.single.passwordHash, 'member-hash');
-    expect(network.members.single.passwordSalt, 'member-salt');
+    expect(network.members.single.passwordHash, isNull);
+    expect(network.members.single.passwordSalt, isNull);
     expect(network.members.single.avatarColor, '#059669');
     expect(network.members.single.avatarInitials, 'AL');
     expect(network.members.single.avatarImagePath, 'network/member.jpg');

@@ -12,6 +12,7 @@ dependencies:
   flutter_localizations:
     sdk: flutter
   shared_preferences: ^2.3.3
+  crypto: ^3.0.7
   supabase_flutter: ^2.12.4
   pdf: ^3.11.1
   printing: ^5.13.4

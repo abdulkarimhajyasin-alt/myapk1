@@ -1,5 +1,9 @@
 import 'id_utils.dart';
 
+/// Legacy compatibility utility retained for local-data migration only.
+///
+/// Cloud credential creation and verification must never use this fast hash;
+/// those operations are authoritative only in the Phase 2 server function.
 class PasswordHashUtils {
   const PasswordHashUtils._();
 
@@ -16,7 +20,8 @@ class PasswordHashUtils {
   }
 
   static String createSalt(String seed) {
-    return IdUtils.legacyId('salt', '$seed-${DateTime.now().toIso8601String()}');
+    return IdUtils.legacyId(
+        'salt', '$seed-${DateTime.now().toIso8601String()}');
   }
 
   static String _fnvHash(String value) {

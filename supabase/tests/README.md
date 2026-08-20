@@ -15,6 +15,7 @@ Remove-Item Env:PGPASSWORD
 
 1. `20260807000000_baseline_pre_phase1.sql`
 2. `20260807000100_harden_auth_membership_rls.sql`
+3. `20260820000000_migrate_password_security.sql`
 
 Do not run `supabase link` or `supabase db push` for this validation.
 
@@ -22,3 +23,16 @@ A successful run ends with `ROLLBACK` and no raised exception. The script checks
 Network A/Network B inverse isolation, allowed same-network expense CRUD,
 cross-network read/write denial, actor-ID spoof denial, anonymous table denial,
 sensitive-column privileges, and the SELECT visibility used by Realtime RLS.
+
+# Phase 2 password-security integration test
+
+Keep the local Edge Function server running in a separate terminal, then run
+the synthetic matrix against the disposable local stack:
+
+```powershell
+npx supabase functions serve
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File supabase/tests/phase_02_password_security.ps1
+```
+
+The script never targets a linked project. It validates modern-only creation,
+legacy upgrade-on-proof, reset/Auth synchronization, concurrency, isolation,

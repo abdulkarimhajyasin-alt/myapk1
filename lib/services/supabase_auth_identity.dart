@@ -1,3 +1,6 @@
+import 'dart:convert';
+
+import 'package:crypto/crypto.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Stable bridge between a Maskan member and its Supabase Auth identity.
@@ -11,7 +14,11 @@ abstract final class SupabaseAuthIdentity {
   }
 
   static String passwordFor(String memberId, String memberPassword) {
-    return 'Maskan:$memberId:${memberPassword.trim()}:SupabaseAuth';
+    // This is only a bounded technical Supabase Auth secret. The application
+    // credential is independently verified with PBKDF2 on the server.
+    return sha256
+        .convert(utf8.encode('MaskanAuthV2:$memberId:${memberPassword.trim()}'))
+        .toString();
   }
 
   static Future<void> establish({

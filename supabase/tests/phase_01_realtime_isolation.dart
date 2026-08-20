@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:expense_network/services/supabase_auth_identity.dart';
 
 final apiUrl = Platform.environment['LOCAL_SUPABASE_API_URL'];
 final anonKey = Platform.environment['LOCAL_SUPABASE_ANON_KEY'];
@@ -26,32 +27,39 @@ String uuid() {
 }
 
 Future<Identity> createIdentity(String label, String suffix) async {
+  final networkId = uuid();
+  final memberId = uuid();
+  final memberPassword = 'Local-Realtime-$label-$suffix';
   final client = SupabaseClient(
     apiUrl!,
     anonKey!,
     authOptions: const AuthClientOptions(authFlowType: AuthFlowType.implicit),
   );
   final auth = await client.auth.signUp(
-    email: 'phase1c-realtime-$label-$suffix@example.test',
-    password: 'Local-Realtime-$label-$suffix',
+    email: SupabaseAuthIdentity.emailFor(memberId),
+    password: SupabaseAuthIdentity.passwordFor(memberId, memberPassword),
   );
   if (auth.session == null) {
     throw StateError('Local Auth signup returned no session.');
   }
-  final networkId = uuid();
-  final memberId = uuid();
-  await client.rpc('maskan_create_network', params: {
-    'p_network_id': networkId,
-    'p_member_id': memberId,
-    'p_network_name': 'Realtime $label $suffix',
-    'p_member_name': '${label.toUpperCase()}1',
-    'p_network_password_hash': 'synthetic-network-hash-$label',
-    'p_network_password_salt': 'synthetic-network-salt-$label',
-    'p_member_password_hash': 'synthetic-member-hash-$label',
-    'p_member_password_salt': 'synthetic-member-salt-$label',
-    'p_currency_code': 'EUR',
-    'p_currency_symbol': 'EUR',
-  });
+  final response = await client.functions.invoke(
+    'maskan-password',
+    body: {
+      'action': 'create_network',
+      'networkId': networkId,
+      'memberId': memberId,
+      'networkName': 'Realtime $label $suffix',
+      'memberName': '${label.toUpperCase()}1',
+      'networkPassword': 'Local-Network-$label-$suffix',
+      'memberPassword': memberPassword,
+      'currencyCode': 'EUR',
+      'currencySymbol': 'EUR',
+    },
+  );
+  final data = Map<String, dynamic>.from(response.data as Map);
+  if (response.status != 200 || data['ok'] != true) {
+    throw StateError('Local secure account creation failed.');
+  }
   return Identity(client, memberId, networkId);
 }
 
@@ -103,6 +111,7 @@ Future<void> main() async {
   final subscriptionA = await subscribe(identityA, 'a-$suffix');
   final subscriptionB = await subscribe(identityB, 'b-$suffix');
   try {
+    await Future<void>.delayed(const Duration(seconds: 3));
     await insertExpense(identityA, 101);
     await insertExpense(identityB, 202);
     await Future<void>.delayed(const Duration(seconds: 5));

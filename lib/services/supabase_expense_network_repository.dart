@@ -12,7 +12,6 @@ import '../models/expense_reset_request.dart';
 import '../models/member.dart';
 import '../models/network_notification.dart';
 import '../utils/currency_utils.dart';
-import '../utils/password_hash_utils.dart';
 import 'expense_network_repository.dart';
 import 'supabase_auth_identity.dart';
 
@@ -132,16 +131,6 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
     final normalizedNetworkName = normalizeName(trimmedNetworkName);
     final trimmedMemberName = displayName.trim();
     final currency = CurrencyCatalog.findByCode(currencyCode);
-    final networkSalt = PasswordHashUtils.createSalt(trimmedNetworkName);
-    final memberSalt = PasswordHashUtils.createSalt(trimmedMemberName);
-    final networkPasswordHash = PasswordHashUtils.createHash(
-      password,
-      networkSalt,
-    );
-    final memberPasswordHash = PasswordHashUtils.createHash(
-      memberPassword,
-      memberSalt,
-    );
     final networkId = createUuid();
     final memberId = createUuid();
     var stage = 'authenticate owner';
@@ -168,19 +157,17 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
         networkId: networkId,
         memberId: memberId,
       );
-      await client.rpc(
-        'maskan_create_network',
-        params: {
-          'p_network_id': networkId,
-          'p_member_id': memberId,
-          'p_network_name': trimmedNetworkName,
-          'p_member_name': trimmedMemberName,
-          'p_network_password_hash': networkPasswordHash,
-          'p_network_password_salt': networkSalt,
-          'p_member_password_hash': memberPasswordHash,
-          'p_member_password_salt': memberSalt,
-          'p_currency_code': currency.code,
-          'p_currency_symbol': currency.symbol,
+      await _invokePasswordAction(
+        action: 'create_network',
+        body: {
+          'networkId': networkId,
+          'memberId': memberId,
+          'networkName': trimmedNetworkName,
+          'memberName': trimmedMemberName,
+          'networkPassword': password,
+          'memberPassword': memberPassword,
+          'currencyCode': currency.code,
+          'currencySymbol': currency.symbol,
         },
       );
       _debugCreateNetwork(
@@ -228,12 +215,7 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
   }) async {
     final requestedNetworkId = networkId?.trim();
     final trimmedMemberName = displayName.trim();
-    final memberSalt = PasswordHashUtils.createSalt(trimmedMemberName);
     final memberId = createUuid();
-    final memberPasswordHash = PasswordHashUtils.createHash(
-      memberPassword,
-      memberSalt,
-    );
 
     try {
       final client = _requireClient();
@@ -243,28 +225,19 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
         memberPassword: memberPassword,
         networkName: networkName.trim(),
       );
-      final response = await client.rpc(
-        'maskan_join_network',
-        params: {
-          'p_network_id': requestedNetworkId?.isNotEmpty == true
+      final result = await _invokePasswordAction(
+        action: 'join_network',
+        body: {
+          'networkId': requestedNetworkId?.isNotEmpty == true
               ? requestedNetworkId
               : null,
-          'p_network_name': networkName.trim(),
-          'p_network_password': password,
-          'p_member_id': memberId,
-          'p_member_name': trimmedMemberName,
-          'p_member_password_hash': memberPasswordHash,
-          'p_member_password_salt': memberSalt,
+          'networkName': networkName.trim(),
+          'networkPassword': password,
+          'memberId': memberId,
+          'memberName': trimmedMemberName,
+          'memberPassword': memberPassword,
         },
       );
-      final resultRows = response as List;
-      if (resultRows.isEmpty) {
-        throw const RepositoryException(
-          'Network name or password is incorrect.',
-          code: 'network_invalid_credentials',
-        );
-      }
-      final result = Map<String, dynamic>.from(resultRows.first as Map);
       final resolvedNetworkId = result['network_id'] as String;
       final resolvedNetworkName = result['network_name'] as String;
       await client.auth.updateUser(
@@ -306,38 +279,18 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
   }) async {
     try {
       final client = _requireClient();
-      final discovered = await client.rpc(
-        'maskan_discover_network',
-        params: {'p_network_name': networkName.trim()},
-      ) as List;
-      final networkMatches = discovered.map(
-        (row) => Map<String, dynamic>.from(row as Map),
-      );
-      if (networkMatches.isEmpty) {
-        throw const RepositoryException(
-          'Network not found.',
-          code: 'network_not_found',
-        );
-      }
-      final networkId = networkMatches.first['id'] as String;
-      final verification = await client.rpc(
-        'maskan_verify_member_credentials',
-        params: {
-          'p_network_id': networkId,
-          'p_member_id': null,
-          'p_member_name': memberName.trim(),
-          'p_member_password': memberPassword,
+      final verified = await _invokePasswordAction(
+        action: 'verify_member',
+        body: {
+          'networkName': networkName.trim(),
+          'memberName': memberName.trim(),
+          'memberPassword': memberPassword,
         },
-      ) as List;
-      if (verification.isEmpty) {
-        throw const RepositoryException(
-          'Member password is incorrect.',
-          code: 'member_invalid_password',
-        );
-      }
-      final verified = Map<String, dynamic>.from(verification.first as Map);
-      final memberId = verified['member_id'] as String;
-      final resolvedNetworkName = verified['network_name'] as String;
+      );
+      final networkId = verified['networkId'] as String;
+      final memberId = verified['memberId'] as String;
+      final resolvedNetworkName = verified['networkName'] as String;
+      final claimToken = verified['claimToken'] as String;
       await SupabaseAuthIdentity.establish(
         client: client,
         memberId: memberId,
@@ -345,10 +298,10 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
         networkName: resolvedNetworkName,
       );
       await client.rpc(
-        'maskan_claim_legacy_member',
+        'maskan_claim_member',
         params: {
           'p_member_id': memberId,
-          'p_member_password': memberPassword,
+          'p_claim_token': claimToken,
         },
       );
       final networkRow = await _loadNetworkRowById(networkId);
@@ -473,25 +426,19 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
       );
     }
 
-    final passwordSalt = PasswordHashUtils.createSalt(targetMemberId);
-    final passwordHash = PasswordHashUtils.createHash(
-      trimmedPassword,
-      passwordSalt,
-    );
-
     try {
-      final client = _requireClient();
-      final row = await client.rpc(
-        'phase5_reset_member_password',
-        params: {
-          'target_network_id': networkId,
-          'admin_member_id': adminMemberId,
-          'target_member_id': targetMemberId,
-          'new_password_hash': passwordHash,
-          'new_password_salt': passwordSalt,
+      final result = await _invokePasswordAction(
+        action: 'reset_member_password',
+        body: {
+          'networkId': networkId,
+          'adminMemberId': adminMemberId,
+          'targetMemberId': targetMemberId,
+          'newPassword': trimmedPassword,
         },
       );
-      return memberFromRow(Map<String, dynamic>.from(row as Map));
+      return memberFromRow(
+        Map<String, dynamic>.from(result['member'] as Map),
+      );
     } catch (error) {
       throw mapSupabaseError(
         error,
@@ -1654,7 +1601,7 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
     return ExpenseNetwork(
       id: networkRow['id'] as String,
       name: networkRow['name'] as String,
-      password: networkRow['network_password_hash'] as String? ?? '',
+      password: '',
       members: memberRows.map((row) {
         final member = memberFromRow(row);
         return member.copyWith(expenses: expensesByMemberId[member.id] ?? []);
@@ -1674,8 +1621,8 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
     return Member(
       id: row['id'] as String,
       name: row['name'] as String,
-      passwordHash: row['password_hash'] as String?,
-      passwordSalt: row['password_salt'] as String?,
+      passwordHash: null,
+      passwordSalt: null,
       createdAt: _parseTimestamp(row['created_at']),
       avatarColor: row['avatar_color'] as String?,
       avatarInitials: row['avatar_initials'] as String?,
@@ -1898,6 +1845,53 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
     if (trimmed == null || trimmed.isEmpty) return null;
     if (trimmed.length <= maxExpenseNoteLength) return trimmed;
     return trimmed.substring(0, maxExpenseNoteLength);
+  }
+
+  Future<Map<String, dynamic>> _invokePasswordAction({
+    required String action,
+    required Map<String, dynamic> body,
+  }) async {
+    final result = await _requireClient().functions.invoke(
+      'maskan-password',
+      body: {'action': action, ...body},
+    );
+    if (result.status < 200 || result.status >= 300 || result.data is! Map) {
+      throw const RepositoryException(
+        'Secure credential service is unavailable.',
+        code: 'password_service_unavailable',
+      );
+    }
+    final data = Map<String, dynamic>.from(result.data as Map);
+    if (data['ok'] == true) return data;
+    final code = data['code'] as String?;
+    if (code == 'invalid_credentials') {
+      throw const RepositoryException(
+        'The supplied credentials are incorrect.',
+        code: 'invalid_credentials',
+      );
+    }
+    if (code == 'duplicate_network') {
+      throw const RepositoryException(
+        'This network name is already in use. Choose another name.',
+        code: 'duplicate_network',
+      );
+    }
+    if (code == 'duplicate_member') {
+      throw const RepositoryException(
+        'This member name is already used in the network.',
+        code: 'duplicate_member',
+      );
+    }
+    if (code == 'authentication_required') {
+      throw const RepositoryException(
+        'Authentication is required.',
+        code: 'supabase_auth_required',
+      );
+    }
+    throw const RepositoryException(
+      'Secure credential operation failed.',
+      code: 'password_operation_failed',
+    );
   }
 
   static RepositoryException mapSupabaseError(

@@ -86,7 +86,8 @@ void main() {
     expect(createSource, contains('final networkId = createUuid();'));
     expect(createSource, contains('final memberId = createUuid();'));
     expect(createSource, contains('SupabaseAuthIdentity.establish'));
-    expect(createSource, contains("'maskan_create_network'"));
+    expect(createSource, contains("action: 'create_network'"));
+    expect(createSource, contains('_invokePasswordAction'));
     expect(createSource, contains("duplicateCode: 'duplicate_network'"));
     expect(createSource, isNot(contains("from('networks').insert")));
     expect(createSource, isNot(contains("from('network_members').insert")));
@@ -149,16 +150,20 @@ void main() {
     expect(sessionSource, contains('refreshSession()'));
   });
 
-  test('admin member password reset uses a narrow Supabase RPC', () {
-    final schema = File('supabase/schema.sql').readAsStringSync();
+  test('admin password reset uses the narrow Phase 2 server function', () {
+    final migration = File(
+      'supabase/migrations/20260820000000_migrate_password_security.sql',
+    ).readAsStringSync();
     final source = File('lib/services/supabase_expense_network_repository.dart')
         .readAsStringSync();
 
-    expect(schema, contains('phase5_reset_member_password'));
-    expect(schema, contains('security definer'));
-    expect(schema, contains('created_by_member_id = admin_member_id'));
-    expect(schema, contains('admin_member_id::text <> jwt_member_id'));
-    expect(source, contains('phase5_reset_member_password'));
+    expect(migration, contains('maskan_password_reset_context'));
+    expect(migration, contains('maskan_password_reset_member'));
+    expect(migration, contains('a.auth_user_id = p_caller_auth_user_id'));
+    expect(migration, contains('n.created_by_member_id = a.id'));
+    expect(migration, contains('legacy_password_hash = null'));
+    expect(source, contains("action: 'reset_member_password'"));
+    expect(source, isNot(contains('phase5_reset_member_password')));
     expect(source, isNot(contains('service_role')));
   });
 
@@ -171,9 +176,11 @@ void main() {
 
     expect(updateSource, contains('_ensureExpenseEditAuthSession'));
     expect(source, contains('supabase_auth_session_required'));
+    final expenseUpdate = updateSource.indexOf('.update(');
+    expect(expenseUpdate, greaterThanOrEqualTo(0));
     expect(
       updateSource.indexOf('_ensureExpenseEditAuthSession'),
-      lessThan(updateSource.indexOf(".from('expenses')\n          .update(")),
+      lessThan(expenseUpdate),
     );
   });
 
@@ -224,6 +231,7 @@ void main() {
       orderedEquals([
         '20260807000000_baseline_pre_phase1.sql',
         '20260807000100_harden_auth_membership_rls.sql',
+        '20260820000000_migrate_password_security.sql',
       ]),
     );
     expect(baseline.join('\n'), isNot(contains('auth_user_id uuid')));
