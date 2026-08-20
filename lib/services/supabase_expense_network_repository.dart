@@ -72,7 +72,7 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
 
       if (row == null) return null;
       final networkRow = Map<String, dynamic>.from(row);
-      return _networkFromHydratedRow(networkRow);
+      return await _networkFromHydratedRow(networkRow);
     } catch (error) {
       throw mapSupabaseError(
         error,
@@ -197,7 +197,7 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
           code: 'supabase_create_network_failed',
         );
       }
-      return _networkFromHydratedRow(networkRow);
+      return await _networkFromHydratedRow(networkRow);
     } catch (error) {
       _debugCreateNetwork(
         'failed at $stage: ${backendErrorSummary(error)}',
@@ -358,7 +358,7 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
           code: 'network_not_found',
         );
       }
-      return _networkFromHydratedRow(networkRow);
+      return await _networkFromHydratedRow(networkRow);
     } on RepositoryException {
       rethrow;
     } catch (error) {
@@ -582,7 +582,7 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
         note: cleanedNote,
       );
 
-      return _networkFromHydratedRow(networkRow);
+      return await _networkFromHydratedRow(networkRow);
     } catch (error) {
       throw mapSupabaseError(
         error,
@@ -693,7 +693,7 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
         currencySymbol: networkRow['currency_symbol'] as String? ?? r'$',
         note: note,
       );
-      return _networkFromHydratedRow(networkRow);
+      return await _networkFromHydratedRow(networkRow);
     } on RepositoryException {
       rethrow;
     } catch (error) {
@@ -786,7 +786,7 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
           code: 'expense_delete_zero_rows',
         );
       }
-      return _networkFromHydratedRow(networkRow);
+      return await _networkFromHydratedRow(networkRow);
     } catch (error) {
       logDelete(
         'delete failed deletedRowsCount=0 ${backendErrorSummary(error)}',
@@ -975,7 +975,7 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
           currencySymbol: networkRow['currency_symbol'] as String? ?? r'$',
           actorMemberName: requester.name,
         );
-        return _networkFromHydratedRow(networkRow);
+        return await _networkFromHydratedRow(networkRow);
       } on RepositoryException {
         rethrow;
       } catch (error) {
@@ -1038,7 +1038,7 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
           actorMemberName: networkRow['name'] as String,
         );
       }
-      return _networkFromHydratedRow(networkRow);
+      return await _networkFromHydratedRow(networkRow);
     } catch (error) {
       throw mapSupabaseError(
         error,
@@ -1115,7 +1115,7 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
           actorMemberName: networkRow['name'] as String,
         );
       }
-      return _networkFromHydratedRow(networkRow);
+      return await _networkFromHydratedRow(networkRow);
     } catch (error) {
       throw mapSupabaseError(
         error,
