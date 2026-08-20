@@ -17,6 +17,10 @@ android/app/release
 *.iml
 .idea/
 .vscode/
+node_modules/
+.env
+.env.*
+!.env.example
 upload-keystore.jks
 keystore_base64.txt
 *.jks

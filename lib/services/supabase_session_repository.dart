@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'session_repository.dart';
+import 'supabase_auth_identity.dart';
 import 'supabase_config.dart';
 
 class SupabaseSessionRepository implements SessionRepository {
@@ -168,8 +169,11 @@ class SupabaseSessionRepository implements SessionRepository {
     String memberPassword, {
     String? networkId,
   }) async {
-    final email = _authEmailFor(session.memberId);
-    final password = _authPasswordFor(session.memberId, memberPassword);
+    final email = SupabaseAuthIdentity.emailFor(session.memberId);
+    final password = SupabaseAuthIdentity.passwordFor(
+      session.memberId,
+      memberPassword,
+    );
     var authMethod = 'signInWithPassword';
     try {
       await _auth.signInWithPassword(email: email, password: password);
@@ -288,15 +292,6 @@ class SupabaseSessionRepository implements SessionRepository {
       'authRestored=${state.authRestored} memberId=${state.memberId ?? '<none>'}',
       name: 'maskan.session',
     );
-  }
-
-  static String _authEmailFor(String memberId) {
-    final safeMemberId = memberId.replaceAll(RegExp(r'[^A-Za-z0-9_-]'), '_');
-    return 'maskan-$safeMemberId@auth.maskan.app'.toLowerCase();
-  }
-
-  static String _authPasswordFor(String memberId, String memberPassword) {
-    return 'Maskan:$memberId:${memberPassword.trim()}:SupabaseAuth';
   }
 
   static String? _jwtMetadataMemberId(dynamic session) {

@@ -42,17 +42,16 @@ void main() {
     expect(workflow.toLowerCase(), isNot(contains('service-role')));
   });
 
-  test('Supabase schema includes member leave delete policy', () {
-    final schema = File('supabase/schema.sql').readAsStringSync();
+  test('Phase 1 migration establishes durable Auth membership', () {
+    final migration = File(
+      'supabase/migrations/20260807000100_harden_auth_membership_rls.sql',
+    ).readAsStringSync();
 
-    expect(schema, contains('phase5_interim_leave_network'));
-    expect(schema, contains('on public.network_members'));
-    expect(schema, contains('for delete'));
-    expect(schema, contains('phase5_network_has_no_active_expenses'));
-    expect(schema, contains('sum(amount_cents)'));
-    expect(schema, contains('phase5_interim_delete_empty_networks'));
-    expect(schema, contains('phase5_interim_delete_settled_network_expenses'));
-    expect(schema, contains('on delete set null'));
+    expect(migration, contains('auth_user_id uuid'));
+    expect(migration, contains('references auth.users(id)'));
+    expect(migration, contains('network_members_auth_user_id_uidx'));
+    expect(migration, contains('where members.auth_user_id = auth.uid()'));
+    expect(migration, isNot(contains('auth.jwt()')));
   });
 
   test('Supabase schema allows only JWT member to edit own active expenses',
@@ -86,16 +85,11 @@ void main() {
 
     expect(createSource, contains('final networkId = createUuid();'));
     expect(createSource, contains('final memberId = createUuid();'));
-    expect(createSource, contains("'id': networkId"));
-    expect(createSource, contains("'id': memberId"));
-    expect(createSource, contains('insertedNetwork = true'));
-    expect(
-      createSource,
-      contains('insertedNetwork && !isDuplicateSupabaseError(error)'),
-    );
-    expect(createSource, contains('_tryDeletePartialNetwork('));
+    expect(createSource, contains('SupabaseAuthIdentity.establish'));
+    expect(createSource, contains("'maskan_create_network'"));
     expect(createSource, contains("duplicateCode: 'duplicate_network'"));
-    expect(createSource, isNot(contains('.select()\n          .single()')));
+    expect(createSource, isNot(contains("from('networks').insert")));
+    expect(createSource, isNot(contains("from('network_members').insert")));
   });
 
   test('Flutter source does not expose temporary create-network debug text',
@@ -111,20 +105,20 @@ void main() {
     expect(source, isNot(contains('createNetworkDebugMessage')));
   });
 
-  test('final network cleanup deletes all network-owned Supabase rows', () {
+  test('member leave is one server-authorized transaction', () {
     final source = File('lib/services/supabase_expense_network_repository.dart')
         .readAsStringSync();
-    final cleanupStart = source.indexOf('Future<void> _deleteNetworkCascade');
-    final cleanupEnd = source.indexOf('@override', cleanupStart + 1);
-    final cleanupSource = source.substring(cleanupStart, cleanupEnd);
+    final migration = File(
+      'supabase/migrations/20260807000100_harden_auth_membership_rls.sql',
+    ).readAsStringSync();
 
-    expect(cleanupSource, contains("from('network_notifications')"));
-    expect(cleanupSource, contains("from('expense_reset_approvals')"));
-    expect(cleanupSource, contains("from('expense_reset_requests')"));
-    expect(cleanupSource, contains("from('expenses')"));
-    expect(cleanupSource, contains("from('expense_cycles')"));
-    expect(cleanupSource, contains("from('network_members')"));
-    expect(cleanupSource, contains("from('networks')"));
+    expect(source, contains("'maskan_leave_network'"));
+    expect(source, isNot(contains('_deleteNetworkCascade')));
+    expect(
+      migration,
+      contains('create or replace function public.maskan_leave_network'),
+    );
+    expect(migration, contains('m.auth_user_id = auth.uid()'));
   });
 
   test('Supabase schema configures member avatar storage bucket', () {
@@ -192,5 +186,46 @@ void main() {
     final source = files.map((file) => file.readAsStringSync()).join('\n');
 
     expect(source, isNot(contains('signInAnonymously')));
+  });
+
+  test('Phase 1 exposes safe views and ships repeatable isolation tests', () {
+    final migration = File(
+      'supabase/migrations/20260807000100_harden_auth_membership_rls.sql',
+    ).readAsStringSync();
+    final sqlTest = File(
+      'supabase/tests/phase_01_rls_isolation.sql',
+    ).readAsStringSync();
+
+    expect(migration, contains('with (security_invoker = true)'));
+    expect(migration, contains('null::text as password_hash'));
+    expect(migration, contains('null::text as network_password_hash'));
+    expect(migration, contains('from anon, authenticated'));
+    expect(sqlTest, contains('A1 cross-network insert was accepted'));
+    expect(sqlTest, contains('B1 inverse network isolation failed'));
+    expect(sqlTest, contains('anon listed private networks'));
+    expect(sqlTest, contains('A1 spoofed A2 actor was accepted'));
+  });
+
+  test('local migration chain starts from the reviewed pre-Phase-1 schema', () {
+    final schema = File('supabase/schema.sql').readAsLinesSync();
+    final baseline = File(
+      'supabase/migrations/20260807000000_baseline_pre_phase1.sql',
+    ).readAsLinesSync();
+    final migrations = Directory('supabase/migrations')
+        .listSync()
+        .whereType<File>()
+        .map((file) => file.uri.pathSegments.last)
+        .toList()
+      ..sort();
+
+    expect(baseline.skip(4), orderedEquals(schema));
+    expect(
+      migrations,
+      orderedEquals([
+        '20260807000000_baseline_pre_phase1.sql',
+        '20260807000100_harden_auth_membership_rls.sql',
+      ]),
+    );
+    expect(baseline.join('\n'), isNot(contains('auth_user_id uuid')));
   });
 }

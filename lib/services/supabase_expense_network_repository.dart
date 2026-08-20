@@ -14,6 +14,7 @@ import '../models/network_notification.dart';
 import '../utils/currency_utils.dart';
 import '../utils/password_hash_utils.dart';
 import 'expense_network_repository.dart';
+import 'supabase_auth_identity.dart';
 
 class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
   SupabaseExpenseNetworkRepository({
@@ -38,8 +39,9 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
   Future<List<ExpenseNetwork>> getNetworks() async {
     try {
       final client = _requireClient();
+      if (client.auth.currentSession == null) return const [];
       final rows = await client
-          .from('networks')
+          .from('maskan_networks')
           .select()
           .order('created_at', ascending: false);
 
@@ -63,7 +65,7 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
     try {
       final client = _requireClient();
       final row = await client
-          .from('networks')
+          .from('maskan_networks')
           .select()
           .eq('normalized_name', normalizeName(networkName))
           .maybeSingle();
@@ -142,9 +144,7 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
     );
     final networkId = createUuid();
     final memberId = createUuid();
-    final createdAt = DateTime.now().toUtc();
-    var stage = 'normalize input';
-    var insertedNetwork = false;
+    var stage = 'authenticate owner';
 
     _debugCreateNetwork(
       'normalized input',
@@ -155,25 +155,34 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
 
     try {
       final client = _requireClient();
-      stage = 'network insert';
+      await SupabaseAuthIdentity.establish(
+        client: client,
+        memberId: memberId,
+        memberPassword: memberPassword,
+        networkName: trimmedNetworkName,
+      );
+      stage = 'transactional network creation';
       _debugCreateNetwork(
         'starting network insert',
         normalizedName: normalizedNetworkName,
         networkId: networkId,
         memberId: memberId,
       );
-      await client.from('networks').insert({
-        'id': networkId,
-        'name': trimmedNetworkName,
-        'normalized_name': normalizedNetworkName,
-        'network_password_hash': networkPasswordHash,
-        'network_password_salt': networkSalt,
-        'currency_code': currency.code,
-        'currency_symbol': currency.symbol,
-        'created_at': createdAt.toIso8601String(),
-        'updated_at': createdAt.toIso8601String(),
-      });
-      insertedNetwork = true;
+      await client.rpc(
+        'maskan_create_network',
+        params: {
+          'p_network_id': networkId,
+          'p_member_id': memberId,
+          'p_network_name': trimmedNetworkName,
+          'p_member_name': trimmedMemberName,
+          'p_network_password_hash': networkPasswordHash,
+          'p_network_password_salt': networkSalt,
+          'p_member_password_hash': memberPasswordHash,
+          'p_member_password_salt': memberSalt,
+          'p_currency_code': currency.code,
+          'p_currency_symbol': currency.symbol,
+        },
+      );
       _debugCreateNetwork(
         'SUCCESS network insert',
         normalizedName: normalizedNetworkName,
@@ -181,84 +190,14 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
         memberId: memberId,
       );
 
-      stage = 'member insert';
-      _debugCreateNetwork(
-        'starting member insert',
-        normalizedName: normalizedNetworkName,
-        networkId: networkId,
-        memberId: memberId,
-      );
-      await client.from('network_members').insert({
-        'id': memberId,
-        'network_id': networkId,
-        'name': trimmedMemberName,
-        'normalized_name': normalizeName(trimmedMemberName),
-        'password_hash': memberPasswordHash,
-        'password_salt': memberSalt,
-        'created_at': createdAt.toIso8601String(),
-      });
-      _debugCreateNetwork(
-        'SUCCESS member insert',
-        normalizedName: normalizedNetworkName,
-        networkId: networkId,
-        memberId: memberId,
-      );
-
-      stage = 'owner update';
-      _debugCreateNetwork(
-        'starting owner update',
-        normalizedName: normalizedNetworkName,
-        networkId: networkId,
-        memberId: memberId,
-      );
-      await client
-          .from('networks')
-          .update({'created_by_member_id': memberId}).eq('id', networkId);
-      _debugCreateNetwork(
-        'SUCCESS owner update',
-        normalizedName: normalizedNetworkName,
-        networkId: networkId,
-        memberId: memberId,
-      );
-
-      stage = 'active cycle insert';
-      _debugCreateNetwork(
-        'starting active cycle insert',
-        normalizedName: normalizedNetworkName,
-        networkId: networkId,
-        memberId: memberId,
-      );
-      await client.from('expense_cycles').insert({
-        'network_id': networkId,
-        'cycle_number': 1,
-        'status': 'active',
-        'started_at': createdAt.toIso8601String(),
-      });
-      _debugCreateNetwork(
-        'SUCCESS active cycle insert',
-        normalizedName: normalizedNetworkName,
-        networkId: networkId,
-        memberId: memberId,
-      );
-
-      return ExpenseNetwork(
-        id: networkId,
-        name: trimmedNetworkName,
-        password: networkPasswordHash,
-        members: [
-          Member(
-            id: memberId,
-            name: trimmedMemberName,
-            passwordHash: memberPasswordHash,
-            passwordSalt: memberSalt,
-            createdAt: createdAt,
-          ),
-        ],
-        createdAt: createdAt,
-        createdByMemberId: memberId,
-        currencyCode: currency.code,
-        currencySymbol: currency.symbol,
-      );
+      final networkRow = await _loadNetworkRowById(networkId);
+      if (networkRow == null) {
+        throw const RepositoryException(
+          'The new network could not be reloaded.',
+          code: 'supabase_create_network_failed',
+        );
+      }
+      return _networkFromHydratedRow(networkRow);
     } catch (error) {
       _debugCreateNetwork(
         'failed at $stage: ${backendErrorSummary(error)}',
@@ -266,13 +205,6 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
         networkId: networkId,
         memberId: memberId,
       );
-      if (insertedNetwork && !isDuplicateSupabaseError(error)) {
-        await _tryDeletePartialNetwork(
-          networkId,
-          normalizedName: normalizedNetworkName,
-          memberId: memberId,
-        );
-      }
       throw mapSupabaseError(
         error,
         duplicateCode: 'duplicate_network',
@@ -286,38 +218,6 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
     }
   }
 
-  Future<Object?> _tryDeletePartialNetwork(
-    String networkId, {
-    required String normalizedName,
-    required String memberId,
-  }) async {
-    _debugCreateNetwork(
-      'starting cleanup delete',
-      normalizedName: normalizedName,
-      networkId: networkId,
-      memberId: memberId,
-    );
-    try {
-      await _deleteNetworkCascade(networkId);
-      _debugCreateNetwork(
-        'cleanup delete succeeded',
-        normalizedName: normalizedName,
-        networkId: networkId,
-        memberId: memberId,
-      );
-      return null;
-    } catch (error) {
-      // Best-effort cleanup only. The original create error is more useful.
-      _debugCreateNetwork(
-        'cleanup delete failed: ${backendErrorSummary(error)}',
-        normalizedName: normalizedName,
-        networkId: networkId,
-        memberId: memberId,
-      );
-      return error;
-    }
-  }
-
   @override
   Future<ExpenseNetwork> joinNetwork({
     required String displayName,
@@ -327,43 +227,66 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
     String? networkId,
   }) async {
     final requestedNetworkId = networkId?.trim();
-    final Map<String, dynamic>? networkRow;
-    if (requestedNetworkId != null && requestedNetworkId.isNotEmpty) {
-      networkRow = await _loadNetworkRowById(requestedNetworkId);
-    } else {
-      networkRow = await _loadNetworkRowByName(networkName);
-    }
-    if (networkRow == null) {
-      throw const RepositoryException(
-        'Network name or password is incorrect.',
-        code: 'network_invalid_credentials',
-      );
-    }
-
-    _verifyNetworkPassword(networkRow, password);
-
-    final resolvedNetworkId = networkRow['id'] as String;
     final trimmedMemberName = displayName.trim();
     final memberSalt = PasswordHashUtils.createSalt(trimmedMemberName);
     final memberId = createUuid();
-    final joinedAt = DateTime.now().toUtc();
     final memberPasswordHash = PasswordHashUtils.createHash(
       memberPassword,
       memberSalt,
     );
-    final joinedMemberRow = {
-      'id': memberId,
-      'network_id': resolvedNetworkId,
-      'name': trimmedMemberName,
-      'normalized_name': normalizeName(trimmedMemberName),
-      'password_hash': memberPasswordHash,
-      'password_salt': memberSalt,
-      'created_at': joinedAt.toIso8601String(),
-    };
 
     try {
       final client = _requireClient();
-      await client.from('network_members').insert(joinedMemberRow);
+      await SupabaseAuthIdentity.establish(
+        client: client,
+        memberId: memberId,
+        memberPassword: memberPassword,
+        networkName: networkName.trim(),
+      );
+      final response = await client.rpc(
+        'maskan_join_network',
+        params: {
+          'p_network_id': requestedNetworkId?.isNotEmpty == true
+              ? requestedNetworkId
+              : null,
+          'p_network_name': networkName.trim(),
+          'p_network_password': password,
+          'p_member_id': memberId,
+          'p_member_name': trimmedMemberName,
+          'p_member_password_hash': memberPasswordHash,
+          'p_member_password_salt': memberSalt,
+        },
+      );
+      final resultRows = response as List;
+      if (resultRows.isEmpty) {
+        throw const RepositoryException(
+          'Network name or password is incorrect.',
+          code: 'network_invalid_credentials',
+        );
+      }
+      final result = Map<String, dynamic>.from(resultRows.first as Map);
+      final resolvedNetworkId = result['network_id'] as String;
+      final resolvedNetworkName = result['network_name'] as String;
+      await client.auth.updateUser(
+        UserAttributes(
+          data: {
+            'maskan_network_name': resolvedNetworkName,
+            'maskan_member_id': memberId,
+          },
+        ),
+      );
+      await client.auth.refreshSession();
+      final updatedNetworkRow = await _loadNetworkRowById(resolvedNetworkId);
+      if (updatedNetworkRow == null) {
+        throw const RepositoryException(
+          'Joined network could not be reloaded.',
+          code: 'supabase_join_network_failed',
+        );
+      }
+      return _withMemberLast(
+        await _networkFromHydratedRow(updatedNetworkRow),
+        memberId,
+      );
     } catch (error) {
       throw mapSupabaseError(
         error,
@@ -373,20 +296,6 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
         fallbackMessage: 'Cloud network could not be joined.',
       );
     }
-
-    try {
-      final updatedNetworkRow = await _loadNetworkRowById(resolvedNetworkId);
-      final hydrated = await _networkFromHydratedRow(
-        updatedNetworkRow ?? networkRow,
-      );
-      return _withMemberLast(hydrated, memberId);
-    } catch (error) {
-      developer.log(
-        'post-join network reload failed: ${backendErrorSummary(error)}',
-        name: 'maskan.joinNetwork',
-      );
-      return networkFromRows(networkRow, [joinedMemberRow]);
-    }
   }
 
   @override
@@ -395,47 +304,70 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
     required String memberName,
     required String memberPassword,
   }) async {
-    final networkRow = await _loadNetworkRowByName(networkName);
-    if (networkRow == null) {
-      throw const RepositoryException(
-        'Network not found.',
-        code: 'network_not_found',
+    try {
+      final client = _requireClient();
+      final discovered = await client.rpc(
+        'maskan_discover_network',
+        params: {'p_network_name': networkName.trim()},
+      ) as List;
+      final networkMatches = discovered.map(
+        (row) => Map<String, dynamic>.from(row as Map),
+      );
+      if (networkMatches.isEmpty) {
+        throw const RepositoryException(
+          'Network not found.',
+          code: 'network_not_found',
+        );
+      }
+      final networkId = networkMatches.first['id'] as String;
+      final verification = await client.rpc(
+        'maskan_verify_member_credentials',
+        params: {
+          'p_network_id': networkId,
+          'p_member_id': null,
+          'p_member_name': memberName.trim(),
+          'p_member_password': memberPassword,
+        },
+      ) as List;
+      if (verification.isEmpty) {
+        throw const RepositoryException(
+          'Member password is incorrect.',
+          code: 'member_invalid_password',
+        );
+      }
+      final verified = Map<String, dynamic>.from(verification.first as Map);
+      final memberId = verified['member_id'] as String;
+      final resolvedNetworkName = verified['network_name'] as String;
+      await SupabaseAuthIdentity.establish(
+        client: client,
+        memberId: memberId,
+        memberPassword: memberPassword,
+        networkName: resolvedNetworkName,
+      );
+      await client.rpc(
+        'maskan_claim_legacy_member',
+        params: {
+          'p_member_id': memberId,
+          'p_member_password': memberPassword,
+        },
+      );
+      final networkRow = await _loadNetworkRowById(networkId);
+      if (networkRow == null) {
+        throw const RepositoryException(
+          'Network not found.',
+          code: 'network_not_found',
+        );
+      }
+      return _networkFromHydratedRow(networkRow);
+    } on RepositoryException {
+      rethrow;
+    } catch (error) {
+      throw mapSupabaseError(
+        error,
+        fallbackCode: 'member_invalid_password',
+        fallbackMessage: 'Member password is incorrect.',
       );
     }
-
-    final members = await _loadMemberRows(networkRow['id'] as String);
-    final normalizedMemberName = normalizeName(memberName);
-    final memberRow = members.where(
-      (member) => member['normalized_name'] == normalizedMemberName,
-    );
-    if (memberRow.isEmpty) {
-      throw const RepositoryException(
-        'Member not found.',
-        code: 'member_not_found',
-      );
-    }
-
-    final member = memberFromRow(memberRow.first);
-    if (!member.hasPassword) {
-      throw const RepositoryException(
-        'This member has no cloud password yet.',
-        code: 'member_password_missing',
-      );
-    }
-
-    final isValid = PasswordHashUtils.matches(
-      password: memberPassword,
-      salt: member.passwordSalt!,
-      passwordHash: member.passwordHash!,
-    );
-    if (!isValid) {
-      throw const RepositoryException(
-        'Member password is incorrect.',
-        code: 'member_invalid_password',
-      );
-    }
-
-    return _networkFromHydratedRow(networkRow);
   }
 
   @override
@@ -489,13 +421,11 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
         return member;
       }
       await _ensureAuthMemberMetadata(memberId);
-      final row = await client
-          .from('network_members')
-          .update(payload)
-          .eq('id', memberId)
-          .select()
-          .single();
-      return memberFromRow(Map<String, dynamic>.from(row));
+      await client.from('network_members').update(payload).eq('id', memberId);
+      final rows = await _loadMemberRows(
+        (await _loadNetworkRowByName(networkName))?['id'] as String,
+      );
+      return memberFromRow(rows.singleWhere((row) => row['id'] == memberId));
     } catch (error) {
       throw mapSupabaseError(
         error,
@@ -965,38 +895,10 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
         );
       }
 
-      final client = _requireClient();
-      if (shouldDeleteNetworkAfterLeave(network, memberId)) {
-        await _deleteNetworkCascade(networkId);
-        return;
-      }
-
-      await client
-          .from('network_notifications')
-          .delete()
-          .eq('network_id', networkId)
-          .eq('recipient_member_id', memberId);
-      await client
-          .from('network_notifications')
-          .delete()
-          .eq('network_id', networkId)
-          .eq('actor_member_id', memberId);
-      await client
-          .from('expense_reset_approvals')
-          .delete()
-          .eq('network_id', networkId)
-          .eq('member_id', memberId);
-      await client
-          .from('expense_reset_requests')
-          .delete()
-          .eq('network_id', networkId)
-          .eq('status', 'pending');
-      await client
-          .from('expense_reset_requests')
-          .delete()
-          .eq('network_id', networkId)
-          .eq('requested_by_member_id', memberId);
-      await client.from('network_members').delete().eq('id', memberId);
+      await _requireClient().rpc(
+        'maskan_leave_network',
+        params: {'p_network_id': networkId},
+      );
     } on RepositoryException {
       rethrow;
     } catch (error) {
@@ -1006,26 +908,6 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
         fallbackMessage: 'Cloud member could not leave the network.',
       );
     }
-  }
-
-  Future<void> _deleteNetworkCascade(String networkId) async {
-    final client = _requireClient();
-    await client
-        .from('network_notifications')
-        .delete()
-        .eq('network_id', networkId);
-    await client
-        .from('expense_reset_approvals')
-        .delete()
-        .eq('network_id', networkId);
-    await client
-        .from('expense_reset_requests')
-        .delete()
-        .eq('network_id', networkId);
-    await client.from('expenses').delete().eq('network_id', networkId);
-    await client.from('expense_cycles').delete().eq('network_id', networkId);
-    await client.from('network_members').delete().eq('network_id', networkId);
-    await client.from('networks').delete().eq('id', networkId);
   }
 
   @override
@@ -1248,7 +1130,7 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
     try {
       final client = _requireClient();
       final row = await client
-          .from('networks')
+          .from('maskan_networks')
           .select()
           .eq('normalized_name', normalizeName(networkName))
           .maybeSingle();
@@ -1266,7 +1148,7 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
     try {
       final client = _requireClient();
       final row = await client
-          .from('networks')
+          .from('maskan_networks')
           .select()
           .eq('id', networkId)
           .maybeSingle();
@@ -1284,7 +1166,7 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
     try {
       final client = _requireClient();
       final rows = await client
-          .from('network_members')
+          .from('maskan_network_members')
           .select()
           .eq('network_id', networkId)
           .order('created_at');
@@ -1543,75 +1425,29 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
     if (!request.isPending || !request.hasUnanimousApproval) return false;
 
     final client = _requireClient();
-    final now = DateTime.now().toUtc().toIso8601String();
-    await client
-        .from('expenses')
-        .update({
-          'cycle_id': request.cycleId,
-          'archived_at': now,
-        })
-        .eq('network_id', networkId)
-        .or('cycle_id.eq.${request.cycleId},cycle_id.is.null')
-        .filter('archived_at', 'is', null);
-    await client.from('expense_cycles').update(
-        {'status': 'closed', 'closed_at': now}).eq('id', request.cycleId);
-    await client.from('expense_cycles').insert({
-      'network_id': networkId,
-      'cycle_number': (await _loadCycleRows(networkId)).length + 1,
-      'status': 'active',
-      'started_at': now,
-    });
-    await client.from('expense_reset_requests').update(
-        {'status': 'completed', 'completed_at': now}).eq('id', resetRequestId);
-    return true;
+    final completed = await client.rpc(
+      'maskan_complete_expense_cycle',
+      params: {
+        'p_network_id': networkId,
+        'p_cycle_id': request.cycleId,
+        'p_reset_request_id': resetRequestId,
+      },
+    );
+    return completed == true;
   }
 
   Future<void> _startNewCycleDirectly({
     required String networkId,
     required String cycleId,
   }) async {
-    final client = _requireClient();
-    final now = DateTime.now().toUtc().toIso8601String();
-    await client
-        .from('expenses')
-        .update({
-          'cycle_id': cycleId,
-          'archived_at': now,
-        })
-        .eq('network_id', networkId)
-        .or('cycle_id.eq.$cycleId,cycle_id.is.null')
-        .filter('archived_at', 'is', null);
-    await client
-        .from('expense_cycles')
-        .update({'status': 'closed', 'closed_at': now}).eq('id', cycleId);
-    await client.from('expense_cycles').insert({
-      'network_id': networkId,
-      'cycle_number': (await _loadCycleRows(networkId)).length + 1,
-      'status': 'active',
-      'started_at': now,
-    });
-  }
-
-  void _verifyNetworkPassword(
-    Map<String, dynamic> networkRow,
-    String password,
-  ) {
-    final passwordHash = networkRow['network_password_hash'] as String?;
-    final passwordSalt = networkRow['network_password_salt'] as String?;
-    final isValid = passwordHash != null &&
-        passwordSalt != null &&
-        PasswordHashUtils.matches(
-          password: password,
-          salt: passwordSalt,
-          passwordHash: passwordHash,
-        );
-
-    if (!isValid) {
-      throw const RepositoryException(
-        'Network name or password is incorrect.',
-        code: 'network_invalid_credentials',
-      );
-    }
+    await _requireClient().rpc(
+      'maskan_complete_expense_cycle',
+      params: {
+        'p_network_id': networkId,
+        'p_cycle_id': cycleId,
+        'p_reset_request_id': null,
+      },
+    );
   }
 
   static String normalizeName(String value) {
