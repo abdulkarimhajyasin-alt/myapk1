@@ -100,4 +100,32 @@ void main() {
     expect(script,
         contains('concurrent migration leaves one valid modern credential'));
   });
+
+  test('Phase 2PV rate limiting is durable, private, and returns HTTP 429', () {
+    final migration = File(
+      'supabase/migrations/20260825000000_add_password_rate_limits.sql',
+    ).readAsStringSync();
+    final edge = File(
+      'supabase/functions/maskan-password/index.ts',
+    ).readAsStringSync();
+
+    expect(migration, contains('create table private.password_rate_limits'));
+    expect(migration, contains('v_failed_attempts < 5'));
+    expect(migration, contains('v_total_attempts <= 10'));
+    expect(migration, contains('interval \'5 minutes\''));
+    expect(migration, contains('force row level security'));
+    expect(
+      migration,
+      contains(
+        'revoke all on table private.password_rate_limits from public, anon, authenticated',
+      ),
+    );
+    expect(edge, contains('maskan_password_rate_limit_check'));
+    expect(edge, contains('maskan_password_rate_limit_failure'));
+    expect(edge, contains('maskan_password_rate_limit_success'));
+    expect(edge, contains('RateLimitExceeded'));
+    expect(edge, contains('429'));
+    expect(edge, contains('"retry-after"'));
+    expect(edge, isNot(contains('console.error(body')));
+  });
 }

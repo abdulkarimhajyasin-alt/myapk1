@@ -232,6 +232,7 @@ void main() {
         '20260807000000_baseline_pre_phase1.sql',
         '20260807000100_harden_auth_membership_rls.sql',
         '20260820000000_migrate_password_security.sql',
+        '20260825000000_add_password_rate_limits.sql',
       ]),
     );
     expect(baseline.join('\n'), isNot(contains('auth_user_id uuid')));

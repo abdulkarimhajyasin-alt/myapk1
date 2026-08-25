@@ -15,6 +15,18 @@ type Credential = JsonObject & {
   legacy_password_salt: string | null;
 };
 
+type RateLimitScope = "member_verify" | "network_join" | "member_reset";
+type RateLimitDecision = JsonObject & {
+  allowed: boolean;
+  retry_after_seconds: number;
+};
+
+class RateLimitExceeded extends Error {
+  constructor(readonly retryAfterSeconds: number) {
+    super("rate_limited");
+  }
+}
+
 const corsHeaders = {
   "access-control-allow-origin": "*",
   "access-control-allow-headers": "authorization, x-client-info, apikey, content-type",
@@ -23,10 +35,10 @@ const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
 const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
 const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 
-function response(body: JsonObject, status = 200): Response {
+function response(body: JsonObject, status = 200, headers: HeadersInit = {}): Response {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { ...corsHeaders, "content-type": "application/json; charset=utf-8" },
+    headers: { ...corsHeaders, "content-type": "application/json; charset=utf-8", ...headers },
   });
 }
 
@@ -66,6 +78,39 @@ async function authenticatedUser(request: Request): Promise<JsonObject> {
   });
   if (!result.ok) throw new Error("authentication_required");
   return await result.json() as JsonObject;
+}
+
+function clientAddress(request: Request): string {
+  const forwarded = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
+  return (request.headers.get("cf-connecting-ip")?.trim() || forwarded || "unknown").slice(0, 128);
+}
+
+async function beginRateLimit(
+  request: Request,
+  scope: RateLimitScope,
+  identifiers: string[],
+): Promise<string> {
+  const normalized = identifiers.map((value) => value.trim().toLocaleLowerCase("en-US"));
+  const keyHash = await sha256Hex(
+    ["maskan-rate-limit-v1", scope, clientAddress(request), ...normalized].join("\u001f"),
+  );
+  const rows = await rpc<RateLimitDecision[]>("maskan_password_rate_limit_check", {
+    p_key_hash: keyHash,
+    p_scope: scope,
+  });
+  const decision = rows[0];
+  if (decision === undefined || decision.allowed !== true) {
+    throw new RateLimitExceeded(Math.max(1, Number(decision?.retry_after_seconds ?? 300)));
+  }
+  return keyHash;
+}
+
+async function recordRateLimitFailure(keyHash: string): Promise<void> {
+  await rpc<void>("maskan_password_rate_limit_failure", { p_key_hash: keyHash });
+}
+
+async function recordRateLimitSuccess(keyHash: string): Promise<void> {
+  await rpc<void>("maskan_password_rate_limit_success", { p_key_hash: keyHash });
 }
 
 function memberEmail(memberId: string): string {
@@ -216,12 +261,20 @@ async function joinNetwork(request: Request, body: JsonObject): Promise<JsonObje
   const requestedId = typeof body.networkId === "string" && body.networkId.trim() !== ""
     ? body.networkId.trim()
     : null;
+  const networkName = requiredString(body, "networkName");
+  const rateLimitKey = await beginRateLimit(request, "network_join", [
+    requiredString(user, "id"),
+    requestedId ?? networkName,
+  ]);
   const credentialRows = await rpc<Credential[]>("maskan_password_lookup_network", {
     p_network_id: requestedId,
-    p_network_name: requiredString(body, "networkName"),
+    p_network_name: networkName,
   });
   const credential = credentialRows[0];
-  if (credential === undefined) return { ok: false, code: "invalid_credentials" };
+  if (credential === undefined) {
+    await recordRateLimitFailure(rateLimitKey);
+    return { ok: false, code: "invalid_credentials" };
+  }
   const digest = await verifyAndUpgrade(
     credential,
     requiredString(body, "networkPassword"),
@@ -229,7 +282,11 @@ async function joinNetwork(request: Request, body: JsonObject): Promise<JsonObje
     "p_network_id",
     String(credential.network_id),
   );
-  if (digest === null) return { ok: false, code: "invalid_credentials" };
+  if (digest === null) {
+    await recordRateLimitFailure(rateLimitKey);
+    return { ok: false, code: "invalid_credentials" };
+  }
+  await recordRateLimitSuccess(rateLimitKey);
   try {
     const rows = await rpc<JsonObject[]>("maskan_password_join_network", {
       p_auth_user_id: requiredString(user, "id"),
@@ -248,22 +305,32 @@ async function joinNetwork(request: Request, body: JsonObject): Promise<JsonObje
   }
 }
 
-async function verifyMember(body: JsonObject): Promise<JsonObject> {
+async function verifyMember(request: Request, body: JsonObject): Promise<JsonObject> {
   const password = requiredString(body, "memberPassword");
+  const networkName = requiredString(body, "networkName");
+  const memberName = requiredString(body, "memberName");
+  const rateLimitKey = await beginRateLimit(request, "member_verify", [networkName, memberName]);
   const rows = await rpc<Credential[]>("maskan_password_lookup_member", {
-    p_network_name: requiredString(body, "networkName"),
-    p_member_name: requiredString(body, "memberName"),
+    p_network_name: networkName,
+    p_member_name: memberName,
     p_member_id: null,
   });
   const credential = rows[0];
-  if (credential === undefined) return { ok: false, code: "invalid_credentials" };
+  if (credential === undefined) {
+    await recordRateLimitFailure(rateLimitKey);
+    return { ok: false, code: "invalid_credentials" };
+  }
   if (await verifyAndUpgrade(
     credential,
     password,
     "maskan_password_upgrade_member",
     "p_member_id",
     String(credential.member_id),
-  ) === null) return { ok: false, code: "invalid_credentials" };
+  ) === null) {
+    await recordRateLimitFailure(rateLimitKey);
+    return { ok: false, code: "invalid_credentials" };
+  }
+  await recordRateLimitSuccess(rateLimitKey);
 
   const effectiveCredentialVersion = Math.max(credential.credential_version, 2);
   let authUserId = credential.auth_user_id === null ? null : String(credential.auth_user_id);
@@ -298,6 +365,11 @@ async function resetMember(request: Request, body: JsonObject): Promise<JsonObje
   const targetMemberId = requiredString(body, "targetMemberId");
   const password = requiredString(body, "newPassword");
   if (password.length < 4) return { ok: false, code: "password_too_short" };
+  const rateLimitKey = await beginRateLimit(request, "member_reset", [
+    callerId,
+    networkId,
+    targetMemberId,
+  ]);
   const contexts = await rpc<JsonObject[]>("maskan_password_reset_context", {
     p_caller_auth_user_id: callerId,
     p_network_id: networkId,
@@ -305,7 +377,12 @@ async function resetMember(request: Request, body: JsonObject): Promise<JsonObje
     p_target_member_id: targetMemberId,
   });
   const context = contexts[0];
-  if (context === undefined) return { ok: false, code: "reset_denied" };
+  if (context === undefined) {
+    await recordRateLimitFailure(rateLimitKey);
+    return { ok: false, code: "reset_denied" };
+  }
+  // Keep successful reset attempts in the window so repeated authorized
+  // resets are still bounded by the burst limit.
   const rows = await rpc<JsonObject[]>("maskan_password_reset_member", {
     p_caller_auth_user_id: callerId,
     p_network_id: networkId,
@@ -336,10 +413,17 @@ Deno.serve(async (request: Request) => {
     const action = requiredString(body, "action");
     if (action === "create_network") return response(await createNetwork(request, body));
     if (action === "join_network") return response(await joinNetwork(request, body));
-    if (action === "verify_member") return response(await verifyMember(body));
+    if (action === "verify_member") return response(await verifyMember(request, body));
     if (action === "reset_member_password") return response(await resetMember(request, body));
     return response({ ok: false, code: "invalid_request" }, 400);
   } catch (error) {
+    if (error instanceof RateLimitExceeded) {
+      return response(
+        { ok: false, code: "rate_limited", retryAfterSeconds: error.retryAfterSeconds },
+        429,
+        { "retry-after": String(error.retryAfterSeconds) },
+      );
+    }
     // Log only a controlled internal classification. Request bodies,
     // plaintext passwords, tokens, digests, and backend response bodies are
     // intentionally never included.

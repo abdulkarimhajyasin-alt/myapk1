@@ -16,6 +16,7 @@ Remove-Item Env:PGPASSWORD
 1. `20260807000000_baseline_pre_phase1.sql`
 2. `20260807000100_harden_auth_membership_rls.sql`
 3. `20260820000000_migrate_password_security.sql`
+4. `20260825000000_add_password_rate_limits.sql`
 
 Do not run `supabase link` or `supabase db push` for this validation.
 
@@ -36,3 +37,4 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File supabase/tests/phase_02_
 
 The script never targets a linked project. It validates modern-only creation,
 legacy upgrade-on-proof, reset/Auth synchronization, concurrency, isolation,
+and durable five-failure rate limiting with HTTP 429 and expiry recovery.

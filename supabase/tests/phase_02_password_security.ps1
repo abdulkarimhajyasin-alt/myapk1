@@ -92,6 +92,45 @@ Add-Result 'modern wrong password rejected' ($modernWrong.ok -eq $false -and $mo
 Add-Result 'modern correct password succeeds' ($modernCorrect.ok -eq $true)
 Add-Result 'modern credential cannot downgrade' ((Db-Scalar "select count(*) from private.member_credentials where member_id='$ownerId' and credential_version >= 2 and legacy_password_hash is null") -eq '1')
 
+$rateLimitFailuresAccepted = $true
+1..5 | ForEach-Object {
+  $badAttempt = Invoke-Edge @{
+    action = 'verify_member'; networkName = "modern-$networkId"
+    memberName = 'Modern Owner'; memberPassword = 'RateLimitWrong42!'
+  }
+  if ($badAttempt.ok -ne $false -or $badAttempt.code -ne 'invalid_credentials') {
+    $rateLimitFailuresAccepted = $false
+  }
+}
+Add-Result 'first five failed password attempts are handled normally' $rateLimitFailuresAccepted
+
+$rateLimitedStatus = 0
+$rateLimitedCode = ''
+try {
+  [void](Invoke-Edge @{
+    action = 'verify_member'; networkName = "modern-$networkId"
+    memberName = 'Modern Owner'; memberPassword = 'RateLimitWrong42!'
+  })
+} catch {
+  $rateLimitedStatus = [int]$_.Exception.Response.StatusCode
+  try { $rateLimitedCode = ($_.ErrorDetails.Message | ConvertFrom-Json).code } catch { }
+}
+Add-Result 'sixth failed password attempt returns HTTP 429' (
+  $rateLimitedStatus -eq 429 -and $rateLimitedCode -eq 'rate_limited'
+)
+Add-Result 'rate-limit state stores no plaintext identifiers' (
+  (Db-Scalar "select count(*) from private.password_rate_limits where key_hash ~ '^[0-9a-f]{64}$' and scope='member_verify' and failed_attempts=5") -eq '1'
+)
+[void](Db-Scalar "update private.password_rate_limits set expires_at=clock_timestamp()-interval '1 second'")
+$afterExpiry = Invoke-Edge @{
+  action = 'verify_member'; networkName = "modern-$networkId"
+  memberName = 'Modern Owner'; memberPassword = $ownerPassword
+}
+Add-Result 'valid password works after rate-limit expiry' ($afterExpiry.ok -eq $true)
+Add-Result 'successful verification clears its rate-limit state' (
+  (Db-Scalar "select count(*) from private.password_rate_limits where scope='member_verify'") -eq '0'
+)
+
 $legacyNetworkId = [guid]::NewGuid().ToString()
 $legacyMemberId = [guid]::NewGuid().ToString()
 $legacyNetworkPassword = 'LegacyNetwork42!'
