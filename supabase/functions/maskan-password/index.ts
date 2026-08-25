@@ -370,12 +370,21 @@ async function resetMember(request: Request, body: JsonObject): Promise<JsonObje
     networkId,
     targetMemberId,
   ]);
-  const contexts = await rpc<JsonObject[]>("maskan_password_reset_context", {
-    p_caller_auth_user_id: callerId,
-    p_network_id: networkId,
-    p_admin_member_id: adminMemberId,
-    p_target_member_id: targetMemberId,
-  });
+  let contexts: JsonObject[];
+  try {
+    contexts = await rpc<JsonObject[]>("maskan_password_reset_context", {
+      p_caller_auth_user_id: callerId,
+      p_network_id: networkId,
+      p_admin_member_id: adminMemberId,
+      p_target_member_id: targetMemberId,
+    });
+  } catch (error) {
+    if (error instanceof Error && error.message.endsWith("_42501")) {
+      await recordRateLimitFailure(rateLimitKey);
+      return { ok: false, code: "reset_denied" };
+    }
+    throw error;
+  }
   const context = contexts[0];
   if (context === undefined) {
     await recordRateLimitFailure(rateLimitKey);

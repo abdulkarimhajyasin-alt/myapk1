@@ -243,6 +243,25 @@ $crossReset = Invoke-Edge @{
 } $ownerAuth.access_token
 $crossAfter = Db-Scalar "select updated_at::text from private.member_credentials where member_id='$joinerId'"
 Add-Result 'cross-network reset and member-ID spoofing denied' ($crossReset.ok -eq $false -and $crossBefore -eq $crossAfter)
+Add-Result 'cross-network reset has a stable denial code' ($crossReset.code -eq 'reset_denied')
+2..5 | ForEach-Object {
+  [void](Invoke-Edge @{
+    action = 'reset_member_password'; networkId = $legacyNetworkId
+    adminMemberId = $ownerId; targetMemberId = $joinerId
+    newPassword = 'SpoofedReset42!'
+  } $ownerAuth.access_token)
+}
+$resetRateLimitedStatus = 0
+try {
+  [void](Invoke-Edge @{
+    action = 'reset_member_password'; networkId = $legacyNetworkId
+    adminMemberId = $ownerId; targetMemberId = $joinerId
+    newPassword = 'SpoofedReset42!'
+  } $ownerAuth.access_token)
+} catch {
+  $resetRateLimitedStatus = [int]$_.Exception.Response.StatusCode
+}
+Add-Result 'sixth denied password reset returns HTTP 429' ($resetRateLimitedStatus -eq 429)
 
 $privateDenied = $false
 try {
