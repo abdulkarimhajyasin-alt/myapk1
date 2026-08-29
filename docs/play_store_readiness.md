@@ -9,6 +9,7 @@
 
 ## Release Build Checklist
 
+- Confirm compileSdk and targetSdk are API 36.
 - Build signed APK:
   `flutter build apk --release --dart-define=SUPABASE_URL=... --dart-define=SUPABASE_ANON_KEY=...`
 - Build Android App Bundle:
@@ -30,6 +31,8 @@
 - Short description in Arabic and English
 - Full description in Arabic and English
 - Privacy policy URL
+- Public account-deletion URL:
+  https://karamixlabs.com/maskan/delete-account
 - Support contact email
 
 ## Data Safety Notes
@@ -48,8 +51,11 @@
 - The Karamix Labs website should host `/maskan/join` before launch or clearly
   document that the page is an install/copy-code landing page, not a full web
   version of Maskan.
-- Leaving a network removes only the current member after total expenses are
-  zero and there are no pending reset blockers.
+- Leaving a network is membership-only and is available only to a non-owner
+  when shared active expenses are settled.
+- Delete Account is a separate re-authenticated path. It deletes the Supabase
+  Auth user and account-specific data; a sole member explicitly confirms full
+  network deletion, while an owner with other members must transfer ownership.
 - Settlement PDFs embed Amiri so Arabic reports do not depend on viewer/system
   fonts and avoid square placeholder glyphs.
 

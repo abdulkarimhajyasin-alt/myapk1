@@ -6,6 +6,7 @@ import '../l10n/app_localizations.dart';
 import '../models/expense_network.dart';
 import '../models/member.dart';
 import '../models/network_notification.dart';
+import '../services/account_deletion_service.dart';
 import '../services/dashboard_analytics_service.dart';
 import '../services/expense_network_repository.dart';
 import '../services/push_notification_service.dart';
@@ -26,6 +27,7 @@ class NetworkDashboardScreen extends StatefulWidget {
     required this.sessionRepository,
     required this.network,
     required this.currentMemberId,
+    this.accountDeletionService,
     super.key,
   });
 
@@ -33,6 +35,7 @@ class NetworkDashboardScreen extends StatefulWidget {
   final SessionRepository sessionRepository;
   final ExpenseNetwork network;
   final String currentMemberId;
+  final AccountDeletionService? accountDeletionService;
 
   @override
   State<NetworkDashboardScreen> createState() => _NetworkDashboardScreenState();
@@ -40,10 +43,13 @@ class NetworkDashboardScreen extends StatefulWidget {
 
 class _NetworkDashboardScreenState extends State<NetworkDashboardScreen> {
   late ExpenseNetwork _network = widget.network;
+  late final AccountDeletionService _accountDeletionService =
+      widget.accountDeletionService ?? SupabaseAccountDeletionService.active();
   final _pushNotifications = PushNotificationService();
   SupabaseRealtimeService? _realtimeService;
   RealtimeConnectionState _realtimeState = RealtimeConnectionState.connecting;
   Timer? _reconnectTimer;
+  bool _isDeletingAccount = false;
 
   Member get _currentMember {
     return _network.findMemberById(widget.currentMemberId) ??
@@ -236,6 +242,27 @@ class _NetworkDashboardScreenState extends State<NetworkDashboardScreen> {
   Future<void> _leaveNetwork() async {
     final l10n = context.l10n;
     final isLastMember = _network.members.length == 1;
+    final isOwner = _network.isOwnerMember(widget.currentMemberId);
+    if (isLastMember) {
+      await _deleteAccount();
+      return;
+    }
+    if (isOwner) {
+      await showDialog<void>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text(l10n.leaveNetwork),
+          content: Text(l10n.ownerTransferRequired),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(l10n.confirm),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -289,7 +316,71 @@ class _NetworkDashboardScreenState extends State<NetworkDashboardScreen> {
       'leave_unsettled_expenses' => l10n.cannotLeaveBeforeSettlement,
       'leave_pending_reset' => l10n.cannotLeavePendingReset,
       'leave_member_has_history' => l10n.cannotLeaveWithHistory,
+      'owner_transfer_required' => l10n.ownerTransferRequired,
       _ => l10n.leaveNetworkFailed,
+    };
+  }
+
+  Future<void> _deleteAccount() async {
+    final l10n = context.l10n;
+    final deletesNetwork = _network.members.length == 1;
+    final isOwner = _network.isOwnerMember(widget.currentMemberId);
+    if (isOwner && !deletesNetwork) {
+      await showDialog<void>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text(l10n.deleteAccount),
+          content: Text(l10n.ownerTransferRequired),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(l10n.confirm),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+
+    final confirmation = await showDialog<_AccountDeletionConfirmation>(
+      context: context,
+      builder: (_) => _DeleteAccountDialog(
+        deletesNetwork: deletesNetwork,
+      ),
+    );
+    if (confirmation == null || !mounted) return;
+
+    setState(() => _isDeletingAccount = true);
+    try {
+      await _accountDeletionService.deleteAccount(
+        memberPassword: confirmation.memberPassword,
+        confirmNetworkDeletion: confirmation.confirmNetworkDeletion,
+      );
+      await widget.sessionRepository.clearActiveSession();
+      if (!mounted) return;
+      final navigator = Navigator.of(context);
+      final messenger = ScaffoldMessenger.of(context);
+      navigator.popUntil((route) => route.isFirst);
+      messenger.showSnackBar(
+        SnackBar(content: Text(l10n.deleteAccountSuccess)),
+      );
+    } on AccountDeletionException catch (error) {
+      if (!mounted) return;
+      _showSnack(_accountDeletionErrorMessage(error));
+    } finally {
+      if (mounted) setState(() => _isDeletingAccount = false);
+    }
+  }
+
+  String _accountDeletionErrorMessage(AccountDeletionException error) {
+    final l10n = context.l10n;
+    return switch (error.code) {
+      'invalid_credentials' => l10n.invalidDeletionPassword,
+      'reauthentication_required' => l10n.accountDeletionReauthRequired,
+      'rate_limited' => l10n.accountDeletionRateLimited,
+      'owner_transfer_required' => l10n.ownerTransferRequired,
+      'network_confirmation_required' => l10n.deleteAccountSoleMemberWarning,
+      _ => l10n.deleteAccountFailed,
     };
   }
 
@@ -477,8 +568,137 @@ class _NetworkDashboardScreenState extends State<NetworkDashboardScreen> {
             icon: const Icon(Icons.receipt_long_rounded),
             label: Text(l10n.expenseSettlement),
           ),
+          const SizedBox(height: 24),
+          OutlinedButton.icon(
+            onPressed: _isDeletingAccount ? null : _deleteAccount,
+            style: OutlinedButton.styleFrom(
+              foregroundColor: theme.colorScheme.error,
+              side: BorderSide(color: theme.colorScheme.error),
+            ),
+            icon: const Icon(Icons.delete_forever_rounded),
+            label: Text(
+              _isDeletingAccount ? l10n.deletingAccount : l10n.deleteAccount,
+            ),
+          ),
         ],
       ),
+    );
+  }
+}
+
+class _AccountDeletionConfirmation {
+  const _AccountDeletionConfirmation({
+    required this.memberPassword,
+    required this.confirmNetworkDeletion,
+  });
+
+  final String memberPassword;
+  final bool confirmNetworkDeletion;
+}
+
+class _DeleteAccountDialog extends StatefulWidget {
+  const _DeleteAccountDialog({
+    required this.deletesNetwork,
+  });
+
+  final bool deletesNetwork;
+
+  @override
+  State<_DeleteAccountDialog> createState() => _DeleteAccountDialogState();
+}
+
+class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
+  final _formKey = GlobalKey<FormState>();
+  final _passwordController = TextEditingController();
+  bool _confirmedNetworkDeletion = false;
+
+  @override
+  void dispose() {
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    if (!_formKey.currentState!.validate()) return;
+    if (widget.deletesNetwork && !_confirmedNetworkDeletion) return;
+    Navigator.of(context).pop(
+      _AccountDeletionConfirmation(
+        memberPassword: _passwordController.text,
+        confirmNetworkDeletion:
+            widget.deletesNetwork && _confirmedNetworkDeletion,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final theme = Theme.of(context);
+    return AlertDialog(
+      title: Text(l10n.deleteAccount),
+      content: Form(
+        key: _formKey,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(l10n.deleteAccountWarning),
+              if (widget.deletesNetwork) ...[
+                const SizedBox(height: 12),
+                Text(
+                  l10n.deleteAccountSoleMemberWarning,
+                  style: TextStyle(
+                    color: theme.colorScheme.error,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _passwordController,
+                decoration: InputDecoration(labelText: l10n.accountPassword),
+                obscureText: true,
+                validator: (value) {
+                  return value == null || value.trim().isEmpty
+                      ? l10n.fieldRequired
+                      : null;
+                },
+              ),
+              if (widget.deletesNetwork) ...[
+                const SizedBox(height: 8),
+                CheckboxListTile(
+                  contentPadding: EdgeInsets.zero,
+                  controlAffinity: ListTileControlAffinity.leading,
+                  value: _confirmedNetworkDeletion,
+                  onChanged: (value) {
+                    setState(() {
+                      _confirmedNetworkDeletion = value ?? false;
+                    });
+                  },
+                  title: Text(l10n.confirmNetworkDeletion),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(l10n.cancel),
+        ),
+        FilledButton(
+          onPressed: widget.deletesNetwork && !_confirmedNetworkDeletion
+              ? null
+              : _submit,
+          style: FilledButton.styleFrom(
+            backgroundColor: theme.colorScheme.error,
+            foregroundColor: theme.colorScheme.onError,
+          ),
+          child: Text(l10n.deleteAccount),
+        ),
+      ],
     );
   }
 }

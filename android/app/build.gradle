@@ -21,7 +21,7 @@ def hasReleaseSigning = releaseStoreFile &&
 
 android {
     namespace = "com.expensenetwork.app"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
@@ -37,7 +37,7 @@ android {
     defaultConfig {
         applicationId = "com.expensenetwork.app"
         minSdkVersion = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
+        targetSdk = 36
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }

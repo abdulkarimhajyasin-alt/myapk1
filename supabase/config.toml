@@ -382,6 +382,12 @@ inspector_port = 8083
 # The Deno major version to use.
 deno_version = 2
 
+# The handler validates every bearer token against Supabase Auth via
+# /auth/v1/user. Disable the legacy gateway verifier for this function only so
+# current project signing keys reach that mandatory server-side validation.
+[functions.maskan-delete-account]
+verify_jwt = false
+
 # [edge_runtime.secrets]
 # secret_key = "env(SECRET_VALUE)"
 

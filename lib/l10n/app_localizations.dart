@@ -175,7 +175,7 @@ class AppLocalizations {
       'joinMyMaskanNetwork': 'Join my Maskan network:',
       'leaveNetwork': 'Leave Network',
       'confirmLeaveNetwork':
-          'Do you want to delete your account and permanently leave this expense network?',
+          'Do you want to remove this membership and permanently leave this expense network?',
       'lastMemberLeaveWarning':
           'You are the last member. Leaving will permanently delete this network.',
       'cannotLeaveBeforeSettlement':
@@ -186,6 +186,24 @@ class AppLocalizations {
           'This account still has expense history in this network. Export or settle records before leaving.',
       'leaveNetworkSuccess': 'You left the network.',
       'leaveNetworkFailed': 'Could not leave the network.',
+      'deleteAccount': 'Delete Account',
+      'deleteAccountWarning':
+          'This permanently deletes your account, credentials, profile photo, notifications, and account-specific data. Shared expense records remain for other members without your account identity. This cannot be undone.',
+      'deleteAccountSoleMemberWarning':
+          'You are the only member. Deleting your account will also permanently delete the entire network and all of its data.',
+      'confirmNetworkDeletion':
+          'I understand that the entire network will be permanently deleted.',
+      'ownerTransferRequired':
+          'Transfer network ownership to another member before deleting your account.',
+      'invalidDeletionPassword': 'The account password is incorrect.',
+      'accountDeletionReauthRequired':
+          'Re-authentication expired. Enter your password and try again.',
+      'accountDeletionRateLimited':
+          'Too many deletion attempts. Wait a few minutes and try again.',
+      'deleteAccountFailed':
+          'Could not delete the account. No successful deletion was confirmed.',
+      'deleteAccountSuccess': 'Your account was permanently deleted.',
+      'deletingAccount': 'Deleting account...',
       'reportSubtitleEn': 'Shared Housing Expense Report',
       'reportSubtitleAr': 'تقرير مصاريف السكن',
       'reportNetworkInfo': 'Network info',
@@ -374,7 +392,7 @@ class AppLocalizations {
       'inviteLinkLabel': 'رابط دعوة Maskan',
       'joinMyMaskanNetwork': 'انضم إلى مصروفي في Maskan:',
       'leaveNetwork': 'مغادرة المصروف',
-      'confirmLeaveNetwork': 'هل تريد حذف حسابك ومغادرة المصروف نهائيًا؟',
+      'confirmLeaveNetwork': 'هل تريد إزالة عضويتك ومغادرة المصروف نهائيًا؟',
       'lastMemberLeaveWarning':
           'أنت آخر عضو في هذا المصروف. عند المغادرة سيتم حذف المصروف بالكامل.',
       'cannotLeaveBeforeSettlement':
@@ -385,6 +403,21 @@ class AppLocalizations {
           'لا يزال لهذا الحساب سجل مصاريف في هذا المصروف. صدّر السجلات أو سوّها قبل المغادرة.',
       'leaveNetworkSuccess': 'تمت مغادرة المصروف.',
       'leaveNetworkFailed': 'تعذر مغادرة المصروف.',
+      'deleteAccount': 'حذف الحساب',
+      'deleteAccountWarning':
+          'سيؤدي هذا إلى حذف حسابك وبيانات الاعتماد والصورة الشخصية والإشعارات والبيانات الخاصة بالحساب نهائيًا. تبقى سجلات المصاريف المشتركة للأعضاء الآخرين من دون ربطها بهوية حسابك. لا يمكن التراجع عن العملية.',
+      'deleteAccountSoleMemberWarning':
+          'أنت العضو الوحيد. سيؤدي حذف حسابك أيضًا إلى حذف المصروف بالكامل وجميع بياناته نهائيًا.',
+      'confirmNetworkDeletion': 'أفهم أن المصروف بالكامل سيُحذف نهائيًا.',
+      'ownerTransferRequired': 'انقل ملكية المصروف إلى عضو آخر قبل حذف حسابك.',
+      'invalidDeletionPassword': 'كلمة مرور الحساب غير صحيحة.',
+      'accountDeletionReauthRequired':
+          'انتهت صلاحية إعادة التحقق. أدخل كلمة المرور وحاول مجددًا.',
+      'accountDeletionRateLimited':
+          'محاولات حذف كثيرة. انتظر بضع دقائق ثم حاول مجددًا.',
+      'deleteAccountFailed': 'تعذر حذف الحساب، ولم يتم تأكيد اكتمال الحذف.',
+      'deleteAccountSuccess': 'تم حذف حسابك نهائيًا.',
+      'deletingAccount': 'جارٍ حذف الحساب...',
       'reportSubtitleEn': 'Shared Housing Expense Report',
       'reportSubtitleAr': 'تقرير مصاريف السكن',
       'reportNetworkInfo': 'معلومات المصروف',
@@ -577,6 +610,19 @@ class AppLocalizations {
   String get cannotLeaveWithHistory => _text('cannotLeaveWithHistory');
   String get leaveNetworkSuccess => _text('leaveNetworkSuccess');
   String get leaveNetworkFailed => _text('leaveNetworkFailed');
+  String get deleteAccount => _text('deleteAccount');
+  String get deleteAccountWarning => _text('deleteAccountWarning');
+  String get deleteAccountSoleMemberWarning =>
+      _text('deleteAccountSoleMemberWarning');
+  String get confirmNetworkDeletion => _text('confirmNetworkDeletion');
+  String get ownerTransferRequired => _text('ownerTransferRequired');
+  String get invalidDeletionPassword => _text('invalidDeletionPassword');
+  String get accountDeletionReauthRequired =>
+      _text('accountDeletionReauthRequired');
+  String get accountDeletionRateLimited => _text('accountDeletionRateLimited');
+  String get deleteAccountFailed => _text('deleteAccountFailed');
+  String get deleteAccountSuccess => _text('deleteAccountSuccess');
+  String get deletingAccount => _text('deletingAccount');
   String get reportSubtitleEn => _text('reportSubtitleEn');
   String get reportSubtitleAr => _text('reportSubtitleAr');
   String get reportNetworkInfo => _text('reportNetworkInfo');

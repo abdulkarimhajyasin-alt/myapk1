@@ -5,6 +5,7 @@ import 'package:expense_network/models/expense_reset_request.dart';
 import 'package:expense_network/models/member.dart';
 import 'package:expense_network/models/network_notification.dart';
 import 'package:expense_network/screens/network_dashboard_screen.dart';
+import 'package:expense_network/services/account_deletion_service.dart';
 import 'package:expense_network/services/expense_network_repository.dart';
 import 'package:expense_network/services/session_repository.dart';
 import 'package:expense_network/services/supabase_expense_network_repository.dart';
@@ -177,7 +178,7 @@ void main() {
     expect(sessionRepository.cleared, isTrue);
   });
 
-  testWidgets('last member leave deletes the network in the repository',
+  testWidgets('last member leave routes through verified account deletion',
       (tester) async {
     final network = ExpenseNetwork(
       id: 'network_1',
@@ -190,35 +191,33 @@ void main() {
     );
     final repository = _LeaveRepository(network);
     final sessionRepository = _LeaveSessionRepository();
+    final deletionService = _AccountDeletionServiceFake();
 
     await _pumpDashboard(
       tester,
       network: network,
       repository: repository,
       sessionRepository: sessionRepository,
+      accountDeletionService: deletionService,
     );
 
     await tester.tap(find.byTooltip('Leave Network'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Confirm'));
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Account password'),
+      'member-password',
+    );
+    await tester.tap(find.byType(CheckboxListTile));
+    await tester.pump();
+    await tester.tap(find.text('Delete Account').last);
     await tester.pumpAndSettle();
 
-    expect(repository.deletedNetwork, isTrue);
-    expect(repository.remainingMembers, isEmpty);
-    expect(await repository.findNetwork('Flat'), isNull);
-    final recreated = await repository.createNetwork(
-      displayName: 'Mona',
-      networkName: 'Flat',
-      password: 'network',
-      memberPassword: 'member',
-      currencyCode: 'USD',
-    );
-    expect(recreated.name, 'Flat');
-    expect(recreated.members.single.name, 'Mona');
+    expect(deletionService.memberPassword, 'member-password');
+    expect(deletionService.confirmNetworkDeletion, isTrue);
     expect(sessionRepository.cleared, isTrue);
   });
 
-  testWidgets('last member leave dialog warns that network will be deleted',
+  testWidgets('last member deletion requires explicit network confirmation',
       (tester) async {
     final network = ExpenseNetwork(
       id: 'network_1',
@@ -242,10 +241,89 @@ void main() {
 
     expect(
       find.textContaining(
-        'You are the last member. Leaving will permanently delete this network.',
+        'Deleting your account will also permanently delete the entire network',
       ),
       findsOneWidget,
     );
+    final deleteButton = tester.widget<FilledButton>(
+      find.widgetWithText(FilledButton, 'Delete Account'),
+    );
+    expect(deleteButton.onPressed, isNull);
+  });
+
+  testWidgets('non-owner can delete account with password confirmation',
+      (tester) async {
+    final network = ExpenseNetwork(
+      id: 'network_1',
+      name: 'Flat',
+      password: 'network',
+      createdByMemberId: 'member_2',
+      createdAt: DateTime(2026),
+      members: [
+        Member(id: 'member_1', name: 'Ali'),
+        Member(id: 'member_2', name: 'Mona'),
+      ],
+    );
+    final deletionService = _AccountDeletionServiceFake();
+    final sessionRepository = _LeaveSessionRepository();
+
+    await _pumpDashboard(
+      tester,
+      network: network,
+      repository: _LeaveRepository(network),
+      sessionRepository: sessionRepository,
+      accountDeletionService: deletionService,
+    );
+
+    await tester.ensureVisible(find.text('Delete Account'));
+    await tester.tap(find.text('Delete Account'));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Account password'),
+      'member-password',
+    );
+    await tester.tap(find.text('Delete Account').last);
+    await tester.pumpAndSettle();
+
+    expect(deletionService.memberPassword, 'member-password');
+    expect(deletionService.confirmNetworkDeletion, isFalse);
+    expect(sessionRepository.cleared, isTrue);
+  });
+
+  testWidgets('owner with other members is blocked before deletion call',
+      (tester) async {
+    final network = ExpenseNetwork(
+      id: 'network_1',
+      name: 'Flat',
+      password: 'network',
+      createdByMemberId: 'member_1',
+      createdAt: DateTime(2026),
+      members: [
+        Member(id: 'member_1', name: 'Ali'),
+        Member(id: 'member_2', name: 'Mona'),
+      ],
+    );
+    final deletionService = _AccountDeletionServiceFake();
+
+    await _pumpDashboard(
+      tester,
+      network: network,
+      repository: _LeaveRepository(network),
+      sessionRepository: _LeaveSessionRepository(),
+      accountDeletionService: deletionService,
+    );
+
+    await tester.ensureVisible(find.text('Delete Account'));
+    await tester.tap(find.text('Delete Account'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+        'Transfer network ownership to another member before deleting your account.',
+      ),
+      findsOneWidget,
+    );
+    expect(deletionService.memberPassword, isNull);
   });
 }
 
@@ -254,6 +332,7 @@ Future<void> _pumpDashboard(
   required ExpenseNetwork network,
   required _LeaveRepository repository,
   required _LeaveSessionRepository sessionRepository,
+  AccountDeletionService? accountDeletionService,
 }) {
   return tester.pumpWidget(
     MaterialApp(
@@ -264,9 +343,24 @@ Future<void> _pumpDashboard(
         sessionRepository: sessionRepository,
         network: network,
         currentMemberId: 'member_1',
+        accountDeletionService: accountDeletionService,
       ),
     ),
   );
+}
+
+class _AccountDeletionServiceFake implements AccountDeletionService {
+  String? memberPassword;
+  bool? confirmNetworkDeletion;
+
+  @override
+  Future<void> deleteAccount({
+    required String memberPassword,
+    required bool confirmNetworkDeletion,
+  }) async {
+    this.memberPassword = memberPassword;
+    this.confirmNetworkDeletion = confirmNetworkDeletion;
+  }
 }
 
 class _LeaveSessionRepository implements SessionRepository {

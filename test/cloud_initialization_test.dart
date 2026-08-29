@@ -57,7 +57,7 @@ void main() {
     expect(arabic.errorCreateNetworkFailed, isNotEmpty);
     expect(
       arabic.confirmLeaveNetwork,
-      'هل تريد حذف حسابك ومغادرة المصروف نهائيًا؟',
+      'هل تريد إزالة عضويتك ومغادرة المصروف نهائيًا؟',
     );
     expect(
       arabic.lastMemberLeaveWarning,

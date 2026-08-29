@@ -49,7 +49,7 @@ void main() {
     expect(arabic.leaveNetwork, 'مغادرة المصروف');
     expect(
       arabic.confirmLeaveNetwork,
-      'هل تريد حذف حسابك ومغادرة المصروف نهائيًا؟',
+      'هل تريد إزالة عضويتك ومغادرة المصروف نهائيًا؟',
     );
     expect(arabic.joinMyMaskanNetwork, 'انضم إلى مصروفي في Maskan:');
     expect(arabic.footerText, contains('عبد الكريم حاج ياسين'));
