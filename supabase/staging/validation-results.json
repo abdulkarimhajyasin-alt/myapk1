@@ -1,0 +1,304 @@
+{
+  "clean-timings": [
+    {
+      "migration": "20260807000000_baseline_pre_phase1.sql",
+      "seconds": 0.853
+    },
+    {
+      "migration": "20260807000100_harden_auth_membership_rls.sql",
+      "seconds": 0.446
+    },
+    {
+      "migration": "20260820000000_migrate_password_security.sql",
+      "seconds": 0.794
+    },
+    {
+      "migration": "20260825000000_add_password_rate_limits.sql",
+      "seconds": 0.415
+    },
+    {
+      "migration": "20260826000000_add_account_deletion.sql",
+      "seconds": 0.427
+    },
+    {
+      "migration": "20261017194224_harden_expense_cycles_and_reset_workflows.sql",
+      "seconds": 0.45
+    }
+  ],
+  "baseline-timings": [
+    {
+      "migration": "20260807000000_baseline_pre_phase1.sql",
+      "seconds": 0.807
+    },
+    {
+      "migration": "20260807000100_harden_auth_membership_rls.sql",
+      "seconds": 0.458
+    },
+    {
+      "migration": "20260820000000_migrate_password_security.sql",
+      "seconds": 0.483
+    },
+    {
+      "migration": "20260825000000_add_password_rate_limits.sql",
+      "seconds": 0.407
+    },
+    {
+      "migration": "20260826000000_add_account_deletion.sql",
+      "seconds": 0.405
+    }
+  ],
+  "migration-rehearsal": [
+    {
+      "case": "duplicate open cycles safely rejected",
+      "seconds": 0.717
+    },
+    {
+      "case": "unarchived expense on closed cycle rejected",
+      "seconds": 1.047
+    },
+    {
+      "case": "unsafe voter snapshot rejected",
+      "seconds": 0.61
+    },
+    {
+      "case": "terminated migration connection rolls back DDL and preserves money",
+      "passed": true
+    },
+    {
+      "case": "migration lock timeout safely rolls back",
+      "seconds": 5.654
+    },
+    {
+      "case": "valid upgrade including pending request and indexes",
+      "seconds": 0.626,
+      "historical_expenses": 4000,
+      "financial_snapshot": "4000:8402000",
+      "invalid_indexes": 0
+    }
+  ],
+  "load-results": {
+    "max_workers": 4,
+    "logical_operations": 16,
+    "submissions": 32,
+    "http_attempts": 48,
+    "temporary_conflicts": 16,
+    "initial_retry_exhaustions": 4,
+    "distinct_expenses": 16,
+    "duplicate_expenses": 0,
+    "concurrent_closures": 8,
+    "successful_closure_effects": 1,
+    "interrupted_insert_rolled_back": true,
+    "latency_ms": {
+      "p50": 19.97,
+      "p95": 83.5,
+      "max": 98.33
+    },
+    "elapsed_seconds": 3.799,
+    "results": {
+      "bounded-retry-exhausted": 4,
+      "inserted": 16,
+      "duplicate-retry": 12
+    }
+  },
+  "lock-results": {
+    "observed_waiting_advisory_locks": 1,
+    "waiter_latency_ms": 4022.93,
+    "waiter_idempotent_result": false,
+    "deadlock": false
+  },
+  "backup-results": {
+    "backup_bytes": 620702,
+    "backup_sha256": "5b64d0fdba8ef1f45ec4ceee8c07cd9f0be15380cc871da0e71245b56f80f89d",
+    "dump_seconds": 0.593,
+    "restore_seconds": 2.86,
+    "tables_compared": 46,
+    "schema_indexes_rls_function_privileges_equal": true,
+    "all_row_digests_equal": true,
+    "financial_totals": {
+      "expenses": 4022,
+      "amount_cents": 8451700,
+      "archived": 20
+    },
+    "cycles": 20,
+    "recovery_port": 57322
+  },
+  "isolation-results": {
+    "database_password_enforced": true,
+    "project": "maskan-staging-validation",
+    "network": "maskan-staging-validation-network",
+    "api": "http://127.0.0.1:56321",
+    "loopback_ports": [
+      "56321",
+      "56322",
+      "56324"
+    ],
+    "volumes": [
+      "supabase_db_maskan-staging-validation",
+      "supabase_storage_maskan-staging-validation"
+    ],
+    "old_test_volumes_disjoint": true,
+    "valid_key_health": 200,
+    "wrong_key_rejected": 401,
+    "edge_targets_staging_gateway": true,
+    "jwt_distinct_from_previous_stack": true,
+    "external_test_requests_and_redirects_rejected": true
+  },
+  "lifecycle-results": {
+    "stop_start_preserves_financial_snapshot": true,
+    "snapshot": "4028:8464003",
+    "api_healthy_after_restart": true
+  },
+  "baseline_commit": "df1fbfb4f9c3ad5bccdbeb0c6555bb57061588c4",
+  "data_source": "Synthetic fixtures only; local Docker staging and separate recovery database",
+  "safety_unit_tests": {
+    "passed": 9,
+    "failed": 0
+  },
+  "suite_history": [
+    {
+      "suite": "shared-seed",
+      "exit_code": 1,
+      "seconds": 9.43
+    },
+    {
+      "suite": "shared-seed",
+      "exit_code": 0,
+      "seconds": 13.26
+    },
+    {
+      "suite": "shared-join",
+      "exit_code": 0,
+      "seconds": 31.73
+    },
+    {
+      "suite": "shared-finish",
+      "exit_code": 0,
+      "seconds": 10.9
+    },
+    {
+      "suite": "shared-verify",
+      "exit_code": 0,
+      "seconds": 37.95
+    },
+    {
+      "suite": "realtime-0",
+      "exit_code": 1,
+      "seconds": 27.33
+    },
+    {
+      "suite": "realtime-0",
+      "exit_code": 0,
+      "seconds": 49.31
+    },
+    {
+      "suite": "web-0",
+      "exit_code": 0,
+      "seconds": 8.29
+    },
+    {
+      "suite": "web-1",
+      "exit_code": 0,
+      "seconds": 38.34
+    },
+    {
+      "suite": "web-2",
+      "exit_code": 0,
+      "seconds": 2.37
+    },
+    {
+      "suite": "web-0",
+      "exit_code": 0,
+      "seconds": 10.31
+    },
+    {
+      "suite": "web-1",
+      "exit_code": 0,
+      "seconds": 15.72
+    },
+    {
+      "suite": "web-2",
+      "exit_code": 0,
+      "seconds": 2.48
+    },
+    {
+      "suite": "web-3",
+      "exit_code": 0,
+      "seconds": 18.59
+    },
+    {
+      "suite": "web-4",
+      "exit_code": 0,
+      "seconds": 59.31
+    },
+    {
+      "suite": "flutter-0",
+      "exit_code": 1,
+      "seconds": 25.92
+    },
+    {
+      "suite": "web-regression-0",
+      "exit_code": 0,
+      "seconds": 17.15
+    },
+    {
+      "suite": "web-regression-1",
+      "exit_code": 0,
+      "seconds": 127.96
+    },
+    {
+      "suite": "web-regression-2",
+      "exit_code": 0,
+      "seconds": 4.96
+    },
+    {
+      "suite": "web-regression-3",
+      "exit_code": 0,
+      "seconds": 24.72
+    },
+    {
+      "suite": "edge-0",
+      "exit_code": 0,
+      "seconds": 7.52
+    },
+    {
+      "suite": "edge-1",
+      "exit_code": 0,
+      "seconds": 49.43
+    },
+    {
+      "suite": "browser-0",
+      "exit_code": 0,
+      "seconds": 146.72
+    },
+    {
+      "suite": "web-regression-0",
+      "exit_code": 0,
+      "seconds": 17.15
+    },
+    {
+      "suite": "web-regression-1",
+      "exit_code": 0,
+      "seconds": 127.96
+    },
+    {
+      "suite": "web-regression-2",
+      "exit_code": 0,
+      "seconds": 4.96
+    },
+    {
+      "suite": "web-regression-3",
+      "exit_code": 0,
+      "seconds": 24.72
+    }
+  ],
+  "counts": {
+    "flutter_passed": 178,
+    "flutter_opt_in_skipped": 2,
+    "web_unit_passed": 18,
+    "web_integration_passed": 1,
+    "edge_unit_passed": 5,
+    "browser_passed": 10,
+    "sql_checks_passed": 57
+  },
+  "production_recommendation": "NO-GO: physical devices, hosted drift and production backup/Storage recovery gates remain pending"
+}

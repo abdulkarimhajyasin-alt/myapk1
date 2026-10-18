@@ -1,3 +1,4 @@
+import { localOnlyFetch } from "../support/local-only-fetch";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createClient } from "@supabase/supabase-js";
@@ -21,11 +22,12 @@ test(
       "Refusing to mutate a remote or production database",
     );
     assert.equal(endpoint.protocol, "http:");
-    assert.ok(["54321", "55321"].includes(endpoint.port));
+    assert.ok(["54321", "55321", "56321"].includes(endpoint.port));
     const make = () =>
       new MaskanRepository(
         createClient(url!, key!, {
           auth: { persistSession: false, autoRefreshToken: false },
+          global: { fetch: localOnlyFetch(url!) },
         }),
       );
     // Client 0 uses the same AuthV2 and REST contract as Android; this is not a physical device test.

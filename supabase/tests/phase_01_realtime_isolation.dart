@@ -1,3 +1,4 @@
+import 'local_only_test_client.dart';
 import 'dart:async';
 import 'dart:io';
 import 'dart:math';
@@ -33,6 +34,7 @@ Future<Identity> createIdentity(String label, String suffix) async {
   final client = SupabaseClient(
     apiUrl!,
     anonKey!,
+    httpClient: LocalOnlyTestClient(apiUrl!),
     authOptions: const AuthClientOptions(authFlowType: AuthFlowType.implicit),
   );
   final auth = await client.auth.signUp(
@@ -108,7 +110,7 @@ Future<void> main() async {
   final endpoint = Uri.parse(apiUrl!);
   if (endpoint.scheme != 'http' ||
       !['127.0.0.1', 'localhost'].contains(endpoint.host) ||
-      ![54321, 55321].contains(endpoint.port)) {
+      ![54321, 55321, 56321].contains(endpoint.port)) {
     throw StateError('This synthetic fixture test requires local Supabase.');
   }
   final suffix = uuid().replaceAll('-', '');

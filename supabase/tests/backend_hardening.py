@@ -19,8 +19,22 @@ import uuid
 
 CONTAINER = "supabase_db_maskan-hardening-local"
 checks = 0
+validate_target = None
+
+def configure_staging():
+    global CONTAINER, validate_target
+    import sys
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "staging"))
+    import staging
+    staging.db_guard()
+    CONTAINER = staging.DB
+    validate_target = staging.db_guard
+    urllib.request.install_opener(urllib.request.build_opener(urllib.request.ProxyHandler({}), staging.NoRedirect()))
+    return staging.settings()
+
 
 def sql(statement, user=None, expect_error=False):
+    if validate_target: validate_target()
     prefix = ""
     if user:
         prefix = f"set local role authenticated; set local request.jwt.claim.sub='{user}'; set local request.jwt.claim.role='authenticated';"
@@ -62,6 +76,7 @@ def complete(n, c):
     return f"select public.maskan_complete_expense_cycle('{n}','{c}',null);"
 
 def held(statement, user, network):
+    if validate_target: validate_target()
     # Read an explicit lock-acquired marker before issuing the competing request.
     command = f"begin; set local statement_timeout='10s'; set local role authenticated; set local request.jwt.claim.sub='{user}'; select pg_advisory_xact_lock(hashtextextended('maskan-finance:{network}',0)); select 'LOCKED'; select pg_sleep(1.5); {statement} commit;"
     process = subprocess.Popen(["docker","exec","-i",CONTAINER,"psql","-XqAt","-U","postgres","-v","ON_ERROR_STOP=1"],stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True)
@@ -86,14 +101,19 @@ def main():
     endpoint=json.loads(subprocess.check_output(['docker','context','inspect'],text=True))[0]['Endpoints']['docker']['Host']
     if not endpoint.startswith(('npipe://','unix://')):
         raise SystemExit('Refusing a nonlocal Docker context')
-    config=Path(args.workdir)/'supabase'/'config.toml'
-    if 'project_id = "maskan-hardening-local"' not in config.read_text():
-        raise SystemExit('Requires the dedicated disposable local project')
-    status=subprocess.run([shutil.which('npx.cmd') or shutil.which('npx'),'--yes','supabase','status','--workdir',str(Path(args.workdir).resolve()),'--output','json'],capture_output=True,text=True,check=True)
-    settings=json.loads(status.stdout)
+    workdir = Path(args.workdir).resolve()
+    staging_dir = Path(__file__).resolve().parents[2] / '.codex_tmp' / 'maskan-staging-validation'
+    if workdir == staging_dir.resolve():
+        settings = configure_staging()
+    else:
+        config=workdir/'supabase'/'config.toml'
+        if 'project_id = "maskan-hardening-local"' not in config.read_text():
+            raise SystemExit('Requires a dedicated disposable local project')
+        status=subprocess.run([shutil.which('npx.cmd') or shutil.which('npx'),'--yes','supabase@2.115.0','status','--workdir',str(workdir),'--output','json'],capture_output=True,text=True,check=True)
+        settings=json.loads(status.stdout)
+        if settings['API_URL'] != 'http://127.0.0.1:55321':
+            raise SystemExit('Refusing nonlocal or unexpected API URL')
     api=settings['API_URL']
-    if api != 'http://127.0.0.1:55321':
-        raise SystemExit('Refusing nonlocal or unexpected API URL')
     jwt_secret=settings['JWT_SECRET']
     def token(user):
         enc=lambda x:base64.urlsafe_b64encode(json.dumps(x).encode()).decode().rstrip('=')

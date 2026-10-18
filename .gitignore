@@ -29,3 +29,4 @@ android/key.properties
 # Disposable local security-test stack and credential-bearing CLI logs.
 .codex_tmp/
 supabase/tests/__pycache__/
+supabase/staging/__pycache__/
