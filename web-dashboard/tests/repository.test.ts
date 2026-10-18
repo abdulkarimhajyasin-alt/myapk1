@@ -121,3 +121,97 @@ test("owner-only reset validation prevents invoking the privileged Edge action",
   );
   assert.equal(invoked, false);
 });
+
+test("atomic approval never falls back after an authorization error", async () => {
+  let writes = 0;
+  const fake = {
+    rpc: async () => ({
+      data: null,
+      error: { code: "42501", message: "denied" },
+    }),
+    from: () => {
+      writes++;
+      throw new Error("unexpected fallback");
+    },
+  };
+  await assert.rejects(
+    new MaskanRepository(fake as unknown as SupabaseClient).approveCycle(
+      { network: { id: "network" } } as Snapshot,
+      { id: "request" } as Snapshot["requests"][number],
+    ),
+  );
+  assert.equal(writes, 0);
+});
+
+test("atomic approval success needs no client notification or follow-up write", async () => {
+  const names: string[] = [];
+  const fake = {
+    rpc: async (name: string) => {
+      names.push(name);
+      return { data: true, error: null };
+    },
+    from: () => {
+      throw new Error("unexpected follow-up write");
+    },
+  };
+  await new MaskanRepository(fake as unknown as SupabaseClient).approveCycle(
+    { network: { id: "network" } } as Snapshot,
+    { id: "request" } as Snapshot["requests"][number],
+  );
+  assert.deepEqual(names, ["maskan_approve_expense_reset"]);
+});
+
+for (const [message, expectedAttempts] of [
+  ["network_busy_retry", 3],
+  ["stale_expense_cycle", 1],
+] as const) {
+  test(`expense conflict ${message} preserves original operation and cycle`, async () => {
+    const payloads: unknown[] = [];
+    const cycle = {
+      id: "cycle-original",
+      status: "active",
+    } as Snapshot["cycles"][number];
+    const chain = {
+      insert: (payload: unknown) => {
+        payloads.push(structuredClone(payload));
+        return chain;
+      },
+      select: () => chain,
+      single: async () => ({ data: null, error: { code: "40001", message } }),
+    };
+    const repository = new MaskanRepository({
+      from: () => chain,
+    } as unknown as SupabaseClient);
+    repository.activeCycle = async () => cycle;
+    const member = { id: "member", name: "Fixture" } as Snapshot["me"];
+    const snapshot = {
+      network: { id: "network" },
+      me: member,
+      members: [member],
+      cycles: [cycle],
+    } as Snapshot;
+    await assert.rejects(
+      repository.addExpense(
+        snapshot,
+        member.id,
+        100,
+        "test",
+        "operation-original",
+      ),
+    );
+    assert.equal(payloads.length, expectedAttempts);
+    assert.ok(
+      payloads.every(
+        (payload) => JSON.stringify(payload) === JSON.stringify(payloads[0]),
+      ),
+    );
+    assert.equal(
+      (payloads[0] as { client_generated_id: string }).client_generated_id,
+      "operation-original",
+    );
+    assert.equal(
+      (payloads[0] as { cycle_id: string }).cycle_id,
+      "cycle-original",
+    );
+  });
+}

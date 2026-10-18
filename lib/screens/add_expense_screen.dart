@@ -31,6 +31,9 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
   final _noteController = TextEditingController();
   String? _error;
   bool _isSaving = false;
+  String? _operationId;
+  int? _attemptedCents;
+  String? _attemptedNote;
 
   @override
   void dispose() {
@@ -40,10 +43,16 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
   }
 
   Future<void> _saveExpense() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (_isSaving || !_formKey.currentState!.validate()) return;
     final cents = MoneyUtils.parseToCents(_amountController.text);
     if (cents == null) return;
-    final clientGeneratedId = IdUtils.createId('client_expense');
+    final note = _noteController.text.trim();
+    if (_attemptedCents != cents || _attemptedNote != note) {
+      _operationId = IdUtils.createId('client_expense');
+      _attemptedCents = cents;
+      _attemptedNote = note;
+    }
+    final clientGeneratedId = _operationId!;
 
     setState(() {
       _isSaving = true;
@@ -56,7 +65,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
         memberName: _currentMemberName,
         addedByMemberId: widget.currentMemberId,
         amountCents: cents,
-        note: _noteController.text,
+        note: note,
         clientGeneratedId: clientGeneratedId,
       );
       if (mounted) Navigator.of(context).pop(network);
@@ -93,7 +102,8 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
             TextFormField(
               controller: _amountController,
               decoration: InputDecoration(labelText: l10n.amount),
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
               textInputAction: TextInputAction.next,
               validator: (value) {
                 return MoneyUtils.parseToCents(value ?? '') == null

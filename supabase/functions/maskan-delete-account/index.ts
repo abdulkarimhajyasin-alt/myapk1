@@ -157,13 +157,6 @@ async function serviceRpc<T>(
   );
 }
 
-function userMetadata(user: JsonObject): JsonObject {
-  const metadata = user.user_metadata;
-  return metadata !== null && typeof metadata === "object"
-    ? metadata as JsonObject
-    : {};
-}
-
 async function accountContext(
   request: Request,
 ): Promise<DeletionContext | null> {
@@ -363,6 +356,16 @@ async function deleteDatabaseData(
   }
 }
 
+async function revokeSessions(request: Request): Promise<void> {
+  const result = await fetch(`${supabaseUrl}/auth/v1/logout?scope=global`, {
+    method: "POST",
+    headers: { apikey: anonKey, authorization: authorizationHeader(request) },
+  });
+  if (!result.ok && result.status !== 401 && result.status !== 403) {
+    throw new ControlledFailure("session_revoke_failed", 500);
+  }
+}
+
 async function deleteAuthUser(authUserId: string): Promise<void> {
   const result = await fetch(
     `${supabaseUrl}/auth/v1/admin/users/${encodeURIComponent(authUserId)}`,
@@ -388,12 +391,12 @@ async function deleteAccount(
 
   await enforceRateLimit(request);
   const context = await accountContext(request);
-  const metadataMemberId = requiredString(
-    userMetadata(user),
-    "maskan_member_id",
-  );
-  const memberId = context?.member_id ?? metadataMemberId;
-  if (context !== null && context.member_id !== metadataMemberId) {
+  // Durable membership is authoritative. For a retry after database deletion,
+  // derive the identity from the Auth-verified technical email, never user_metadata.
+  const emailMemberId = /^maskan-([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})@auth\.maskan\.app$/iu
+    .exec(requiredString(user, "email"))?.[1];
+  const memberId = context?.member_id ?? emailMemberId;
+  if (memberId === undefined) {
     throw new ControlledFailure("account_identity_mismatch", 409);
   }
   if (context?.is_owner === true && Number(context.member_count) > 1) {
@@ -431,6 +434,7 @@ async function deleteAccount(
 
   // If a previous attempt removed database data but failed at Auth deletion,
   // context is null and this retry safely completes the remaining Auth step.
+  await revokeSessions(request);
   await deleteAuthUser(authUserId);
   return { ok: true };
 }
@@ -454,7 +458,7 @@ Deno.serve(async (request: Request) => {
     return response(await deleteAccount(request, body));
   } catch (error) {
     if (error instanceof ControlledFailure) {
-      const headers = error.retryAfterSeconds === undefined
+      const headers: HeadersInit = error.retryAfterSeconds === undefined
         ? {}
         : { "retry-after": String(error.retryAfterSeconds) };
       return response(

@@ -21,6 +21,12 @@ class AppLocalizations {
 
   static const _localizedValues = {
     'en': {
+      'expenseOperationConflict':
+          'This attempt ID belongs to a different expense. Check history before adding a new expense.',
+      'expenseNetworkBusy':
+          'Another group operation is running. Refresh and retry the same expense.',
+      'expenseCycleChanged':
+          'The expense cycle changed. Refresh and review history before trying again.',
       'appTitle': 'Maskan',
       'homeSubtitle':
           'Create or join a private group and settle shared costs clearly.',
@@ -253,6 +259,12 @@ class AppLocalizations {
       'pushCycleStartedTitle': 'New cycle started',
     },
     'ar': {
+      'expenseOperationConflict':
+          'استُخدم رقم العملية نفسه لبيانات مختلفة. حدّث الصفحة وتحقق من المصروف قبل المحاولة مجددًا.',
+      'expenseNetworkBusy':
+          'تجري عملية أخرى على المجموعة. حدّث البيانات ثم أعد المحاولة مع الاحتفاظ ببيانات المصروف.',
+      'expenseCycleChanged':
+          'تغيرت دورة المصاريف. حدّث البيانات وتحقق منها قبل إعادة المحاولة.',
       'appTitle': 'Maskan',
       'homeSubtitle':
           'أنشئ مجموعة خاصة أو انضم إليها لتقسيم المصاريف وتسويتها بوضوح.',
@@ -551,6 +563,9 @@ class AppLocalizations {
   String get cloudConnectionFailedMessage =>
       _text('cloudConnectionFailedMessage');
   String get retry => _text('retry');
+  String get expenseOperationConflict => _text('expenseOperationConflict');
+  String get expenseNetworkBusy => _text('expenseNetworkBusy');
+  String get expenseCycleChanged => _text('expenseCycleChanged');
   String get errorNoInternet => _text('errorNoInternet');
   String get errorDuplicateNetwork => _text('errorDuplicateNetwork');
   String get errorDuplicateMember => _text('errorDuplicateMember');

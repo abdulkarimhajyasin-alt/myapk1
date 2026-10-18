@@ -30,9 +30,15 @@ type Result = {
 function checked<T extends Result>(result: T): T["data"] {
   if (result.error)
     throw new Error(
-      result.error.code === "42501"
-        ? "permission_denied"
-        : (result.error.code ?? "operation_failed"),
+      result.error.message === "expense_operation_conflict"
+        ? "operation_conflict"
+        : result.error.message === "network_busy_retry"
+          ? "network_busy"
+          : result.error.message === "stale_expense_cycle"
+            ? "cycle_changed"
+            : result.error.code === "42501"
+              ? "permission_denied"
+              : (result.error.code ?? "operation_failed"),
     );
   return result.data as T["data"];
 }
@@ -291,6 +297,7 @@ export class MaskanRepository {
       note.trim().length > 200
     )
       throw new Error("invalid_amount");
+    if (!operationId.trim()) throw new Error("invalid_request");
     const payer = s.members.find((m) => m.id === payerId);
     if (!payer) throw new Error("permission_denied");
     const cycle = await this.activeCycle(s);
@@ -307,11 +314,20 @@ export class MaskanRepository {
       cycle_id: cycle.id,
       client_generated_id: operationId,
     };
-    const result = await this.client
-      .from("expenses")
-      .insert(payload)
-      .select()
-      .single();
+    const insert = () =>
+      this.client.from("expenses").insert(payload).select().single();
+    let result = await insert();
+    for (
+      let attempt = 0;
+      attempt < 2 &&
+      result.error?.code === "40001" &&
+      result.error.message === "network_busy_retry";
+      attempt++
+    ) {
+      await new Promise((resolve) => setTimeout(resolve, 100 * (attempt + 1)));
+      // Reuse the operation ID and original cycle; never move a stale write to a new cycle.
+      result = await insert();
+    }
     if (result.error?.code === "23505") {
       const existing = checked(
         await this.client
@@ -322,6 +338,9 @@ export class MaskanRepository {
           .single(),
       ) as Expense;
       if (
+        existing.network_id !== s.network.id ||
+        existing.cycle_id !== cycle.id ||
+        existing.client_generated_id !== operationId ||
         existing.added_by_member_id !== s.me.id ||
         existing.amount_cents !== amount ||
         existing.paid_by_member_id !== payer.id ||
@@ -375,6 +394,17 @@ export class MaskanRepository {
   }
   async requestCycle(s: Snapshot) {
     this.warning = null;
+    if (s.me.id !== s.network.created_by_member_id) {
+      const cycle = await this.activeCycle(s);
+      const result = await this.client.rpc("maskan_request_expense_reset", {
+        p_network_id: s.network.id,
+        p_cycle_id: cycle.id,
+      });
+      if (!result.error) return;
+      // Compatibility while the reviewed migration has not yet been deployed.
+      // Permission, validation and network errors must never trigger a second write.
+      if (result.error.code !== "PGRST202") checked(result);
+    }
     const requests = await this.rows<ResetRequest>(
       "expense_reset_requests",
       s.network.id,
@@ -419,6 +449,12 @@ export class MaskanRepository {
   }
   async approveCycle(s: Snapshot, request: ResetRequest) {
     this.warning = null;
+    const result = await this.client.rpc("maskan_approve_expense_reset", {
+      p_network_id: s.network.id,
+      p_reset_request_id: request.id,
+    });
+    if (!result.error) return;
+    if (result.error.code !== "PGRST202") checked(result);
     if (
       request.status !== "pending" ||
       !request.required_member_ids.includes(s.me.id)

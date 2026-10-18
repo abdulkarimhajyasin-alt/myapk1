@@ -39,7 +39,7 @@ async function derive(password: string, salt: Uint8Array): Promise<Uint8Array> {
     {
       name: "PBKDF2",
       hash: "SHA-256",
-      salt,
+      salt: new Uint8Array(salt),
       iterations: PBKDF2_ITERATIONS,
     },
     key,

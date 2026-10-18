@@ -21,7 +21,7 @@ test(
       "Refusing to mutate a remote or production database",
     );
     assert.equal(endpoint.protocol, "http:");
-    assert.equal(endpoint.port, "54321");
+    assert.ok(["54321", "55321"].includes(endpoint.port));
     const make = () =>
       new MaskanRepository(
         createClient(url!, key!, {
@@ -100,6 +100,57 @@ test(
         );
         assert.equal(settle(s.members, s.expenses).share, 1000);
       }
+      for (const [payer, amount, note] of [
+        [group.me.id, 4001, "integration"],
+        [group.members[1].id, 4000, "integration"],
+        [group.me.id, 4000, "different"],
+      ] as const) {
+        await assert.rejects(
+          clients[0].addExpense(group, payer, amount, note, operationId),
+          /operation_conflict/,
+        );
+      }
+      const otherMember = (await clients[1].snapshot())!;
+      await assert.rejects(
+        clients[1].addExpense(
+          otherMember,
+          group.me.id,
+          4000,
+          "integration",
+          operationId,
+        ),
+        /operation_conflict/,
+      );
+      const conflictingId = crypto.randomUUID();
+      const competing = await Promise.allSettled([
+        clients[0].addExpense(group, group.me.id, 4100, "race", conflictingId),
+        clients[0].addExpense(group, group.me.id, 4200, "race", conflictingId),
+      ]);
+      assert.equal(competing.filter((result) => result.status === "fulfilled").length, 1);
+      const rejected = competing.find((result) => result.status === "rejected");
+      assert.ok(rejected && rejected.status === "rejected");
+      assert.match(String(rejected.reason), /operation_conflict/);
+      const conflictRows = (await clients[0].snapshot())!.expenses.filter(
+        (expense) => expense.client_generated_id === conflictingId,
+      );
+      assert.equal(conflictRows.length, 1);
+      await clients[0].deleteExpense(group, conflictRows[0]);
+      const independentIds = [crypto.randomUUID(), crypto.randomUUID()];
+      await Promise.all(
+        independentIds.map((id) =>
+          clients[0].addExpense(group, group.me.id, 4000, "integration", id),
+        ),
+      );
+      const independent = (await clients[0].snapshot())!.expenses.filter(
+        (expense) => independentIds.includes(expense.client_generated_id!),
+      );
+      assert.equal(
+        independent.length,
+        2,
+        "Identical contents with different operation IDs are separate expenses",
+      );
+      for (const expense of independent)
+        await clients[0].deleteExpense(group, expense);
       const saved = (await clients[0].snapshot())!.expenses.find(
         (e) => e.client_generated_id === operationId,
       )!;
@@ -129,6 +180,17 @@ test(
         assert.equal(settle(s.members, s.expenses).total, 0);
         assert.ok(s.expenses.some((e) => e.archived_at !== null));
       }
+      const nextCycle = (await clients[0].snapshot())!;
+      await assert.rejects(
+        clients[0].addExpense(
+          nextCycle,
+          group.me.id,
+          4000,
+          "integration",
+          operationId,
+        ),
+        /operation_conflict/,
+      );
       await clients[3].logout();
       await assert.rejects(() =>
         clients[3].login(prefix, "Member 3", "wrong-password"),

@@ -80,19 +80,15 @@ async function authenticatedUser(request: Request): Promise<JsonObject> {
   return await result.json() as JsonObject;
 }
 
-function clientAddress(request: Request): string {
-  const forwarded = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
-  return (request.headers.get("cf-connecting-ip")?.trim() || forwarded || "unknown").slice(0, 128);
-}
-
 async function beginRateLimit(
-  request: Request,
+  _request: Request,
   scope: RateLimitScope,
   identifiers: string[],
 ): Promise<string> {
-  const normalized = identifiers.map((value) => value.trim().toLocaleLowerCase("en-US"));
+  const normalized = identifiers.map((value) => value.trim().replace(/\s+/gu, " ").toLocaleLowerCase("en-US"));
+  // Account-scoped quota cannot be bypassed by changing forwarded-IP headers.
   const keyHash = await sha256Hex(
-    ["maskan-rate-limit-v1", scope, clientAddress(request), ...normalized].join("\u001f"),
+    ["maskan-rate-limit-v2", scope, ...normalized].join("\u001f"),
   );
   const rows = await rpc<RateLimitDecision[]>("maskan_password_rate_limit_check", {
     p_key_hash: keyHash,
@@ -436,7 +432,7 @@ Deno.serve(async (request: Request) => {
     // Log only a controlled internal classification. Request bodies,
     // plaintext passwords, tokens, digests, and backend response bodies are
     // intentionally never included.
-    console.error(`maskan-password failure: ${error instanceof Error ? error.message : "unknown"}`);
+    console.error("maskan-password failure: operation_failed");
     const code = error instanceof Error && error.message === "authentication_required"
       ? "authentication_required"
       : "operation_failed";

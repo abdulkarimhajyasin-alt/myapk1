@@ -234,6 +234,7 @@ void main() {
         '20260820000000_migrate_password_security.sql',
         '20260825000000_add_password_rate_limits.sql',
         '20260826000000_add_account_deletion.sql',
+      '20261017194224_harden_expense_cycles_and_reset_workflows.sql',
       ]),
     );
     expect(baseline.join('\n'), isNot(contains('auth_user_id uuid')));

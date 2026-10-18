@@ -636,6 +636,7 @@ function Workspace({ initialRepo }: { initialRepo: MaskanRepository }) {
           expense={editor === "new" ? null : editor}
           s={s}
           busy={busy}
+          serverError={error}
           close={() => setEditor(null)}
           save={async (payer, amount, note, id) => {
             const ok = await run(
@@ -654,12 +655,14 @@ function Workspace({ initialRepo }: { initialRepo: MaskanRepository }) {
   );
 }
 function ExpenseEditor({
+  serverError,
   expense,
   s,
   busy,
   close,
   save,
 }: {
+  serverError: string;
   expense: Expense | null;
   s: Snapshot;
   busy: boolean;
@@ -673,6 +676,7 @@ function ExpenseEditor({
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const operation = useRef(crypto.randomUUID());
+  const attempted = useRef<string | null>(null);
   const [error, setError] = useState("");
   useEffect(() => {
     dialog.current?.showModal();
@@ -704,10 +708,18 @@ function ExpenseEditor({
           setError("");
           const data = new FormData(event.currentTarget);
           try {
+            const payer = String(data.get("payer"));
+            const amount = parseCents(String(data.get("amount")));
+            const note = String(data.get("note"));
+            const signature = JSON.stringify([payer, amount, note]);
+            if (attempted.current !== null && attempted.current !== signature) {
+              operation.current = crypto.randomUUID();
+            }
+            attempted.current = signature;
             const ok = await save(
-              String(data.get("payer")),
-              parseCents(String(data.get("amount"))),
-              String(data.get("note")),
+              payer,
+              amount,
+              note,
               operation.current,
             );
             if (!ok)
@@ -760,7 +772,7 @@ function ExpenseEditor({
           </label>
           {error && (
             <p className="notice error" role="alert">
-              {error}
+              {serverError || error}
             </p>
           )}
           <button className="primary full" type="submit">

@@ -105,6 +105,12 @@ Future<void> main() async {
   if (apiUrl == null || anonKey == null) {
     throw StateError('Local Supabase API URL and anon key are required.');
   }
+  final endpoint = Uri.parse(apiUrl!);
+  if (endpoint.scheme != 'http' ||
+      !['127.0.0.1', 'localhost'].contains(endpoint.host) ||
+      ![54321, 55321].contains(endpoint.port)) {
+    throw StateError('This synthetic fixture test requires local Supabase.');
+  }
   final suffix = uuid().replaceAll('-', '');
   final identityA = await createIdentity('a', suffix);
   final identityB = await createIdentity('b', suffix);

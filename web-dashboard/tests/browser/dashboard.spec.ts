@@ -64,3 +64,30 @@ test("authenticated dashboard shows real response totals, opens editor, filters 
     ),
   ).toBe(true);
 });
+
+test("expense conflict stays visible in dialog and retries preserve operation identity", async ({ page }) => {
+  await mockDashboard(page);
+  const keys: string[] = [];
+  await page.route("**/rest/v1/expenses**", async (route) => {
+    if (route.request().method() !== "POST") return route.fallback();
+    keys.push(route.request().postDataJSON().client_generated_id);
+    await route.fulfill({ status: 400, contentType: "application/json", body: JSON.stringify({ code: "P0001", message: "expense_operation_conflict" }) });
+  });
+  await page.goto("/");
+  await page.getByRole("button", { name: "إضافة مصروف", exact: true }).click();
+  const dialog = page.getByRole("dialog");
+  await page.getByLabel("المبلغ (USD)").fill("20.55");
+  const save = dialog.getByRole("button", { name: "حفظ المصروف", exact: true });
+  await save.click();
+  await expect(dialog.getByRole("alert")).toContainText("لبيانات مختلفة");
+  await save.click();
+  await expect.poll(() => keys.length).toBe(2);
+  await expect(dialog.getByRole("alert")).toBeVisible();
+  expect(keys[0]).toBeTruthy();
+  expect(keys[1]).toBe(keys[0]);
+  await page.getByLabel("المبلغ (USD)").fill("21.55");
+  await save.click();
+  await expect.poll(() => keys.length).toBe(3);
+  await expect(dialog.getByRole("alert")).toContainText("لبيانات مختلفة");
+  expect(keys[2]).not.toBe(keys[0]);
+});

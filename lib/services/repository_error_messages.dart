@@ -17,6 +17,9 @@ class RepositoryErrorMessages {
 
   static String? fromCode(AppLocalizations l10n, String? code) {
     return switch (code) {
+      'expense_operation_conflict' => l10n.expenseOperationConflict,
+      'expense_network_busy' => l10n.expenseNetworkBusy,
+      'expense_cycle_changed' => l10n.expenseCycleChanged,
       'supabase_network_unavailable' => l10n.errorNoInternet,
       'duplicate_network' => l10n.errorDuplicateNetwork,
       'duplicate_member' => l10n.errorDuplicateMember,

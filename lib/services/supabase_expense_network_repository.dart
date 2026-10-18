@@ -13,6 +13,7 @@ import '../models/member.dart';
 import '../models/network_notification.dart';
 import '../utils/currency_utils.dart';
 import 'expense_network_repository.dart';
+import 'expense_write_policy.dart';
 import 'supabase_auth_identity.dart';
 
 class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
@@ -501,23 +502,37 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
 
     try {
       final client = _requireClient();
-      final expenseRow = await client
-          .from('expenses')
-          .insert(
-            buildExpenseInsertPayload(
-              networkId: networkId,
-              paidByMemberId: payer.id,
-              paidByMemberName: payer.name,
-              addedByMemberId: actor.id,
-              addedByMemberName: actor.name,
-              amountCents: amountCents,
-              note: cleanedNote,
-              cycleId: cycle.id,
-              clientGeneratedId: clientGeneratedId,
-            ),
-          )
-          .select()
-          .single();
+      final payload = buildExpenseInsertPayload(
+        networkId: networkId,
+        paidByMemberId: payer.id,
+        paidByMemberName: payer.name,
+        addedByMemberId: actor.id,
+        addedByMemberName: actor.name,
+        amountCents: amountCents,
+        note: cleanedNote,
+        cycleId: cycle.id,
+        clientGeneratedId: clientGeneratedId,
+      );
+      Map<String, dynamic> expenseRow;
+      try {
+        expenseRow = await retryExpenseWrite(
+            () => client.from('expenses').insert(payload).select().single());
+      } on PostgrestException catch (error) {
+        if (error.code != '23505' || clientGeneratedId == null) rethrow;
+        final existing = await client
+            .from('expenses')
+            .select()
+            .eq('network_id', networkId)
+            .eq('client_generated_id', clientGeneratedId)
+            .maybeSingle();
+        if (existing == null || !matchesExpenseOperation(existing, payload)) {
+          throw const RepositoryException(
+            'This operation identifier belongs to a different expense.',
+            code: 'expense_operation_conflict',
+          );
+        }
+        return await _networkFromHydratedRow(networkRow);
+      }
 
       await _createExpenseNotificationsSafely(
         networkId: networkId,
@@ -1905,6 +1920,23 @@ class SupabaseExpenseNetworkRepository implements ExpenseNetworkRepository {
   }) {
     final message = error.toString().toLowerCase();
     if (error is RepositoryException) return error;
+    if (error is PostgrestException) {
+      if (error.message == 'expense_operation_conflict') {
+        return const RepositoryException(
+            'Review the existing expense before retrying.',
+            code: 'expense_operation_conflict');
+      }
+      if (error.message == 'network_busy_retry') {
+        return const RepositoryException(
+            'Refresh and retry the same operation.',
+            code: 'expense_network_busy');
+      }
+      if (error.message == 'stale_expense_cycle') {
+        return const RepositoryException(
+            'The expense cycle changed. Refresh first.',
+            code: 'expense_cycle_changed');
+      }
+    }
 
     final isNetworkUnavailable = message.contains('socketexception') ||
         message.contains('failed host lookup') ||

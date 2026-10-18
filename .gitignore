@@ -26,3 +26,6 @@ keystore_base64.txt
 *.jks
 *.keystore
 android/key.properties
+# Disposable local security-test stack and credential-bearing CLI logs.
+.codex_tmp/
+supabase/tests/__pycache__/
