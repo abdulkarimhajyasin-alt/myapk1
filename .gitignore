@@ -30,3 +30,5 @@ android/key.properties
 .codex_tmp/
 supabase/tests/__pycache__/
 supabase/staging/__pycache__/
+
+supabase/audit/__pycache__/

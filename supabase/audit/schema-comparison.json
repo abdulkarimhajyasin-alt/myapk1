@@ -1,0 +1,156 @@
+{
+  "production_functions": 46,
+  "staging_functions": 59,
+  "new_staging_functions": [
+    "private.maskan_finish_approval()",
+    "private.maskan_finish_reset_request()",
+    "private.maskan_guard_approval()",
+    "private.maskan_guard_cycle()",
+    "private.maskan_guard_expense()",
+    "private.maskan_guard_membership_change()",
+    "private.maskan_guard_notification_insert()",
+    "private.maskan_guard_request_delete()",
+    "private.maskan_lock_network(p_network_id uuid)",
+    "private.maskan_prepare_reset_request()",
+    "private.maskan_release_pending_cycle()",
+    "public.maskan_approve_expense_reset(p_network_id uuid, p_reset_request_id uuid)",
+    "public.maskan_request_expense_reset(p_network_id uuid, p_cycle_id uuid)"
+  ],
+  "changed_function_definitions": [
+    "private.maskan_legacy_password_hash(password_salt text, raw_password text)",
+    "public.maskan_account_deletion_context()",
+    "public.maskan_account_deletion_rate_limit_check()",
+    "public.maskan_account_deletion_rate_limit_failure()",
+    "public.maskan_authorize_account_deletion(p_auth_user_id uuid, p_token_hash text)",
+    "public.maskan_can_create_active_cycle(target_network_id uuid, target_cycle_number integer)",
+    "public.maskan_claim_legacy_member(p_member_id uuid, p_member_password text)",
+    "public.maskan_claim_member(p_member_id uuid, p_claim_token text)",
+    "public.maskan_complete_expense_cycle(p_network_id uuid, p_cycle_id uuid, p_reset_request_id uuid)",
+    "public.maskan_create_network(p_network_id uuid, p_member_id uuid, p_network_name text, p_member_name text, p_network_password_hash text, p_network_password_salt text, p_member_password_hash text, p_member_password_salt text, p_currency_code text, p_currency_symbol text)",
+    "public.maskan_current_member_id()",
+    "public.maskan_current_network_id()",
+    "public.maskan_delete_account_data(p_deletion_token text, p_confirm_network_deletion boolean)",
+    "public.maskan_discover_network(p_network_name text)",
+    "public.maskan_is_current_member(target_member_id uuid)",
+    "public.maskan_is_network_member(target_network_id uuid)",
+    "public.maskan_join_network(p_network_id uuid, p_network_name text, p_network_password text, p_member_id uuid, p_member_name text, p_member_password_hash text, p_member_password_salt text)",
+    "public.maskan_leave_network(p_network_id uuid)",
+    "public.maskan_password_rate_limit_check(p_key_hash text, p_scope text)",
+    "public.maskan_password_rate_limit_cleanup()",
+    "public.maskan_password_rate_limit_failure(p_key_hash text)",
+    "public.maskan_password_rate_limit_success(p_key_hash text)",
+    "public.maskan_verify_member_credentials(p_network_id uuid, p_member_id uuid, p_member_name text, p_member_password text)",
+    "public.phase5_cycle_member_belongs_to_network(target_network_id uuid, requester_member_id uuid)",
+    "public.phase5_expense_members_match_network(target_network_id uuid, paid_member_id uuid, added_member_id uuid)",
+    "public.phase5_member_belongs_to_network(member_id uuid, target_network_id uuid)",
+    "public.phase5_network_can_be_deleted_after_leave(target_network_id uuid)",
+    "public.phase5_network_exists(target_network_id uuid)",
+    "public.phase5_network_has_no_active_expenses(target_network_id uuid)",
+    "public.phase5_notification_matches_network(target_network_id uuid, recipient_member_id uuid, actor_member_id uuid, target_expense_id uuid, target_reset_request_id uuid)",
+    "public.phase5_prevent_notification_identity_update()",
+    "public.phase5_reset_approval_matches_network(target_network_id uuid, target_reset_request_id uuid, approving_member_id uuid)",
+    "public.phase5_reset_member_password(target_network_id uuid, admin_member_id uuid, target_member_id uuid, new_password_hash text, new_password_salt text)",
+    "public.phase5_reset_request_matches_network(target_network_id uuid, target_cycle_id uuid, requester_member_id uuid)"
+  ],
+  "production_anon_security_definers": [
+    "maskan_complete_expense_cycle",
+    "phase5_cycle_member_belongs_to_network",
+    "phase5_expense_members_match_network",
+    "phase5_member_belongs_to_network",
+    "phase5_network_can_be_deleted_after_leave",
+    "phase5_network_exists",
+    "phase5_network_has_no_active_expenses",
+    "phase5_notification_matches_network",
+    "phase5_reset_approval_matches_network",
+    "phase5_reset_request_matches_network"
+  ],
+  "staging_anon_security_definers": [],
+  "new_staging_indexes": [
+    "expense_cycles_one_open_idx",
+    "expense_cycles_requested_by_member_idx",
+    "expense_reset_approvals_member_idx",
+    "expense_reset_approvals_network_idx",
+    "expense_reset_requests_cycle_idx",
+    "expense_reset_requests_requester_idx",
+    "member_claim_tokens_auth_user_idx",
+    "network_notifications_actor_idx",
+    "network_notifications_expense_idx",
+    "network_notifications_reset_idx",
+    "networks_created_by_member_idx"
+  ],
+  "production_not_valid_constraints": [
+    [
+      "public",
+      "expense_cycles",
+      "expense_cycles_status_valid",
+      "c",
+      false,
+      "CHECK ((status = ANY (ARRAY['active'::text, 'pending_reset'::text, 'closed'::text]))) NOT VALID"
+    ],
+    [
+      "public",
+      "expense_reset_requests",
+      "expense_reset_requests_requested_by_member_id_fkey",
+      "f",
+      false,
+      "FOREIGN KEY (requested_by_member_id) REFERENCES network_members(id) ON DELETE SET NULL NOT VALID"
+    ],
+    [
+      "public",
+      "expense_reset_requests",
+      "expense_reset_requests_status_valid",
+      "c",
+      false,
+      "CHECK ((status = ANY (ARRAY['pending'::text, 'completed'::text, 'cancelled'::text]))) NOT VALID"
+    ],
+    [
+      "public",
+      "expenses",
+      "expenses_added_by_member_id_fkey",
+      "f",
+      false,
+      "FOREIGN KEY (added_by_member_id) REFERENCES network_members(id) ON DELETE SET NULL NOT VALID"
+    ],
+    [
+      "public",
+      "expenses",
+      "expenses_amount_cents_positive",
+      "c",
+      false,
+      "CHECK ((amount_cents > 0)) NOT VALID"
+    ],
+    [
+      "public",
+      "expenses",
+      "expenses_note_length",
+      "c",
+      false,
+      "CHECK (((note IS NULL) OR (char_length(note) <= 200))) NOT VALID"
+    ],
+    [
+      "public",
+      "expenses",
+      "expenses_paid_by_member_id_fkey",
+      "f",
+      false,
+      "FOREIGN KEY (paid_by_member_id) REFERENCES network_members(id) ON DELETE SET NULL NOT VALID"
+    ],
+    [
+      "public",
+      "network_notifications",
+      "network_notifications_kind_valid",
+      "c",
+      false,
+      "CHECK ((kind = ANY (ARRAY['expense'::text, 'expenseUpdated'::text, 'resetRequest'::text, 'cycleStarted'::text]))) NOT VALID"
+    ],
+    [
+      "public",
+      "network_notifications",
+      "network_notifications_note_snippet_length",
+      "c",
+      false,
+      "CHECK (((note_snippet IS NULL) OR (char_length(note_snippet) <= 80))) NOT VALID"
+    ]
+  ],
+  "local_migration_history": "Not compared: SQL-file rehearsal does not populate CLI history"
+}

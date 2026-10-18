@@ -1,0 +1,55 @@
+{
+  "synthetic_backup_restore": {
+    "backup_bytes": 641028,
+    "backup_sha256": "ced1bfcb8d84324357e024e4c4efa788c93d6af94fcb660266b4edefcc1ce93a",
+    "dump_seconds": 0.606,
+    "restore_seconds": 3.527,
+    "tables_compared": 46,
+    "schema_indexes_rls_function_privileges_equal": true,
+    "all_row_digests_equal": true,
+    "financial_totals": {
+      "expenses": 4029,
+      "amount_cents": 8472003,
+      "archived": 25
+    },
+    "cycles": 34,
+    "recovery_port": 57322
+  },
+  "restored_client_validation": {
+    "interrupted_transaction_rolled_back": true,
+    "restored_database_only": true,
+    "checks": [
+      {
+        "client": "web",
+        "exit_code": 0,
+        "seconds": 15.61
+      },
+      {
+        "client": "flutter",
+        "exit_code": 0,
+        "seconds": 21.37
+      }
+    ]
+  },
+  "resolved_attempts": [
+    {
+      "check": "local schema comparison",
+      "result": "failed because CLI history table is absent locally; fixed comparison to mark local history unavailable"
+    },
+    {
+      "check": "web recovery SDK",
+      "exit_code": 1,
+      "result": "CommonJS top-level await incompatibility; fixed async main and subsequent run passed"
+    }
+  ],
+  "data": "Synthetic only; no production backup downloaded or exported",
+  "validation": {
+    "audit_safety_passed": 4,
+    "existing_staging_safety_passed": 9,
+    "python_compilation": "passed",
+    "flutter_targeted_analysis": "passed",
+    "typescript": "passed",
+    "targeted_eslint": "passed",
+    "recovery_rest_stopped": true
+  }
+}

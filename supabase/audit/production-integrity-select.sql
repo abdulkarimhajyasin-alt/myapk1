@@ -1,0 +1,20 @@
+select jsonb_build_object(
+'duplicate_open_cycles',(select count(*) from (select network_id from public.expense_cycles where status in ('active','pending_reset') group by network_id having count(*)>1) d),
+'invalid_active_cycle_assignments',(select count(*) from public.expenses e join public.expense_cycles c on c.id=e.cycle_id where e.archived_at is null and (c.status='closed' or c.network_id<>e.network_id)),
+'unsafe_pending_snapshots',(select count(*) from public.expense_reset_requests r join public.expense_cycles c on c.id=r.cycle_id where r.status='pending' and (c.status='closed' or c.network_id<>r.network_id or r.requested_by_member_id is null or cardinality(r.required_member_ids)=0 or not(r.requested_by_member_id=any(r.required_member_ids)) or exists(select 1 from public.network_members m where m.network_id=r.network_id and m.created_at<=r.created_at and not(m.id=any(r.required_member_ids))) or exists(select 1 from unnest(r.required_member_ids) required(id) where not exists(select 1 from public.network_members m where m.id=required.id and m.network_id=r.network_id)))),
+'orphan_expense_cycles',(select count(*) from public.expenses e left join public.expense_cycles c on c.id=e.cycle_id where e.cycle_id is null or c.id is null),
+'pending_null_snapshots',(select count(*) from public.expense_reset_requests where status='pending' and (required_member_ids is null or array_position(required_member_ids,null) is not null)),
+'pending_requests',(select count(*) from public.expense_reset_requests where status='pending'),
+'completed_requests',(select count(*) from public.expense_reset_requests where status='completed'),
+'cancelled_requests',(select count(*) from public.expense_reset_requests where status='cancelled'),
+'approvals',(select count(*) from public.expense_reset_approvals),
+'invalid_cycle_status',(select count(*) from public.expense_cycles where status not in ('active','pending_reset','closed')),
+'invalid_request_status',(select count(*) from public.expense_reset_requests where status not in ('pending','completed','cancelled')),
+'nonpositive_expenses',(select count(*) from public.expenses where amount_cents<=0),
+'long_expense_notes',(select count(*) from public.expenses where char_length(note)>200),
+'invalid_notification_kind',(select count(*) from public.network_notifications where kind not in ('expense','expenseUpdated','resetRequest','cycleStarted')),
+'long_notification_snippets',(select count(*) from public.network_notifications where char_length(note_snippet)>80),
+'orphan_expense_authors',(select count(*) from public.expenses e where added_by_member_id is not null and not exists(select 1 from public.network_members m where m.id=e.added_by_member_id)),
+'orphan_expense_payers',(select count(*) from public.expenses e where paid_by_member_id is not null and not exists(select 1 from public.network_members m where m.id=e.paid_by_member_id)),
+'orphan_request_authors',(select count(*) from public.expense_reset_requests r where requested_by_member_id is not null and not exists(select 1 from public.network_members m where m.id=r.requested_by_member_id))
+) as audit;

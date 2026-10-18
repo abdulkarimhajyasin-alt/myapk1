@@ -1,0 +1,6733 @@
+{
+  "audited_at": "2026-10-18",
+  "source": "Read-only Supabase MCP; schema metadata and aggregate counts only",
+  "plan": "free",
+  "managed_backup_inventory": "unverified: no backup listing tool or management token",
+  "schema": {
+    "rls": [
+      [
+        "private",
+        "account_deletion_authorizations",
+        true,
+        true,
+        "{postgres=arwdDxtm/postgres}"
+      ],
+      [
+        "private",
+        "account_deletion_rate_limits",
+        true,
+        true,
+        "{postgres=arwdDxtm/postgres}"
+      ],
+      [
+        "private",
+        "member_claim_tokens",
+        false,
+        false,
+        "{postgres=arwdDxtm/postgres}"
+      ],
+      [
+        "private",
+        "member_credentials",
+        false,
+        false,
+        "{postgres=arwdDxtm/postgres}"
+      ],
+      [
+        "private",
+        "network_credentials",
+        false,
+        false,
+        "{postgres=arwdDxtm/postgres}"
+      ],
+      [
+        "private",
+        "password_rate_limits",
+        true,
+        true,
+        "{postgres=arwdDxtm/postgres}"
+      ],
+      [
+        "public",
+        "expense_cycles",
+        true,
+        false,
+        "{postgres=arwdDxtm/postgres,service_role=arwdDxtm/postgres,authenticated=ar/postgres}"
+      ],
+      [
+        "public",
+        "expense_reset_approvals",
+        true,
+        false,
+        "{postgres=arwdDxtm/postgres,service_role=arwdDxtm/postgres,authenticated=ard/postgres}"
+      ],
+      [
+        "public",
+        "expense_reset_requests",
+        true,
+        false,
+        "{postgres=arwdDxtm/postgres,service_role=arwdDxtm/postgres,authenticated=ard/postgres}"
+      ],
+      [
+        "public",
+        "expenses",
+        true,
+        false,
+        "{postgres=arwdDxtm/postgres,service_role=arwdDxtm/postgres,authenticated=ard/postgres}"
+      ],
+      [
+        "public",
+        "maskan_network_members",
+        false,
+        false,
+        "{postgres=arwdDxtm/postgres,service_role=arwdDxtm/postgres,authenticated=r/postgres}"
+      ],
+      [
+        "public",
+        "maskan_networks",
+        false,
+        false,
+        "{postgres=arwdDxtm/postgres,service_role=arwdDxtm/postgres,authenticated=r/postgres}"
+      ],
+      [
+        "public",
+        "network_members",
+        true,
+        false,
+        "{postgres=arwdDxtm/postgres,service_role=arwdDxtm/postgres}"
+      ],
+      [
+        "public",
+        "network_notifications",
+        true,
+        false,
+        "{postgres=arwdDxtm/postgres,service_role=arwdDxtm/postgres,authenticated=ard/postgres}"
+      ],
+      [
+        "public",
+        "networks",
+        true,
+        false,
+        "{postgres=arwdDxtm/postgres,service_role=arwdDxtm/postgres}"
+      ]
+    ],
+    "columns": [
+      [
+        "auth",
+        "audit_log_entries",
+        "instance_id",
+        "uuid",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "audit_log_entries",
+        "id",
+        "uuid",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "audit_log_entries",
+        "payload",
+        "json",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "audit_log_entries",
+        "created_at",
+        "timestamp with time zone",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "audit_log_entries",
+        "ip_address",
+        "character varying",
+        "NO",
+        "5001af52b868852e1ace9362f2f67171"
+      ],
+      [
+        "auth",
+        "custom_oauth_providers",
+        "id",
+        "uuid",
+        "NO",
+        "f3b72bb359a50b640590970a2ab8e514"
+      ],
+      [
+        "auth",
+        "custom_oauth_providers",
+        "provider_type",
+        "text",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "custom_oauth_providers",
+        "identifier",
+        "text",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "custom_oauth_providers",
+        "name",
+        "text",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "custom_oauth_providers",
+        "client_id",
+        "text",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "custom_oauth_providers",
+        "client_secret",
+        "text",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "custom_oauth_providers",
+        "acceptable_client_ids",
+        "ARRAY",
+        "NO",
+        "f81a5133416544064d5b9b182f73a6e1"
+      ],
+      [
+        "auth",
+        "custom_oauth_providers",
+        "scopes",
+        "ARRAY",
+        "NO",
+        "f81a5133416544064d5b9b182f73a6e1"
+      ],
+      [
+        "auth",
+        "custom_oauth_providers",
+        "pkce_enabled",
+        "boolean",
+        "NO",
+        "b326b5062b2f0e69046810717534cb09"
+      ],
+      [
+        "auth",
+        "custom_oauth_providers",
+        "attribute_mapping",
+        "jsonb",
+        "NO",
+        "f3db357cf4f4a03883484fa3281a056c"
+      ],
+      [
+        "auth",
+        "custom_oauth_providers",
+        "authorization_params",
+        "jsonb",
+        "NO",
+        "f3db357cf4f4a03883484fa3281a056c"
+      ],
+      [
+        "auth",
+        "custom_oauth_providers",
+        "enabled",
+        "boolean",
+        "NO",
+        "b326b5062b2f0e69046810717534cb09"
+      ],
+      [
+        "auth",
+        "custom_oauth_providers",
+        "email_optional",
+        "boolean",
+        "NO",
+        "68934a3e9455fa72420237eb05902327"
+      ],
+      [
+        "auth",
+        "custom_oauth_providers",
+        "issuer",
+        "text",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "custom_oauth_providers",
+        "discovery_url",
+        "text",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "custom_oauth_providers",
+        "skip_nonce_check",
+        "boolean",
+        "NO",
+        "68934a3e9455fa72420237eb05902327"
+      ],
+      [
+        "auth",
+        "custom_oauth_providers",
+        "cached_discovery",
+        "jsonb",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "custom_oauth_providers",
+        "discovery_cached_at",
+        "timestamp with time zone",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "custom_oauth_providers",
+        "authorization_url",
+        "text",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "custom_oauth_providers",
+        "token_url",
+        "text",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "custom_oauth_providers",
+        "userinfo_url",
+        "text",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "custom_oauth_providers",
+        "jwks_uri",
+        "text",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "custom_oauth_providers",
+        "created_at",
+        "timestamp with time zone",
+        "NO",
+        "75230039beb12ce952f24927f2bfa2f2"
+      ],
+      [
+        "auth",
+        "custom_oauth_providers",
+        "updated_at",
+        "timestamp with time zone",
+        "NO",
+        "75230039beb12ce952f24927f2bfa2f2"
+      ],
+      [
+        "auth",
+        "custom_oauth_providers",
+        "custom_claims_allowlist",
+        "ARRAY",
+        "NO",
+        "f81a5133416544064d5b9b182f73a6e1"
+      ],
+      [
+        "auth",
+        "flow_state",
+        "id",
+        "uuid",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "flow_state",
+        "user_id",
+        "uuid",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "flow_state",
+        "auth_code",
+        "text",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "flow_state",
+        "code_challenge_method",
+        "USER-DEFINED",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "flow_state",
+        "code_challenge",
+        "text",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "flow_state",
+        "provider_type",
+        "text",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "flow_state",
+        "provider_access_token",
+        "text",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "flow_state",
+        "provider_refresh_token",
+        "text",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "flow_state",
+        "created_at",
+        "timestamp with time zone",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "flow_state",
+        "updated_at",
+        "timestamp with time zone",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "flow_state",
+        "authentication_method",
+        "text",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "flow_state",
+        "auth_code_issued_at",
+        "timestamp with time zone",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "flow_state",
+        "invite_token",
+        "text",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "flow_state",
+        "referrer",
+        "text",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "flow_state",
+        "oauth_client_state_id",
+        "uuid",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "flow_state",
+        "linking_target_id",
+        "uuid",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "flow_state",
+        "email_optional",
+        "boolean",
+        "NO",
+        "68934a3e9455fa72420237eb05902327"
+      ],
+      [
+        "auth",
+        "identities",
+        "provider_id",
+        "text",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "identities",
+        "user_id",
+        "uuid",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "identities",
+        "identity_data",
+        "jsonb",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "identities",
+        "provider",
+        "text",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "identities",
+        "last_sign_in_at",
+        "timestamp with time zone",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "identities",
+        "created_at",
+        "timestamp with time zone",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "identities",
+        "updated_at",
+        "timestamp with time zone",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "identities",
+        "email",
+        "text",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "identities",
+        "id",
+        "uuid",
+        "NO",
+        "f3b72bb359a50b640590970a2ab8e514"
+      ],
+      [
+        "auth",
+        "instances",
+        "id",
+        "uuid",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "instances",
+        "uuid",
+        "uuid",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "instances",
+        "raw_base_config",
+        "text",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "instances",
+        "created_at",
+        "timestamp with time zone",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "instances",
+        "updated_at",
+        "timestamp with time zone",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "mfa_amr_claims",
+        "session_id",
+        "uuid",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "mfa_amr_claims",
+        "created_at",
+        "timestamp with time zone",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "mfa_amr_claims",
+        "updated_at",
+        "timestamp with time zone",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "mfa_amr_claims",
+        "authentication_method",
+        "text",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "mfa_amr_claims",
+        "id",
+        "uuid",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "mfa_challenges",
+        "id",
+        "uuid",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "mfa_challenges",
+        "factor_id",
+        "uuid",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "mfa_challenges",
+        "created_at",
+        "timestamp with time zone",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "mfa_challenges",
+        "verified_at",
+        "timestamp with time zone",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "mfa_challenges",
+        "ip_address",
+        "inet",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "mfa_challenges",
+        "otp_code",
+        "text",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "mfa_challenges",
+        "web_authn_session_data",
+        "jsonb",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "mfa_factors",
+        "id",
+        "uuid",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "mfa_factors",
+        "user_id",
+        "uuid",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "mfa_factors",
+        "friendly_name",
+        "text",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "mfa_factors",
+        "factor_type",
+        "USER-DEFINED",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "mfa_factors",
+        "status",
+        "USER-DEFINED",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "mfa_factors",
+        "created_at",
+        "timestamp with time zone",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "mfa_factors",
+        "updated_at",
+        "timestamp with time zone",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "mfa_factors",
+        "secret",
+        "text",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "mfa_factors",
+        "phone",
+        "text",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "mfa_factors",
+        "last_challenged_at",
+        "timestamp with time zone",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "mfa_factors",
+        "web_authn_credential",
+        "jsonb",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "mfa_factors",
+        "web_authn_aaguid",
+        "uuid",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "mfa_factors",
+        "last_webauthn_challenge_data",
+        "jsonb",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "mfa_recovery_code_sets",
+        "id",
+        "uuid",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "mfa_recovery_code_sets",
+        "user_id",
+        "uuid",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "mfa_recovery_code_sets",
+        "mfa_factor_id",
+        "uuid",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "mfa_recovery_code_sets",
+        "failed_verification_count",
+        "integer",
+        "NO",
+        "cfcd208495d565ef66e7dff9f98764da"
+      ],
+      [
+        "auth",
+        "mfa_recovery_code_sets",
+        "verification_locked_until",
+        "timestamp with time zone",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "mfa_recovery_code_sets",
+        "created_at",
+        "timestamp with time zone",
+        "NO",
+        "75230039beb12ce952f24927f2bfa2f2"
+      ],
+      [
+        "auth",
+        "mfa_recovery_code_sets",
+        "updated_at",
+        "timestamp with time zone",
+        "NO",
+        "75230039beb12ce952f24927f2bfa2f2"
+      ],
+      [
+        "auth",
+        "mfa_recovery_codes",
+        "id",
+        "uuid",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "mfa_recovery_codes",
+        "mfa_recovery_code_set_id",
+        "uuid",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "mfa_recovery_codes",
+        "code_hash",
+        "text",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "mfa_recovery_codes",
+        "consumed_at",
+        "timestamp with time zone",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "mfa_recovery_codes",
+        "created_at",
+        "timestamp with time zone",
+        "NO",
+        "75230039beb12ce952f24927f2bfa2f2"
+      ],
+      [
+        "auth",
+        "oauth_authorizations",
+        "id",
+        "uuid",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "oauth_authorizations",
+        "authorization_id",
+        "text",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "oauth_authorizations",
+        "client_id",
+        "uuid",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "oauth_authorizations",
+        "user_id",
+        "uuid",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "oauth_authorizations",
+        "redirect_uri",
+        "text",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "oauth_authorizations",
+        "scope",
+        "text",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "oauth_authorizations",
+        "state",
+        "text",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "oauth_authorizations",
+        "resource",
+        "text",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "oauth_authorizations",
+        "code_challenge",
+        "text",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "oauth_authorizations",
+        "code_challenge_method",
+        "USER-DEFINED",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "oauth_authorizations",
+        "response_type",
+        "USER-DEFINED",
+        "NO",
+        "33893adea8599fbd6b1c34b99b4a77c5"
+      ],
+      [
+        "auth",
+        "oauth_authorizations",
+        "status",
+        "USER-DEFINED",
+        "NO",
+        "577d16c87c22b4906645313210722f2d"
+      ],
+      [
+        "auth",
+        "oauth_authorizations",
+        "authorization_code",
+        "text",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "oauth_authorizations",
+        "created_at",
+        "timestamp with time zone",
+        "NO",
+        "75230039beb12ce952f24927f2bfa2f2"
+      ],
+      [
+        "auth",
+        "oauth_authorizations",
+        "expires_at",
+        "timestamp with time zone",
+        "NO",
+        "88b5f5aa0fc9ea4ea0f88a68fb6971d1"
+      ],
+      [
+        "auth",
+        "oauth_authorizations",
+        "approved_at",
+        "timestamp with time zone",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "oauth_authorizations",
+        "nonce",
+        "text",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "oauth_client_states",
+        "id",
+        "uuid",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "oauth_client_states",
+        "provider_type",
+        "text",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "oauth_client_states",
+        "code_verifier",
+        "text",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "oauth_client_states",
+        "created_at",
+        "timestamp with time zone",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "oauth_clients",
+        "id",
+        "uuid",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "oauth_clients",
+        "client_secret_hash",
+        "text",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "oauth_clients",
+        "registration_type",
+        "USER-DEFINED",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "oauth_clients",
+        "redirect_uris",
+        "text",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "oauth_clients",
+        "grant_types",
+        "text",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "oauth_clients",
+        "client_name",
+        "text",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "oauth_clients",
+        "client_uri",
+        "text",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "oauth_clients",
+        "logo_uri",
+        "text",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "oauth_clients",
+        "created_at",
+        "timestamp with time zone",
+        "NO",
+        "75230039beb12ce952f24927f2bfa2f2"
+      ],
+      [
+        "auth",
+        "oauth_clients",
+        "updated_at",
+        "timestamp with time zone",
+        "NO",
+        "75230039beb12ce952f24927f2bfa2f2"
+      ],
+      [
+        "auth",
+        "oauth_clients",
+        "deleted_at",
+        "timestamp with time zone",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "oauth_clients",
+        "client_type",
+        "USER-DEFINED",
+        "NO",
+        "9955f047d0aadb5c47be722e745b5a11"
+      ],
+      [
+        "auth",
+        "oauth_clients",
+        "token_endpoint_auth_method",
+        "text",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "oauth_consents",
+        "id",
+        "uuid",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "oauth_consents",
+        "user_id",
+        "uuid",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "oauth_consents",
+        "client_id",
+        "uuid",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "oauth_consents",
+        "scopes",
+        "text",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "oauth_consents",
+        "granted_at",
+        "timestamp with time zone",
+        "NO",
+        "75230039beb12ce952f24927f2bfa2f2"
+      ],
+      [
+        "auth",
+        "oauth_consents",
+        "revoked_at",
+        "timestamp with time zone",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "one_time_tokens",
+        "id",
+        "uuid",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "one_time_tokens",
+        "user_id",
+        "uuid",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "one_time_tokens",
+        "token_type",
+        "USER-DEFINED",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "one_time_tokens",
+        "token_hash",
+        "text",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "one_time_tokens",
+        "relates_to",
+        "text",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "one_time_tokens",
+        "created_at",
+        "timestamp without time zone",
+        "NO",
+        "75230039beb12ce952f24927f2bfa2f2"
+      ],
+      [
+        "auth",
+        "one_time_tokens",
+        "updated_at",
+        "timestamp without time zone",
+        "NO",
+        "75230039beb12ce952f24927f2bfa2f2"
+      ],
+      [
+        "auth",
+        "one_time_tokens",
+        "expires_at",
+        "timestamp with time zone",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "refresh_tokens",
+        "instance_id",
+        "uuid",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "refresh_tokens",
+        "id",
+        "bigint",
+        "NO",
+        "6f86b21a9491d45489fd7802d5b378d3"
+      ],
+      [
+        "auth",
+        "refresh_tokens",
+        "token",
+        "character varying",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "refresh_tokens",
+        "user_id",
+        "character varying",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "refresh_tokens",
+        "revoked",
+        "boolean",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "refresh_tokens",
+        "created_at",
+        "timestamp with time zone",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "refresh_tokens",
+        "updated_at",
+        "timestamp with time zone",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "refresh_tokens",
+        "parent",
+        "character varying",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "refresh_tokens",
+        "session_id",
+        "uuid",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "saml_providers",
+        "id",
+        "uuid",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "saml_providers",
+        "sso_provider_id",
+        "uuid",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "saml_providers",
+        "entity_id",
+        "text",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "saml_providers",
+        "metadata_xml",
+        "text",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "saml_providers",
+        "metadata_url",
+        "text",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "saml_providers",
+        "attribute_mapping",
+        "jsonb",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "saml_providers",
+        "created_at",
+        "timestamp with time zone",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "saml_providers",
+        "updated_at",
+        "timestamp with time zone",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "saml_providers",
+        "name_id_format",
+        "text",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "saml_relay_states",
+        "id",
+        "uuid",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "saml_relay_states",
+        "sso_provider_id",
+        "uuid",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "saml_relay_states",
+        "request_id",
+        "text",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "saml_relay_states",
+        "for_email",
+        "text",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "saml_relay_states",
+        "redirect_to",
+        "text",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "saml_relay_states",
+        "created_at",
+        "timestamp with time zone",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "saml_relay_states",
+        "updated_at",
+        "timestamp with time zone",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "saml_relay_states",
+        "flow_state_id",
+        "uuid",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "schema_migrations",
+        "version",
+        "character varying",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "scim_tokens",
+        "id",
+        "uuid",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "scim_tokens",
+        "sso_provider_id",
+        "uuid",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "scim_tokens",
+        "token_hash",
+        "text",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "scim_tokens",
+        "prefix",
+        "text",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "scim_tokens",
+        "created_at",
+        "timestamp with time zone",
+        "NO",
+        "75230039beb12ce952f24927f2bfa2f2"
+      ],
+      [
+        "auth",
+        "scim_tokens",
+        "expires_at",
+        "timestamp with time zone",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "scim_tokens",
+        "revoked_at",
+        "timestamp with time zone",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "scim_tokens",
+        "last_used_at",
+        "timestamp with time zone",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "scim_users",
+        "id",
+        "uuid",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "scim_users",
+        "sso_provider_id",
+        "uuid",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "scim_users",
+        "user_id",
+        "uuid",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "scim_users",
+        "resource",
+        "jsonb",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "scim_users",
+        "user_name",
+        "text",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "scim_users",
+        "external_id",
+        "text",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "scim_users",
+        "active",
+        "boolean",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "scim_users",
+        "created_at",
+        "timestamp with time zone",
+        "NO",
+        "75230039beb12ce952f24927f2bfa2f2"
+      ],
+      [
+        "auth",
+        "scim_users",
+        "updated_at",
+        "timestamp with time zone",
+        "NO",
+        "75230039beb12ce952f24927f2bfa2f2"
+      ],
+      [
+        "auth",
+        "scim_users",
+        "deleted_at",
+        "timestamp with time zone",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "sessions",
+        "id",
+        "uuid",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "sessions",
+        "user_id",
+        "uuid",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "sessions",
+        "created_at",
+        "timestamp with time zone",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "sessions",
+        "updated_at",
+        "timestamp with time zone",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "sessions",
+        "factor_id",
+        "uuid",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "sessions",
+        "aal",
+        "USER-DEFINED",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "sessions",
+        "not_after",
+        "timestamp with time zone",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "sessions",
+        "refreshed_at",
+        "timestamp without time zone",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "sessions",
+        "user_agent",
+        "text",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "sessions",
+        "ip",
+        "inet",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "sessions",
+        "tag",
+        "text",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "sessions",
+        "oauth_client_id",
+        "uuid",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "sessions",
+        "refresh_token_hmac_key",
+        "text",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "sessions",
+        "refresh_token_counter",
+        "bigint",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "sessions",
+        "scopes",
+        "text",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "sso_domains",
+        "id",
+        "uuid",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "sso_domains",
+        "sso_provider_id",
+        "uuid",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "sso_domains",
+        "domain",
+        "text",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "sso_domains",
+        "created_at",
+        "timestamp with time zone",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "sso_domains",
+        "updated_at",
+        "timestamp with time zone",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "sso_providers",
+        "id",
+        "uuid",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "sso_providers",
+        "resource_id",
+        "text",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "sso_providers",
+        "created_at",
+        "timestamp with time zone",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "sso_providers",
+        "updated_at",
+        "timestamp with time zone",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "sso_providers",
+        "disabled",
+        "boolean",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "users",
+        "instance_id",
+        "uuid",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "users",
+        "id",
+        "uuid",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "users",
+        "aud",
+        "character varying",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "users",
+        "role",
+        "character varying",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "users",
+        "email",
+        "character varying",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "users",
+        "encrypted_password",
+        "character varying",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "users",
+        "email_confirmed_at",
+        "timestamp with time zone",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "users",
+        "invited_at",
+        "timestamp with time zone",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "users",
+        "confirmation_token",
+        "character varying",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "users",
+        "confirmation_sent_at",
+        "timestamp with time zone",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "users",
+        "recovery_token",
+        "character varying",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "users",
+        "recovery_sent_at",
+        "timestamp with time zone",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "users",
+        "email_change_token_new",
+        "character varying",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "users",
+        "email_change",
+        "character varying",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "users",
+        "email_change_sent_at",
+        "timestamp with time zone",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "users",
+        "last_sign_in_at",
+        "timestamp with time zone",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "users",
+        "raw_app_meta_data",
+        "jsonb",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "users",
+        "raw_user_meta_data",
+        "jsonb",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "users",
+        "is_super_admin",
+        "boolean",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "users",
+        "created_at",
+        "timestamp with time zone",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "users",
+        "updated_at",
+        "timestamp with time zone",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "users",
+        "phone",
+        "text",
+        "YES",
+        "44aa2e80afbbf95e893573263b34addb"
+      ],
+      [
+        "auth",
+        "users",
+        "phone_confirmed_at",
+        "timestamp with time zone",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "users",
+        "phone_change",
+        "text",
+        "YES",
+        "5001af52b868852e1ace9362f2f67171"
+      ],
+      [
+        "auth",
+        "users",
+        "phone_change_token",
+        "character varying",
+        "YES",
+        "5001af52b868852e1ace9362f2f67171"
+      ],
+      [
+        "auth",
+        "users",
+        "phone_change_sent_at",
+        "timestamp with time zone",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "users",
+        "confirmed_at",
+        "timestamp with time zone",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "users",
+        "email_change_token_current",
+        "character varying",
+        "YES",
+        "5001af52b868852e1ace9362f2f67171"
+      ],
+      [
+        "auth",
+        "users",
+        "email_change_confirm_status",
+        "smallint",
+        "YES",
+        "cfcd208495d565ef66e7dff9f98764da"
+      ],
+      [
+        "auth",
+        "users",
+        "banned_until",
+        "timestamp with time zone",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "users",
+        "reauthentication_token",
+        "character varying",
+        "YES",
+        "5001af52b868852e1ace9362f2f67171"
+      ],
+      [
+        "auth",
+        "users",
+        "reauthentication_sent_at",
+        "timestamp with time zone",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "users",
+        "is_sso_user",
+        "boolean",
+        "NO",
+        "68934a3e9455fa72420237eb05902327"
+      ],
+      [
+        "auth",
+        "users",
+        "deleted_at",
+        "timestamp with time zone",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "users",
+        "is_anonymous",
+        "boolean",
+        "NO",
+        "68934a3e9455fa72420237eb05902327"
+      ],
+      [
+        "auth",
+        "webauthn_challenges",
+        "id",
+        "uuid",
+        "NO",
+        "f3b72bb359a50b640590970a2ab8e514"
+      ],
+      [
+        "auth",
+        "webauthn_challenges",
+        "user_id",
+        "uuid",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "webauthn_challenges",
+        "challenge_type",
+        "text",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "webauthn_challenges",
+        "session_data",
+        "jsonb",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "webauthn_challenges",
+        "created_at",
+        "timestamp with time zone",
+        "NO",
+        "75230039beb12ce952f24927f2bfa2f2"
+      ],
+      [
+        "auth",
+        "webauthn_challenges",
+        "expires_at",
+        "timestamp with time zone",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "webauthn_credentials",
+        "id",
+        "uuid",
+        "NO",
+        "f3b72bb359a50b640590970a2ab8e514"
+      ],
+      [
+        "auth",
+        "webauthn_credentials",
+        "user_id",
+        "uuid",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "webauthn_credentials",
+        "credential_id",
+        "bytea",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "webauthn_credentials",
+        "public_key",
+        "bytea",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "webauthn_credentials",
+        "attestation_type",
+        "text",
+        "NO",
+        "86e751880b3791dd7c2efae188915799"
+      ],
+      [
+        "auth",
+        "webauthn_credentials",
+        "aaguid",
+        "uuid",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "auth",
+        "webauthn_credentials",
+        "sign_count",
+        "bigint",
+        "NO",
+        "cfcd208495d565ef66e7dff9f98764da"
+      ],
+      [
+        "auth",
+        "webauthn_credentials",
+        "transports",
+        "jsonb",
+        "NO",
+        "8b4b2df56ad0773943ef9179742da01b"
+      ],
+      [
+        "auth",
+        "webauthn_credentials",
+        "backup_eligible",
+        "boolean",
+        "NO",
+        "68934a3e9455fa72420237eb05902327"
+      ],
+      [
+        "auth",
+        "webauthn_credentials",
+        "backed_up",
+        "boolean",
+        "NO",
+        "68934a3e9455fa72420237eb05902327"
+      ],
+      [
+        "auth",
+        "webauthn_credentials",
+        "friendly_name",
+        "text",
+        "NO",
+        "86e751880b3791dd7c2efae188915799"
+      ],
+      [
+        "auth",
+        "webauthn_credentials",
+        "created_at",
+        "timestamp with time zone",
+        "NO",
+        "75230039beb12ce952f24927f2bfa2f2"
+      ],
+      [
+        "auth",
+        "webauthn_credentials",
+        "updated_at",
+        "timestamp with time zone",
+        "NO",
+        "75230039beb12ce952f24927f2bfa2f2"
+      ],
+      [
+        "auth",
+        "webauthn_credentials",
+        "last_used_at",
+        "timestamp with time zone",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "private",
+        "account_deletion_authorizations",
+        "auth_user_id",
+        "uuid",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "private",
+        "account_deletion_authorizations",
+        "token_hash",
+        "text",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "private",
+        "account_deletion_authorizations",
+        "expires_at",
+        "timestamp with time zone",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "private",
+        "account_deletion_authorizations",
+        "created_at",
+        "timestamp with time zone",
+        "NO",
+        "75230039beb12ce952f24927f2bfa2f2"
+      ],
+      [
+        "private",
+        "account_deletion_rate_limits",
+        "auth_user_id",
+        "uuid",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "private",
+        "account_deletion_rate_limits",
+        "window_started_at",
+        "timestamp with time zone",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "private",
+        "account_deletion_rate_limits",
+        "failed_attempts",
+        "integer",
+        "NO",
+        "cfcd208495d565ef66e7dff9f98764da"
+      ],
+      [
+        "private",
+        "account_deletion_rate_limits",
+        "total_attempts",
+        "integer",
+        "NO",
+        "cfcd208495d565ef66e7dff9f98764da"
+      ],
+      [
+        "private",
+        "account_deletion_rate_limits",
+        "expires_at",
+        "timestamp with time zone",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "private",
+        "account_deletion_rate_limits",
+        "updated_at",
+        "timestamp with time zone",
+        "NO",
+        "75230039beb12ce952f24927f2bfa2f2"
+      ],
+      [
+        "private",
+        "member_claim_tokens",
+        "member_id",
+        "uuid",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "private",
+        "member_claim_tokens",
+        "auth_user_id",
+        "uuid",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "private",
+        "member_claim_tokens",
+        "token_hash",
+        "text",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "private",
+        "member_claim_tokens",
+        "expires_at",
+        "timestamp with time zone",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "private",
+        "member_claim_tokens",
+        "created_at",
+        "timestamp with time zone",
+        "NO",
+        "75230039beb12ce952f24927f2bfa2f2"
+      ],
+      [
+        "private",
+        "member_credentials",
+        "member_id",
+        "uuid",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "private",
+        "member_credentials",
+        "legacy_password_hash",
+        "text",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "private",
+        "member_credentials",
+        "legacy_password_salt",
+        "text",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "private",
+        "member_credentials",
+        "migrated_at",
+        "timestamp with time zone",
+        "NO",
+        "75230039beb12ce952f24927f2bfa2f2"
+      ],
+      [
+        "private",
+        "member_credentials",
+        "credential_version",
+        "smallint",
+        "NO",
+        "c4ca4238a0b923820dcc509a6f75849b"
+      ],
+      [
+        "private",
+        "member_credentials",
+        "algorithm",
+        "text",
+        "NO",
+        "bb971999a636bd958d40a73bbb37e0fe"
+      ],
+      [
+        "private",
+        "member_credentials",
+        "password_digest",
+        "text",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "private",
+        "member_credentials",
+        "modernized_at",
+        "timestamp with time zone",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "private",
+        "member_credentials",
+        "updated_at",
+        "timestamp with time zone",
+        "NO",
+        "75230039beb12ce952f24927f2bfa2f2"
+      ],
+      [
+        "private",
+        "member_credentials",
+        "auth_password_version",
+        "smallint",
+        "NO",
+        "cfcd208495d565ef66e7dff9f98764da"
+      ],
+      [
+        "private",
+        "network_credentials",
+        "network_id",
+        "uuid",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "private",
+        "network_credentials",
+        "legacy_password_hash",
+        "text",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "private",
+        "network_credentials",
+        "legacy_password_salt",
+        "text",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "private",
+        "network_credentials",
+        "migrated_at",
+        "timestamp with time zone",
+        "NO",
+        "75230039beb12ce952f24927f2bfa2f2"
+      ],
+      [
+        "private",
+        "network_credentials",
+        "credential_version",
+        "smallint",
+        "NO",
+        "c4ca4238a0b923820dcc509a6f75849b"
+      ],
+      [
+        "private",
+        "network_credentials",
+        "algorithm",
+        "text",
+        "NO",
+        "bb971999a636bd958d40a73bbb37e0fe"
+      ],
+      [
+        "private",
+        "network_credentials",
+        "password_digest",
+        "text",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "private",
+        "network_credentials",
+        "modernized_at",
+        "timestamp with time zone",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "private",
+        "network_credentials",
+        "updated_at",
+        "timestamp with time zone",
+        "NO",
+        "75230039beb12ce952f24927f2bfa2f2"
+      ],
+      [
+        "private",
+        "password_rate_limits",
+        "key_hash",
+        "text",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "private",
+        "password_rate_limits",
+        "scope",
+        "text",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "private",
+        "password_rate_limits",
+        "window_started_at",
+        "timestamp with time zone",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "private",
+        "password_rate_limits",
+        "failed_attempts",
+        "integer",
+        "NO",
+        "cfcd208495d565ef66e7dff9f98764da"
+      ],
+      [
+        "private",
+        "password_rate_limits",
+        "total_attempts",
+        "integer",
+        "NO",
+        "cfcd208495d565ef66e7dff9f98764da"
+      ],
+      [
+        "private",
+        "password_rate_limits",
+        "expires_at",
+        "timestamp with time zone",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "private",
+        "password_rate_limits",
+        "updated_at",
+        "timestamp with time zone",
+        "NO",
+        "75230039beb12ce952f24927f2bfa2f2"
+      ],
+      [
+        "public",
+        "expense_cycles",
+        "id",
+        "uuid",
+        "NO",
+        "f3b72bb359a50b640590970a2ab8e514"
+      ],
+      [
+        "public",
+        "expense_cycles",
+        "network_id",
+        "uuid",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "public",
+        "expense_cycles",
+        "cycle_number",
+        "integer",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "public",
+        "expense_cycles",
+        "started_at",
+        "timestamp with time zone",
+        "NO",
+        "75230039beb12ce952f24927f2bfa2f2"
+      ],
+      [
+        "public",
+        "expense_cycles",
+        "closed_at",
+        "timestamp with time zone",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "public",
+        "expense_cycles",
+        "status",
+        "text",
+        "NO",
+        "cfaf8d9e8ae4be644c6e743d4de4ac24"
+      ],
+      [
+        "public",
+        "expense_cycles",
+        "requested_by_member_id",
+        "uuid",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "public",
+        "expense_cycles",
+        "requested_by_member_name",
+        "text",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "public",
+        "expense_reset_approvals",
+        "id",
+        "uuid",
+        "NO",
+        "f3b72bb359a50b640590970a2ab8e514"
+      ],
+      [
+        "public",
+        "expense_reset_approvals",
+        "reset_request_id",
+        "uuid",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "public",
+        "expense_reset_approvals",
+        "network_id",
+        "uuid",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "public",
+        "expense_reset_approvals",
+        "member_id",
+        "uuid",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "public",
+        "expense_reset_approvals",
+        "member_name",
+        "text",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "public",
+        "expense_reset_approvals",
+        "approved_at",
+        "timestamp with time zone",
+        "NO",
+        "75230039beb12ce952f24927f2bfa2f2"
+      ],
+      [
+        "public",
+        "expense_reset_requests",
+        "id",
+        "uuid",
+        "NO",
+        "f3b72bb359a50b640590970a2ab8e514"
+      ],
+      [
+        "public",
+        "expense_reset_requests",
+        "network_id",
+        "uuid",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "public",
+        "expense_reset_requests",
+        "cycle_id",
+        "uuid",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "public",
+        "expense_reset_requests",
+        "requested_by_member_id",
+        "uuid",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "public",
+        "expense_reset_requests",
+        "requested_by_member_name",
+        "text",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "public",
+        "expense_reset_requests",
+        "status",
+        "text",
+        "NO",
+        "3d0c12821e68f0fc31291c72ad568aa9"
+      ],
+      [
+        "public",
+        "expense_reset_requests",
+        "required_member_ids",
+        "ARRAY",
+        "NO",
+        "30c8ce2479a7d03ad0036cb8f8bf8a8d"
+      ],
+      [
+        "public",
+        "expense_reset_requests",
+        "required_member_names",
+        "ARRAY",
+        "NO",
+        "f81a5133416544064d5b9b182f73a6e1"
+      ],
+      [
+        "public",
+        "expense_reset_requests",
+        "created_at",
+        "timestamp with time zone",
+        "NO",
+        "75230039beb12ce952f24927f2bfa2f2"
+      ],
+      [
+        "public",
+        "expense_reset_requests",
+        "completed_at",
+        "timestamp with time zone",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "public",
+        "expenses",
+        "id",
+        "uuid",
+        "NO",
+        "f3b72bb359a50b640590970a2ab8e514"
+      ],
+      [
+        "public",
+        "expenses",
+        "network_id",
+        "uuid",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "public",
+        "expenses",
+        "cycle_id",
+        "uuid",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "public",
+        "expenses",
+        "paid_by_member_id",
+        "uuid",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "public",
+        "expenses",
+        "paid_by_member_name",
+        "text",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "public",
+        "expenses",
+        "added_by_member_id",
+        "uuid",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "public",
+        "expenses",
+        "added_by_member_name",
+        "text",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "public",
+        "expenses",
+        "amount_cents",
+        "bigint",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "public",
+        "expenses",
+        "note",
+        "text",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "public",
+        "expenses",
+        "archived_at",
+        "timestamp with time zone",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "public",
+        "expenses",
+        "client_generated_id",
+        "text",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "public",
+        "expenses",
+        "created_at",
+        "timestamp with time zone",
+        "NO",
+        "75230039beb12ce952f24927f2bfa2f2"
+      ],
+      [
+        "public",
+        "maskan_network_members",
+        "id",
+        "uuid",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "public",
+        "maskan_network_members",
+        "network_id",
+        "uuid",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "public",
+        "maskan_network_members",
+        "name",
+        "text",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "public",
+        "maskan_network_members",
+        "normalized_name",
+        "text",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "public",
+        "maskan_network_members",
+        "password_hash",
+        "text",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "public",
+        "maskan_network_members",
+        "password_salt",
+        "text",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "public",
+        "maskan_network_members",
+        "avatar_color",
+        "text",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "public",
+        "maskan_network_members",
+        "avatar_initials",
+        "text",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "public",
+        "maskan_network_members",
+        "avatar_image_path",
+        "text",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "public",
+        "maskan_network_members",
+        "avatar_image_url",
+        "text",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "public",
+        "maskan_network_members",
+        "created_at",
+        "timestamp with time zone",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "public",
+        "maskan_networks",
+        "id",
+        "uuid",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "public",
+        "maskan_networks",
+        "name",
+        "text",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "public",
+        "maskan_networks",
+        "normalized_name",
+        "text",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "public",
+        "maskan_networks",
+        "network_password_hash",
+        "text",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "public",
+        "maskan_networks",
+        "network_password_salt",
+        "text",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "public",
+        "maskan_networks",
+        "currency_code",
+        "text",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "public",
+        "maskan_networks",
+        "currency_symbol",
+        "text",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "public",
+        "maskan_networks",
+        "created_by_member_id",
+        "uuid",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "public",
+        "maskan_networks",
+        "created_at",
+        "timestamp with time zone",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "public",
+        "maskan_networks",
+        "updated_at",
+        "timestamp with time zone",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "public",
+        "network_members",
+        "id",
+        "uuid",
+        "NO",
+        "f3b72bb359a50b640590970a2ab8e514"
+      ],
+      [
+        "public",
+        "network_members",
+        "network_id",
+        "uuid",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "public",
+        "network_members",
+        "name",
+        "text",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "public",
+        "network_members",
+        "normalized_name",
+        "text",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "public",
+        "network_members",
+        "password_hash",
+        "text",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "public",
+        "network_members",
+        "password_salt",
+        "text",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "public",
+        "network_members",
+        "avatar_color",
+        "text",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "public",
+        "network_members",
+        "avatar_initials",
+        "text",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "public",
+        "network_members",
+        "avatar_image_path",
+        "text",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "public",
+        "network_members",
+        "avatar_image_url",
+        "text",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "public",
+        "network_members",
+        "created_at",
+        "timestamp with time zone",
+        "NO",
+        "75230039beb12ce952f24927f2bfa2f2"
+      ],
+      [
+        "public",
+        "network_members",
+        "auth_user_id",
+        "uuid",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "public",
+        "network_notifications",
+        "id",
+        "uuid",
+        "NO",
+        "f3b72bb359a50b640590970a2ab8e514"
+      ],
+      [
+        "public",
+        "network_notifications",
+        "network_id",
+        "uuid",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "public",
+        "network_notifications",
+        "recipient_member_id",
+        "uuid",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "public",
+        "network_notifications",
+        "actor_member_id",
+        "uuid",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "public",
+        "network_notifications",
+        "actor_member_name",
+        "text",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "public",
+        "network_notifications",
+        "expense_id",
+        "uuid",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "public",
+        "network_notifications",
+        "amount_cents",
+        "bigint",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "public",
+        "network_notifications",
+        "currency_symbol",
+        "text",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "public",
+        "network_notifications",
+        "note_snippet",
+        "text",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "public",
+        "network_notifications",
+        "kind",
+        "text",
+        "NO",
+        "d45785b87cf18cef87012a54fa31f011"
+      ],
+      [
+        "public",
+        "network_notifications",
+        "reset_request_id",
+        "uuid",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "public",
+        "network_notifications",
+        "is_read",
+        "boolean",
+        "NO",
+        "68934a3e9455fa72420237eb05902327"
+      ],
+      [
+        "public",
+        "network_notifications",
+        "created_at",
+        "timestamp with time zone",
+        "NO",
+        "75230039beb12ce952f24927f2bfa2f2"
+      ],
+      [
+        "public",
+        "networks",
+        "id",
+        "uuid",
+        "NO",
+        "f3b72bb359a50b640590970a2ab8e514"
+      ],
+      [
+        "public",
+        "networks",
+        "name",
+        "text",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "public",
+        "networks",
+        "normalized_name",
+        "text",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "public",
+        "networks",
+        "network_password_hash",
+        "text",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "public",
+        "networks",
+        "network_password_salt",
+        "text",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "public",
+        "networks",
+        "currency_code",
+        "text",
+        "NO",
+        "4675c94f96cabfc75e38fbf746eb84ae"
+      ],
+      [
+        "public",
+        "networks",
+        "currency_symbol",
+        "text",
+        "NO",
+        "b0433f2ce3b1acc78d431ca480b37ae4"
+      ],
+      [
+        "public",
+        "networks",
+        "created_by_member_id",
+        "uuid",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "public",
+        "networks",
+        "created_at",
+        "timestamp with time zone",
+        "NO",
+        "75230039beb12ce952f24927f2bfa2f2"
+      ],
+      [
+        "public",
+        "networks",
+        "updated_at",
+        "timestamp with time zone",
+        "NO",
+        "75230039beb12ce952f24927f2bfa2f2"
+      ],
+      [
+        "storage",
+        "buckets",
+        "id",
+        "text",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "storage",
+        "buckets",
+        "name",
+        "text",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "storage",
+        "buckets",
+        "owner",
+        "uuid",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "storage",
+        "buckets",
+        "created_at",
+        "timestamp with time zone",
+        "YES",
+        "75230039beb12ce952f24927f2bfa2f2"
+      ],
+      [
+        "storage",
+        "buckets",
+        "updated_at",
+        "timestamp with time zone",
+        "YES",
+        "75230039beb12ce952f24927f2bfa2f2"
+      ],
+      [
+        "storage",
+        "buckets",
+        "public",
+        "boolean",
+        "YES",
+        "68934a3e9455fa72420237eb05902327"
+      ],
+      [
+        "storage",
+        "buckets",
+        "avif_autodetection",
+        "boolean",
+        "YES",
+        "68934a3e9455fa72420237eb05902327"
+      ],
+      [
+        "storage",
+        "buckets",
+        "file_size_limit",
+        "bigint",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "storage",
+        "buckets",
+        "allowed_mime_types",
+        "ARRAY",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "storage",
+        "buckets",
+        "owner_id",
+        "text",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "storage",
+        "buckets",
+        "type",
+        "USER-DEFINED",
+        "NO",
+        "5485714ce72f40c6ffe2818e53862fca"
+      ],
+      [
+        "storage",
+        "buckets",
+        "versioning_status",
+        "text",
+        "NO",
+        "63c248537d1b4fd4346b2a9fdab80c93"
+      ],
+      [
+        "storage",
+        "buckets",
+        "lifecycle_configuration",
+        "jsonb",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "storage",
+        "buckets",
+        "lifecycle_configuration_generation",
+        "uuid",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "storage",
+        "buckets_analytics",
+        "name",
+        "text",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "storage",
+        "buckets_analytics",
+        "type",
+        "USER-DEFINED",
+        "NO",
+        "3cb5e61e8db0bf1e9527d7e23bde376e"
+      ],
+      [
+        "storage",
+        "buckets_analytics",
+        "format",
+        "text",
+        "NO",
+        "0cd243a7d4afac3e81595b9647e1dc0f"
+      ],
+      [
+        "storage",
+        "buckets_analytics",
+        "created_at",
+        "timestamp with time zone",
+        "NO",
+        "75230039beb12ce952f24927f2bfa2f2"
+      ],
+      [
+        "storage",
+        "buckets_analytics",
+        "updated_at",
+        "timestamp with time zone",
+        "NO",
+        "75230039beb12ce952f24927f2bfa2f2"
+      ],
+      [
+        "storage",
+        "buckets_analytics",
+        "id",
+        "uuid",
+        "NO",
+        "f3b72bb359a50b640590970a2ab8e514"
+      ],
+      [
+        "storage",
+        "buckets_analytics",
+        "deleted_at",
+        "timestamp with time zone",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "storage",
+        "buckets_vectors",
+        "id",
+        "text",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "storage",
+        "buckets_vectors",
+        "type",
+        "USER-DEFINED",
+        "NO",
+        "e328c68de51bb97caf262ef02fb152f1"
+      ],
+      [
+        "storage",
+        "buckets_vectors",
+        "created_at",
+        "timestamp with time zone",
+        "NO",
+        "75230039beb12ce952f24927f2bfa2f2"
+      ],
+      [
+        "storage",
+        "buckets_vectors",
+        "updated_at",
+        "timestamp with time zone",
+        "NO",
+        "75230039beb12ce952f24927f2bfa2f2"
+      ],
+      [
+        "storage",
+        "migrations",
+        "id",
+        "integer",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "storage",
+        "migrations",
+        "name",
+        "character varying",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "storage",
+        "migrations",
+        "hash",
+        "character varying",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "storage",
+        "migrations",
+        "executed_at",
+        "timestamp without time zone",
+        "YES",
+        "b96c3e81c1a3dc6db69a2e652bb5449c"
+      ],
+      [
+        "storage",
+        "objects",
+        "id",
+        "uuid",
+        "NO",
+        "f3b72bb359a50b640590970a2ab8e514"
+      ],
+      [
+        "storage",
+        "objects",
+        "bucket_id",
+        "text",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "storage",
+        "objects",
+        "name",
+        "text",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "storage",
+        "objects",
+        "owner",
+        "uuid",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "storage",
+        "objects",
+        "created_at",
+        "timestamp with time zone",
+        "YES",
+        "75230039beb12ce952f24927f2bfa2f2"
+      ],
+      [
+        "storage",
+        "objects",
+        "updated_at",
+        "timestamp with time zone",
+        "YES",
+        "75230039beb12ce952f24927f2bfa2f2"
+      ],
+      [
+        "storage",
+        "objects",
+        "last_accessed_at",
+        "timestamp with time zone",
+        "YES",
+        "75230039beb12ce952f24927f2bfa2f2"
+      ],
+      [
+        "storage",
+        "objects",
+        "metadata",
+        "jsonb",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "storage",
+        "objects",
+        "path_tokens",
+        "ARRAY",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "storage",
+        "objects",
+        "version",
+        "text",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "storage",
+        "objects",
+        "owner_id",
+        "text",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "storage",
+        "objects",
+        "user_metadata",
+        "jsonb",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "storage",
+        "objects",
+        "archived_at",
+        "timestamp with time zone",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "storage",
+        "objects",
+        "is_delete_marker",
+        "boolean",
+        "NO",
+        "68934a3e9455fa72420237eb05902327"
+      ],
+      [
+        "storage",
+        "objects",
+        "is_versioned",
+        "boolean",
+        "NO",
+        "68934a3e9455fa72420237eb05902327"
+      ],
+      [
+        "storage",
+        "s3_multipart_uploads",
+        "id",
+        "text",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "storage",
+        "s3_multipart_uploads",
+        "in_progress_size",
+        "bigint",
+        "NO",
+        "cfcd208495d565ef66e7dff9f98764da"
+      ],
+      [
+        "storage",
+        "s3_multipart_uploads",
+        "upload_signature",
+        "text",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "storage",
+        "s3_multipart_uploads",
+        "bucket_id",
+        "text",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "storage",
+        "s3_multipart_uploads",
+        "key",
+        "text",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "storage",
+        "s3_multipart_uploads",
+        "version",
+        "text",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "storage",
+        "s3_multipart_uploads",
+        "owner_id",
+        "text",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "storage",
+        "s3_multipart_uploads",
+        "created_at",
+        "timestamp with time zone",
+        "NO",
+        "75230039beb12ce952f24927f2bfa2f2"
+      ],
+      [
+        "storage",
+        "s3_multipart_uploads",
+        "user_metadata",
+        "jsonb",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "storage",
+        "s3_multipart_uploads",
+        "metadata",
+        "jsonb",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "storage",
+        "s3_multipart_uploads_parts",
+        "id",
+        "uuid",
+        "NO",
+        "f3b72bb359a50b640590970a2ab8e514"
+      ],
+      [
+        "storage",
+        "s3_multipart_uploads_parts",
+        "upload_id",
+        "text",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "storage",
+        "s3_multipart_uploads_parts",
+        "size",
+        "bigint",
+        "NO",
+        "cfcd208495d565ef66e7dff9f98764da"
+      ],
+      [
+        "storage",
+        "s3_multipart_uploads_parts",
+        "part_number",
+        "integer",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "storage",
+        "s3_multipart_uploads_parts",
+        "bucket_id",
+        "text",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "storage",
+        "s3_multipart_uploads_parts",
+        "key",
+        "text",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "storage",
+        "s3_multipart_uploads_parts",
+        "etag",
+        "text",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "storage",
+        "s3_multipart_uploads_parts",
+        "owner_id",
+        "text",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "storage",
+        "s3_multipart_uploads_parts",
+        "version",
+        "text",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "storage",
+        "s3_multipart_uploads_parts",
+        "created_at",
+        "timestamp with time zone",
+        "NO",
+        "75230039beb12ce952f24927f2bfa2f2"
+      ],
+      [
+        "storage",
+        "vector_indexes",
+        "id",
+        "text",
+        "NO",
+        "f3b72bb359a50b640590970a2ab8e514"
+      ],
+      [
+        "storage",
+        "vector_indexes",
+        "name",
+        "text",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "storage",
+        "vector_indexes",
+        "bucket_id",
+        "text",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "storage",
+        "vector_indexes",
+        "data_type",
+        "text",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "storage",
+        "vector_indexes",
+        "dimension",
+        "integer",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "storage",
+        "vector_indexes",
+        "distance_metric",
+        "text",
+        "NO",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "storage",
+        "vector_indexes",
+        "metadata_configuration",
+        "jsonb",
+        "YES",
+        "d41d8cd98f00b204e9800998ecf8427e"
+      ],
+      [
+        "storage",
+        "vector_indexes",
+        "created_at",
+        "timestamp with time zone",
+        "NO",
+        "75230039beb12ce952f24927f2bfa2f2"
+      ],
+      [
+        "storage",
+        "vector_indexes",
+        "updated_at",
+        "timestamp with time zone",
+        "NO",
+        "75230039beb12ce952f24927f2bfa2f2"
+      ]
+    ],
+    "indexes": [
+      [
+        "private",
+        "account_deletion_authorizations",
+        "account_deletion_authorizations_pkey",
+        "CREATE UNIQUE INDEX account_deletion_authorizations_pkey ON private.account_deletion_authorizations USING btree (auth_user_id)"
+      ],
+      [
+        "private",
+        "account_deletion_rate_limits",
+        "account_deletion_rate_limits_pkey",
+        "CREATE UNIQUE INDEX account_deletion_rate_limits_pkey ON private.account_deletion_rate_limits USING btree (auth_user_id)"
+      ],
+      [
+        "private",
+        "member_claim_tokens",
+        "member_claim_tokens_pkey",
+        "CREATE UNIQUE INDEX member_claim_tokens_pkey ON private.member_claim_tokens USING btree (member_id)"
+      ],
+      [
+        "private",
+        "member_credentials",
+        "member_credentials_pkey",
+        "CREATE UNIQUE INDEX member_credentials_pkey ON private.member_credentials USING btree (member_id)"
+      ],
+      [
+        "private",
+        "network_credentials",
+        "network_credentials_pkey",
+        "CREATE UNIQUE INDEX network_credentials_pkey ON private.network_credentials USING btree (network_id)"
+      ],
+      [
+        "private",
+        "password_rate_limits",
+        "password_rate_limits_expires_at_idx",
+        "CREATE INDEX password_rate_limits_expires_at_idx ON private.password_rate_limits USING btree (expires_at)"
+      ],
+      [
+        "private",
+        "password_rate_limits",
+        "password_rate_limits_pkey",
+        "CREATE UNIQUE INDEX password_rate_limits_pkey ON private.password_rate_limits USING btree (key_hash)"
+      ],
+      [
+        "public",
+        "expense_cycles",
+        "expense_cycles_network_id_cycle_number_key",
+        "CREATE UNIQUE INDEX expense_cycles_network_id_cycle_number_key ON public.expense_cycles USING btree (network_id, cycle_number)"
+      ],
+      [
+        "public",
+        "expense_cycles",
+        "expense_cycles_network_status_idx",
+        "CREATE INDEX expense_cycles_network_status_idx ON public.expense_cycles USING btree (network_id, status)"
+      ],
+      [
+        "public",
+        "expense_cycles",
+        "expense_cycles_one_active_idx",
+        "CREATE UNIQUE INDEX expense_cycles_one_active_idx ON public.expense_cycles USING btree (network_id) WHERE (status = 'active'::text)"
+      ],
+      [
+        "public",
+        "expense_cycles",
+        "expense_cycles_pkey",
+        "CREATE UNIQUE INDEX expense_cycles_pkey ON public.expense_cycles USING btree (id)"
+      ],
+      [
+        "public",
+        "expense_reset_approvals",
+        "expense_reset_approvals_pkey",
+        "CREATE UNIQUE INDEX expense_reset_approvals_pkey ON public.expense_reset_approvals USING btree (id)"
+      ],
+      [
+        "public",
+        "expense_reset_approvals",
+        "expense_reset_approvals_request_idx",
+        "CREATE INDEX expense_reset_approvals_request_idx ON public.expense_reset_approvals USING btree (reset_request_id, member_id)"
+      ],
+      [
+        "public",
+        "expense_reset_approvals",
+        "expense_reset_approvals_reset_request_id_member_id_key",
+        "CREATE UNIQUE INDEX expense_reset_approvals_reset_request_id_member_id_key ON public.expense_reset_approvals USING btree (reset_request_id, member_id)"
+      ],
+      [
+        "public",
+        "expense_reset_requests",
+        "expense_reset_requests_network_status_idx",
+        "CREATE INDEX expense_reset_requests_network_status_idx ON public.expense_reset_requests USING btree (network_id, status, created_at DESC)"
+      ],
+      [
+        "public",
+        "expense_reset_requests",
+        "expense_reset_requests_one_pending_idx",
+        "CREATE UNIQUE INDEX expense_reset_requests_one_pending_idx ON public.expense_reset_requests USING btree (network_id) WHERE (status = 'pending'::text)"
+      ],
+      [
+        "public",
+        "expense_reset_requests",
+        "expense_reset_requests_pkey",
+        "CREATE UNIQUE INDEX expense_reset_requests_pkey ON public.expense_reset_requests USING btree (id)"
+      ],
+      [
+        "public",
+        "expenses",
+        "expenses_active_network_idx",
+        "CREATE INDEX expenses_active_network_idx ON public.expenses USING btree (network_id, archived_at)"
+      ],
+      [
+        "public",
+        "expenses",
+        "expenses_added_by_member_id_idx",
+        "CREATE INDEX expenses_added_by_member_id_idx ON public.expenses USING btree (added_by_member_id)"
+      ],
+      [
+        "public",
+        "expenses",
+        "expenses_cycle_id_idx",
+        "CREATE INDEX expenses_cycle_id_idx ON public.expenses USING btree (cycle_id)"
+      ],
+      [
+        "public",
+        "expenses",
+        "expenses_network_client_generated_id_idx",
+        "CREATE UNIQUE INDEX expenses_network_client_generated_id_idx ON public.expenses USING btree (network_id, client_generated_id) WHERE (client_generated_id IS NOT NULL)"
+      ],
+      [
+        "public",
+        "expenses",
+        "expenses_network_id_created_at_idx",
+        "CREATE INDEX expenses_network_id_created_at_idx ON public.expenses USING btree (network_id, created_at DESC)"
+      ],
+      [
+        "public",
+        "expenses",
+        "expenses_paid_by_member_id_idx",
+        "CREATE INDEX expenses_paid_by_member_id_idx ON public.expenses USING btree (paid_by_member_id)"
+      ],
+      [
+        "public",
+        "expenses",
+        "expenses_pkey",
+        "CREATE UNIQUE INDEX expenses_pkey ON public.expenses USING btree (id)"
+      ],
+      [
+        "public",
+        "network_members",
+        "network_members_auth_user_id_uidx",
+        "CREATE UNIQUE INDEX network_members_auth_user_id_uidx ON public.network_members USING btree (auth_user_id) WHERE (auth_user_id IS NOT NULL)"
+      ],
+      [
+        "public",
+        "network_members",
+        "network_members_auth_user_network_idx",
+        "CREATE INDEX network_members_auth_user_network_idx ON public.network_members USING btree (auth_user_id, network_id) WHERE (auth_user_id IS NOT NULL)"
+      ],
+      [
+        "public",
+        "network_members",
+        "network_members_network_id_idx",
+        "CREATE INDEX network_members_network_id_idx ON public.network_members USING btree (network_id)"
+      ],
+      [
+        "public",
+        "network_members",
+        "network_members_network_id_normalized_name_idx",
+        "CREATE INDEX network_members_network_id_normalized_name_idx ON public.network_members USING btree (network_id, normalized_name)"
+      ],
+      [
+        "public",
+        "network_members",
+        "network_members_network_id_normalized_name_key",
+        "CREATE UNIQUE INDEX network_members_network_id_normalized_name_key ON public.network_members USING btree (network_id, normalized_name)"
+      ],
+      [
+        "public",
+        "network_members",
+        "network_members_pkey",
+        "CREATE UNIQUE INDEX network_members_pkey ON public.network_members USING btree (id)"
+      ],
+      [
+        "public",
+        "network_notifications",
+        "network_notifications_network_recipient_idx",
+        "CREATE INDEX network_notifications_network_recipient_idx ON public.network_notifications USING btree (network_id, recipient_member_id)"
+      ],
+      [
+        "public",
+        "network_notifications",
+        "network_notifications_pkey",
+        "CREATE UNIQUE INDEX network_notifications_pkey ON public.network_notifications USING btree (id)"
+      ],
+      [
+        "public",
+        "network_notifications",
+        "network_notifications_recipient_read_created_idx",
+        "CREATE INDEX network_notifications_recipient_read_created_idx ON public.network_notifications USING btree (recipient_member_id, is_read, created_at DESC)"
+      ],
+      [
+        "public",
+        "networks",
+        "networks_normalized_name_idx",
+        "CREATE INDEX networks_normalized_name_idx ON public.networks USING btree (normalized_name)"
+      ],
+      [
+        "public",
+        "networks",
+        "networks_normalized_name_key",
+        "CREATE UNIQUE INDEX networks_normalized_name_key ON public.networks USING btree (normalized_name)"
+      ],
+      [
+        "public",
+        "networks",
+        "networks_pkey",
+        "CREATE UNIQUE INDEX networks_pkey ON public.networks USING btree (id)"
+      ]
+    ],
+    "storage": [
+      {
+        "public": true,
+        "bucket_id": "member-avatars",
+        "object_count": 0,
+        "reported_object_bytes": 0
+      }
+    ],
+    "policies": [
+      {
+        "cmd": "DELETE",
+        "qual": "maskan_is_network_member(network_id)",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "expense_cycles",
+        "permissive": "PERMISSIVE",
+        "policyname": "maskan_cycles_delete",
+        "schemaname": "public",
+        "with_check": null
+      },
+      {
+        "cmd": "INSERT",
+        "qual": null,
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "expense_cycles",
+        "permissive": "PERMISSIVE",
+        "policyname": "maskan_cycles_insert",
+        "schemaname": "public",
+        "with_check": "(maskan_can_create_active_cycle(network_id, cycle_number) AND (status = 'active'::text) AND (closed_at IS NULL) AND ((requested_by_member_id IS NULL) OR (requested_by_member_id = maskan_current_member_id())))"
+      },
+      {
+        "cmd": "SELECT",
+        "qual": "maskan_is_network_member(network_id)",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "expense_cycles",
+        "permissive": "PERMISSIVE",
+        "policyname": "maskan_cycles_select",
+        "schemaname": "public",
+        "with_check": null
+      },
+      {
+        "cmd": "UPDATE",
+        "qual": "maskan_is_network_member(network_id)",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "expense_cycles",
+        "permissive": "PERMISSIVE",
+        "policyname": "maskan_cycles_update",
+        "schemaname": "public",
+        "with_check": "maskan_is_network_member(network_id)"
+      },
+      {
+        "cmd": "DELETE",
+        "qual": "(member_id = maskan_current_member_id())",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "expense_reset_approvals",
+        "permissive": "PERMISSIVE",
+        "policyname": "maskan_reset_approvals_delete",
+        "schemaname": "public",
+        "with_check": null
+      },
+      {
+        "cmd": "INSERT",
+        "qual": null,
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "expense_reset_approvals",
+        "permissive": "PERMISSIVE",
+        "policyname": "maskan_reset_approvals_insert",
+        "schemaname": "public",
+        "with_check": "(maskan_is_network_member(network_id) AND (member_id = maskan_current_member_id()) AND (EXISTS ( SELECT 1\n   FROM expense_reset_requests request\n  WHERE ((request.id = expense_reset_approvals.reset_request_id) AND (request.network_id = expense_reset_approvals.network_id)))))"
+      },
+      {
+        "cmd": "SELECT",
+        "qual": "maskan_is_network_member(network_id)",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "expense_reset_approvals",
+        "permissive": "PERMISSIVE",
+        "policyname": "maskan_reset_approvals_select",
+        "schemaname": "public",
+        "with_check": null
+      },
+      {
+        "cmd": "DELETE",
+        "qual": "(requested_by_member_id = maskan_current_member_id())",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "expense_reset_requests",
+        "permissive": "PERMISSIVE",
+        "policyname": "maskan_reset_requests_delete",
+        "schemaname": "public",
+        "with_check": null
+      },
+      {
+        "cmd": "INSERT",
+        "qual": null,
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "expense_reset_requests",
+        "permissive": "PERMISSIVE",
+        "policyname": "maskan_reset_requests_insert",
+        "schemaname": "public",
+        "with_check": "(maskan_is_network_member(network_id) AND (requested_by_member_id = maskan_current_member_id()) AND (EXISTS ( SELECT 1\n   FROM expense_cycles target_cycle\n  WHERE ((target_cycle.id = expense_reset_requests.cycle_id) AND (target_cycle.network_id = expense_reset_requests.network_id)))))"
+      },
+      {
+        "cmd": "SELECT",
+        "qual": "maskan_is_network_member(network_id)",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "expense_reset_requests",
+        "permissive": "PERMISSIVE",
+        "policyname": "maskan_reset_requests_select",
+        "schemaname": "public",
+        "with_check": null
+      },
+      {
+        "cmd": "UPDATE",
+        "qual": "maskan_is_network_member(network_id)",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "expense_reset_requests",
+        "permissive": "PERMISSIVE",
+        "policyname": "maskan_reset_requests_update",
+        "schemaname": "public",
+        "with_check": "maskan_is_network_member(network_id)"
+      },
+      {
+        "cmd": "DELETE",
+        "qual": "(added_by_member_id = maskan_current_member_id())",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "expenses",
+        "permissive": "PERMISSIVE",
+        "policyname": "maskan_expenses_delete",
+        "schemaname": "public",
+        "with_check": null
+      },
+      {
+        "cmd": "INSERT",
+        "qual": null,
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "expenses",
+        "permissive": "PERMISSIVE",
+        "policyname": "maskan_expenses_insert",
+        "schemaname": "public",
+        "with_check": "(maskan_is_network_member(network_id) AND (added_by_member_id = maskan_current_member_id()) AND (EXISTS ( SELECT 1\n   FROM network_members payer\n  WHERE ((payer.id = expenses.paid_by_member_id) AND (payer.network_id = expenses.network_id)))) AND ((cycle_id IS NULL) OR (EXISTS ( SELECT 1\n   FROM expense_cycles target_cycle\n  WHERE ((target_cycle.id = expenses.cycle_id) AND (target_cycle.network_id = expenses.network_id))))))"
+      },
+      {
+        "cmd": "SELECT",
+        "qual": "maskan_is_network_member(network_id)",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "expenses",
+        "permissive": "PERMISSIVE",
+        "policyname": "maskan_expenses_select",
+        "schemaname": "public",
+        "with_check": null
+      },
+      {
+        "cmd": "UPDATE",
+        "qual": "(added_by_member_id = maskan_current_member_id())",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "expenses",
+        "permissive": "PERMISSIVE",
+        "policyname": "maskan_expenses_update",
+        "schemaname": "public",
+        "with_check": "((added_by_member_id = maskan_current_member_id()) AND ((paid_by_member_id IS NULL) OR (EXISTS ( SELECT 1\n   FROM network_members payer\n  WHERE ((payer.id = expenses.paid_by_member_id) AND (payer.network_id = expenses.network_id))))) AND ((cycle_id IS NULL) OR (EXISTS ( SELECT 1\n   FROM expense_cycles target_cycle\n  WHERE ((target_cycle.id = expenses.cycle_id) AND (target_cycle.network_id = expenses.network_id))))))"
+      },
+      {
+        "cmd": "SELECT",
+        "qual": "maskan_is_network_member(network_id)",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "network_members",
+        "permissive": "PERMISSIVE",
+        "policyname": "maskan_members_select",
+        "schemaname": "public",
+        "with_check": null
+      },
+      {
+        "cmd": "UPDATE",
+        "qual": "(id = maskan_current_member_id())",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "network_members",
+        "permissive": "PERMISSIVE",
+        "policyname": "maskan_members_update_self",
+        "schemaname": "public",
+        "with_check": "((id = maskan_current_member_id()) AND (auth_user_id = auth.uid()))"
+      },
+      {
+        "cmd": "DELETE",
+        "qual": "((recipient_member_id = maskan_current_member_id()) OR (actor_member_id = maskan_current_member_id()))",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "network_notifications",
+        "permissive": "PERMISSIVE",
+        "policyname": "maskan_notifications_delete",
+        "schemaname": "public",
+        "with_check": null
+      },
+      {
+        "cmd": "INSERT",
+        "qual": null,
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "network_notifications",
+        "permissive": "PERMISSIVE",
+        "policyname": "maskan_notifications_insert",
+        "schemaname": "public",
+        "with_check": "(maskan_is_network_member(network_id) AND ((actor_member_id = maskan_current_member_id()) OR ((actor_member_id IS NULL) AND (kind = 'cycle_started'::text))) AND (EXISTS ( SELECT 1\n   FROM network_members recipient\n  WHERE ((recipient.id = network_notifications.recipient_member_id) AND (recipient.network_id = network_notifications.network_id)))) AND ((expense_id IS NULL) OR (EXISTS ( SELECT 1\n   FROM expenses expense\n  WHERE ((expense.id = network_notifications.expense_id) AND (expense.network_id = network_notifications.network_id))))) AND ((reset_request_id IS NULL) OR (EXISTS ( SELECT 1\n   FROM expense_reset_requests request\n  WHERE ((request.id = network_notifications.reset_request_id) AND (request.network_id = network_notifications.network_id))))))"
+      },
+      {
+        "cmd": "SELECT",
+        "qual": "(recipient_member_id = maskan_current_member_id())",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "network_notifications",
+        "permissive": "PERMISSIVE",
+        "policyname": "maskan_notifications_select",
+        "schemaname": "public",
+        "with_check": null
+      },
+      {
+        "cmd": "UPDATE",
+        "qual": "(recipient_member_id = maskan_current_member_id())",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "network_notifications",
+        "permissive": "PERMISSIVE",
+        "policyname": "maskan_notifications_update",
+        "schemaname": "public",
+        "with_check": "(recipient_member_id = maskan_current_member_id())"
+      },
+      {
+        "cmd": "SELECT",
+        "qual": "maskan_is_network_member(id)",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "networks",
+        "permissive": "PERMISSIVE",
+        "policyname": "maskan_networks_select",
+        "schemaname": "public",
+        "with_check": null
+      },
+      {
+        "cmd": "UPDATE",
+        "qual": "(created_by_member_id = maskan_current_member_id())",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "networks",
+        "permissive": "PERMISSIVE",
+        "policyname": "maskan_networks_update",
+        "schemaname": "public",
+        "with_check": "(created_by_member_id = maskan_current_member_id())"
+      },
+      {
+        "cmd": "DELETE",
+        "qual": "((bucket_id = 'member-avatars'::text) AND ((storage.foldername(name))[1] = (maskan_current_network_id())::text) AND ((storage.foldername(name))[2] = (maskan_current_member_id())::text))",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "objects",
+        "permissive": "PERMISSIVE",
+        "policyname": "maskan_member_avatar_delete",
+        "schemaname": "storage",
+        "with_check": null
+      },
+      {
+        "cmd": "INSERT",
+        "qual": null,
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "objects",
+        "permissive": "PERMISSIVE",
+        "policyname": "maskan_member_avatar_insert",
+        "schemaname": "storage",
+        "with_check": "((bucket_id = 'member-avatars'::text) AND ((storage.foldername(name))[1] = (maskan_current_network_id())::text) AND ((storage.foldername(name))[2] = (maskan_current_member_id())::text))"
+      },
+      {
+        "cmd": "SELECT",
+        "qual": "(bucket_id = 'member-avatars'::text)",
+        "roles": [
+          "public"
+        ],
+        "tablename": "objects",
+        "permissive": "PERMISSIVE",
+        "policyname": "maskan_member_avatar_public_read",
+        "schemaname": "storage",
+        "with_check": null
+      },
+      {
+        "cmd": "UPDATE",
+        "qual": "((bucket_id = 'member-avatars'::text) AND ((storage.foldername(name))[1] = (maskan_current_network_id())::text) AND ((storage.foldername(name))[2] = (maskan_current_member_id())::text))",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "objects",
+        "permissive": "PERMISSIVE",
+        "policyname": "maskan_member_avatar_update",
+        "schemaname": "storage",
+        "with_check": "((bucket_id = 'member-avatars'::text) AND ((storage.foldername(name))[1] = (maskan_current_network_id())::text) AND ((storage.foldername(name))[2] = (maskan_current_member_id())::text))"
+      }
+    ],
+    "functions": [
+      {
+        "acl": "{postgres=X/postgres}",
+        "args": "password_salt text, raw_password text",
+        "name": "maskan_legacy_password_hash",
+        "owner": "postgres",
+        "config": [
+          "search_path=\"\""
+        ],
+        "schema": "private",
+        "anon_execute": false,
+        "definition_md5": "a4ea9504e1dfdb5c437af06ddb130198",
+        "security_definer": false,
+        "authenticated_execute": false
+      },
+      {
+        "acl": "{postgres=X/postgres}",
+        "args": "",
+        "name": "maskan_reject_credential_downgrade",
+        "owner": "postgres",
+        "config": [
+          "search_path=\"\""
+        ],
+        "schema": "private",
+        "anon_execute": false,
+        "definition_md5": "f6716c998e4986d27a79bf43ae6650b9",
+        "security_definer": false,
+        "authenticated_execute": false
+      },
+      {
+        "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+        "args": "",
+        "name": "maskan_account_deletion_context",
+        "owner": "postgres",
+        "config": [
+          "search_path=\"\""
+        ],
+        "schema": "public",
+        "anon_execute": false,
+        "definition_md5": "af3747d3d3174cb9d5fc5b7aa7bc4529",
+        "security_definer": true,
+        "authenticated_execute": true
+      },
+      {
+        "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+        "args": "",
+        "name": "maskan_account_deletion_rate_limit_check",
+        "owner": "postgres",
+        "config": [
+          "search_path=\"\""
+        ],
+        "schema": "public",
+        "anon_execute": false,
+        "definition_md5": "ddef85cb3fefa237f7635af119e0717a",
+        "security_definer": true,
+        "authenticated_execute": true
+      },
+      {
+        "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+        "args": "",
+        "name": "maskan_account_deletion_rate_limit_failure",
+        "owner": "postgres",
+        "config": [
+          "search_path=\"\""
+        ],
+        "schema": "public",
+        "anon_execute": false,
+        "definition_md5": "aa6cb0a84728df0222b09ca2c8970f79",
+        "security_definer": true,
+        "authenticated_execute": true
+      },
+      {
+        "acl": "{postgres=X/postgres,service_role=X/postgres}",
+        "args": "p_auth_user_id uuid, p_token_hash text",
+        "name": "maskan_authorize_account_deletion",
+        "owner": "postgres",
+        "config": [
+          "search_path=\"\""
+        ],
+        "schema": "public",
+        "anon_execute": false,
+        "definition_md5": "2e6352fe92aa4e58064714028cccb37b",
+        "security_definer": true,
+        "authenticated_execute": false
+      },
+      {
+        "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+        "args": "target_network_id uuid, target_cycle_number integer",
+        "name": "maskan_can_create_active_cycle",
+        "owner": "postgres",
+        "config": [
+          "search_path=\"\""
+        ],
+        "schema": "public",
+        "anon_execute": false,
+        "definition_md5": "d7a3df48836e212721106cc74e65bc59",
+        "security_definer": true,
+        "authenticated_execute": true
+      },
+      {
+        "acl": "{postgres=X/postgres,service_role=X/postgres}",
+        "args": "p_member_id uuid, p_member_password text",
+        "name": "maskan_claim_legacy_member",
+        "owner": "postgres",
+        "config": [
+          "search_path=\"\""
+        ],
+        "schema": "public",
+        "anon_execute": false,
+        "definition_md5": "3aa4fc315ded1e9233143616aece6bec",
+        "security_definer": true,
+        "authenticated_execute": false
+      },
+      {
+        "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+        "args": "p_member_id uuid, p_claim_token text",
+        "name": "maskan_claim_member",
+        "owner": "postgres",
+        "config": [
+          "search_path=\"\""
+        ],
+        "schema": "public",
+        "anon_execute": false,
+        "definition_md5": "5cf69476df2752903ca1044a4520f0a9",
+        "security_definer": true,
+        "authenticated_execute": true
+      },
+      {
+        "acl": "{postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+        "args": "p_network_id uuid, p_cycle_id uuid, p_reset_request_id uuid",
+        "name": "maskan_complete_expense_cycle",
+        "owner": "postgres",
+        "config": [
+          "search_path=\"\""
+        ],
+        "schema": "public",
+        "anon_execute": true,
+        "definition_md5": "1b2affd8a3cd768e6eba1e59a8801580",
+        "security_definer": true,
+        "authenticated_execute": true
+      },
+      {
+        "acl": "{postgres=X/postgres,service_role=X/postgres}",
+        "args": "p_network_id uuid, p_member_id uuid, p_network_name text, p_member_name text, p_network_password_hash text, p_network_password_salt text, p_member_password_hash text, p_member_password_salt text, p_currency_code text, p_currency_symbol text",
+        "name": "maskan_create_network",
+        "owner": "postgres",
+        "config": [
+          "search_path=\"\""
+        ],
+        "schema": "public",
+        "anon_execute": false,
+        "definition_md5": "554b4cb038abd7bf53808245cfd814c0",
+        "security_definer": true,
+        "authenticated_execute": false
+      },
+      {
+        "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+        "args": "",
+        "name": "maskan_current_member_id",
+        "owner": "postgres",
+        "config": [
+          "search_path=\"\""
+        ],
+        "schema": "public",
+        "anon_execute": false,
+        "definition_md5": "dc040cd1e4219a7c78b29310484df29f",
+        "security_definer": true,
+        "authenticated_execute": true
+      },
+      {
+        "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+        "args": "",
+        "name": "maskan_current_network_id",
+        "owner": "postgres",
+        "config": [
+          "search_path=\"\""
+        ],
+        "schema": "public",
+        "anon_execute": false,
+        "definition_md5": "7f4dce8eceeea9f1294541c880c61121",
+        "security_definer": true,
+        "authenticated_execute": true
+      },
+      {
+        "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+        "args": "p_deletion_token text, p_confirm_network_deletion boolean",
+        "name": "maskan_delete_account_data",
+        "owner": "postgres",
+        "config": [
+          "search_path=\"\""
+        ],
+        "schema": "public",
+        "anon_execute": false,
+        "definition_md5": "539cd36b60e1787c67d603348ef1a3ef",
+        "security_definer": true,
+        "authenticated_execute": true
+      },
+      {
+        "acl": "{postgres=X/postgres,service_role=X/postgres}",
+        "args": "p_network_name text",
+        "name": "maskan_discover_network",
+        "owner": "postgres",
+        "config": [
+          "search_path=\"\""
+        ],
+        "schema": "public",
+        "anon_execute": false,
+        "definition_md5": "08cc8347d4b4094d1cc884960b2d1be6",
+        "security_definer": true,
+        "authenticated_execute": false
+      },
+      {
+        "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+        "args": "target_member_id uuid",
+        "name": "maskan_is_current_member",
+        "owner": "postgres",
+        "config": [
+          "search_path=\"\""
+        ],
+        "schema": "public",
+        "anon_execute": false,
+        "definition_md5": "b9cacb4f6bc78120914301927d801e86",
+        "security_definer": true,
+        "authenticated_execute": true
+      },
+      {
+        "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+        "args": "target_network_id uuid",
+        "name": "maskan_is_network_member",
+        "owner": "postgres",
+        "config": [
+          "search_path=\"\""
+        ],
+        "schema": "public",
+        "anon_execute": false,
+        "definition_md5": "cd209702c3a073642e1dfe82baccd8c5",
+        "security_definer": true,
+        "authenticated_execute": true
+      },
+      {
+        "acl": "{postgres=X/postgres,service_role=X/postgres}",
+        "args": "p_network_id uuid, p_network_name text, p_network_password text, p_member_id uuid, p_member_name text, p_member_password_hash text, p_member_password_salt text",
+        "name": "maskan_join_network",
+        "owner": "postgres",
+        "config": [
+          "search_path=\"\""
+        ],
+        "schema": "public",
+        "anon_execute": false,
+        "definition_md5": "9d8c092eb00f47fc30dd5f659fa2742e",
+        "security_definer": true,
+        "authenticated_execute": false
+      },
+      {
+        "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+        "args": "p_network_id uuid",
+        "name": "maskan_leave_network",
+        "owner": "postgres",
+        "config": [
+          "search_path=\"\""
+        ],
+        "schema": "public",
+        "anon_execute": false,
+        "definition_md5": "df2d8ed2c18d9a7c2949c7b55a928913",
+        "security_definer": true,
+        "authenticated_execute": true
+      },
+      {
+        "acl": "{postgres=X/postgres,service_role=X/postgres}",
+        "args": "p_auth_user_id uuid, p_network_id uuid, p_member_id uuid, p_network_name text, p_member_name text, p_network_password_digest text, p_member_password_digest text, p_currency_code text, p_currency_symbol text",
+        "name": "maskan_password_create_network",
+        "owner": "postgres",
+        "config": [
+          "search_path=\"\""
+        ],
+        "schema": "public",
+        "anon_execute": false,
+        "definition_md5": "b9a032e70bc7a8f694e7d9fc32f199f9",
+        "security_definer": true,
+        "authenticated_execute": false
+      },
+      {
+        "acl": "{postgres=X/postgres,service_role=X/postgres}",
+        "args": "p_email text",
+        "name": "maskan_password_find_auth_user",
+        "owner": "postgres",
+        "config": [
+          "search_path=\"\""
+        ],
+        "schema": "public",
+        "anon_execute": false,
+        "definition_md5": "dc548eaf6055efb7fe7199ad866298ac",
+        "security_definer": true,
+        "authenticated_execute": false
+      },
+      {
+        "acl": "{postgres=X/postgres,service_role=X/postgres}",
+        "args": "p_member_id uuid, p_auth_user_id uuid, p_token_hash text",
+        "name": "maskan_password_issue_claim",
+        "owner": "postgres",
+        "config": [
+          "search_path=\"\""
+        ],
+        "schema": "public",
+        "anon_execute": false,
+        "definition_md5": "647b7fec4a68d3c7d27507a5f6fad01f",
+        "security_definer": true,
+        "authenticated_execute": false
+      },
+      {
+        "acl": "{postgres=X/postgres,service_role=X/postgres}",
+        "args": "p_auth_user_id uuid, p_network_id uuid, p_member_id uuid, p_member_name text, p_member_password_digest text, p_verified_network_digest text",
+        "name": "maskan_password_join_network",
+        "owner": "postgres",
+        "config": [
+          "search_path=\"\""
+        ],
+        "schema": "public",
+        "anon_execute": false,
+        "definition_md5": "9267d563cd2396d39549224efb277a6d",
+        "security_definer": true,
+        "authenticated_execute": false
+      },
+      {
+        "acl": "{postgres=X/postgres,service_role=X/postgres}",
+        "args": "p_network_name text, p_member_name text, p_member_id uuid",
+        "name": "maskan_password_lookup_member",
+        "owner": "postgres",
+        "config": [
+          "search_path=\"\""
+        ],
+        "schema": "public",
+        "anon_execute": false,
+        "definition_md5": "6be714e86285e10fe85c1b850490b51d",
+        "security_definer": true,
+        "authenticated_execute": false
+      },
+      {
+        "acl": "{postgres=X/postgres,service_role=X/postgres}",
+        "args": "p_network_id uuid, p_network_name text",
+        "name": "maskan_password_lookup_network",
+        "owner": "postgres",
+        "config": [
+          "search_path=\"\""
+        ],
+        "schema": "public",
+        "anon_execute": false,
+        "definition_md5": "11e9b2eff9faecae20ac8ed95a148712",
+        "security_definer": true,
+        "authenticated_execute": false
+      },
+      {
+        "acl": "{postgres=X/postgres,service_role=X/postgres}",
+        "args": "p_member_id uuid, p_credential_version smallint",
+        "name": "maskan_password_mark_auth_synced",
+        "owner": "postgres",
+        "config": [
+          "search_path=\"\""
+        ],
+        "schema": "public",
+        "anon_execute": false,
+        "definition_md5": "9d50480f5d70b8d42defed8d91b19e4a",
+        "security_definer": true,
+        "authenticated_execute": false
+      },
+      {
+        "acl": "{postgres=X/postgres,service_role=X/postgres}",
+        "args": "p_key_hash text, p_scope text",
+        "name": "maskan_password_rate_limit_check",
+        "owner": "postgres",
+        "config": [
+          "search_path=pg_catalog, private"
+        ],
+        "schema": "public",
+        "anon_execute": false,
+        "definition_md5": "94e42eb04f7dd547e9c2d888e398e883",
+        "security_definer": true,
+        "authenticated_execute": false
+      },
+      {
+        "acl": "{postgres=X/postgres,service_role=X/postgres}",
+        "args": "",
+        "name": "maskan_password_rate_limit_cleanup",
+        "owner": "postgres",
+        "config": [
+          "search_path=pg_catalog, private"
+        ],
+        "schema": "public",
+        "anon_execute": false,
+        "definition_md5": "43bf1d867ba599f07093d0236ecd444b",
+        "security_definer": true,
+        "authenticated_execute": false
+      },
+      {
+        "acl": "{postgres=X/postgres,service_role=X/postgres}",
+        "args": "p_key_hash text",
+        "name": "maskan_password_rate_limit_failure",
+        "owner": "postgres",
+        "config": [
+          "search_path=pg_catalog, private"
+        ],
+        "schema": "public",
+        "anon_execute": false,
+        "definition_md5": "57398dbfbfee2fb7cc2a4140d8eeb432",
+        "security_definer": true,
+        "authenticated_execute": false
+      },
+      {
+        "acl": "{postgres=X/postgres,service_role=X/postgres}",
+        "args": "p_key_hash text",
+        "name": "maskan_password_rate_limit_success",
+        "owner": "postgres",
+        "config": [
+          "search_path=pg_catalog, private"
+        ],
+        "schema": "public",
+        "anon_execute": false,
+        "definition_md5": "fba31c9b121e03e15bf36cfc971313dd",
+        "security_definer": true,
+        "authenticated_execute": false
+      },
+      {
+        "acl": "{postgres=X/postgres,service_role=X/postgres}",
+        "args": "p_caller_auth_user_id uuid, p_network_id uuid, p_admin_member_id uuid, p_target_member_id uuid",
+        "name": "maskan_password_reset_context",
+        "owner": "postgres",
+        "config": [
+          "search_path=\"\""
+        ],
+        "schema": "public",
+        "anon_execute": false,
+        "definition_md5": "b9cfab934e3a012907e51da647397bac",
+        "security_definer": true,
+        "authenticated_execute": false
+      },
+      {
+        "acl": "{postgres=X/postgres,service_role=X/postgres}",
+        "args": "p_caller_auth_user_id uuid, p_network_id uuid, p_admin_member_id uuid, p_target_member_id uuid, p_modern_digest text",
+        "name": "maskan_password_reset_member",
+        "owner": "postgres",
+        "config": [
+          "search_path=\"\""
+        ],
+        "schema": "public",
+        "anon_execute": false,
+        "definition_md5": "20817f338b74f22075dfbc96c2c8d9ab",
+        "security_definer": true,
+        "authenticated_execute": false
+      },
+      {
+        "acl": "{postgres=X/postgres,service_role=X/postgres}",
+        "args": "p_member_id uuid, p_expected_legacy_hash text, p_modern_digest text",
+        "name": "maskan_password_upgrade_member",
+        "owner": "postgres",
+        "config": [
+          "search_path=\"\""
+        ],
+        "schema": "public",
+        "anon_execute": false,
+        "definition_md5": "21c277ce211a15d58aff9c985d4c4334",
+        "security_definer": true,
+        "authenticated_execute": false
+      },
+      {
+        "acl": "{postgres=X/postgres,service_role=X/postgres}",
+        "args": "p_network_id uuid, p_expected_legacy_hash text, p_modern_digest text",
+        "name": "maskan_password_upgrade_network",
+        "owner": "postgres",
+        "config": [
+          "search_path=\"\""
+        ],
+        "schema": "public",
+        "anon_execute": false,
+        "definition_md5": "44939610e66b1b1d49fdfd28dd75e4dd",
+        "security_definer": true,
+        "authenticated_execute": false
+      },
+      {
+        "acl": "{postgres=X/postgres,service_role=X/postgres}",
+        "args": "p_network_id uuid, p_member_id uuid, p_member_name text, p_member_password text",
+        "name": "maskan_verify_member_credentials",
+        "owner": "postgres",
+        "config": [
+          "search_path=\"\""
+        ],
+        "schema": "public",
+        "anon_execute": false,
+        "definition_md5": "537995131b787c752d542cd4e44a8885",
+        "security_definer": true,
+        "authenticated_execute": false
+      },
+      {
+        "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+        "args": "target_network_id uuid, requester_member_id uuid",
+        "name": "phase5_cycle_member_belongs_to_network",
+        "owner": "postgres",
+        "config": [
+          "search_path=public"
+        ],
+        "schema": "public",
+        "anon_execute": true,
+        "definition_md5": "ef5ef78edcb1c86e36ba250b59a5db24",
+        "security_definer": true,
+        "authenticated_execute": true
+      },
+      {
+        "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+        "args": "target_network_id uuid, paid_member_id uuid, added_member_id uuid",
+        "name": "phase5_expense_members_match_network",
+        "owner": "postgres",
+        "config": [
+          "search_path=public"
+        ],
+        "schema": "public",
+        "anon_execute": true,
+        "definition_md5": "c6dbdfef788adf9ab99994847e2769fd",
+        "security_definer": true,
+        "authenticated_execute": true
+      },
+      {
+        "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+        "args": "member_id uuid, target_network_id uuid",
+        "name": "phase5_member_belongs_to_network",
+        "owner": "postgres",
+        "config": [
+          "search_path=public"
+        ],
+        "schema": "public",
+        "anon_execute": true,
+        "definition_md5": "af65d1494b65ba5399f9b490e394d2da",
+        "security_definer": true,
+        "authenticated_execute": true
+      },
+      {
+        "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+        "args": "target_network_id uuid",
+        "name": "phase5_network_can_be_deleted_after_leave",
+        "owner": "postgres",
+        "config": [
+          "search_path=public"
+        ],
+        "schema": "public",
+        "anon_execute": true,
+        "definition_md5": "e07a0ec04affe34b56e5887226e407d7",
+        "security_definer": true,
+        "authenticated_execute": true
+      },
+      {
+        "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+        "args": "target_network_id uuid",
+        "name": "phase5_network_exists",
+        "owner": "postgres",
+        "config": [
+          "search_path=public"
+        ],
+        "schema": "public",
+        "anon_execute": true,
+        "definition_md5": "2816514a67ddbacb31ba97e8f187e4f5",
+        "security_definer": true,
+        "authenticated_execute": true
+      },
+      {
+        "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+        "args": "target_network_id uuid",
+        "name": "phase5_network_has_no_active_expenses",
+        "owner": "postgres",
+        "config": [
+          "search_path=public"
+        ],
+        "schema": "public",
+        "anon_execute": true,
+        "definition_md5": "0c6ac685fcad6d0bfd1aaf05a4d51374",
+        "security_definer": true,
+        "authenticated_execute": true
+      },
+      {
+        "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+        "args": "target_network_id uuid, recipient_member_id uuid, actor_member_id uuid, target_expense_id uuid, target_reset_request_id uuid",
+        "name": "phase5_notification_matches_network",
+        "owner": "postgres",
+        "config": [
+          "search_path=public"
+        ],
+        "schema": "public",
+        "anon_execute": true,
+        "definition_md5": "8a786f2421314e8d7e08c4e06a33f13d",
+        "security_definer": true,
+        "authenticated_execute": true
+      },
+      {
+        "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+        "args": "",
+        "name": "phase5_prevent_notification_identity_update",
+        "owner": "postgres",
+        "config": null,
+        "schema": "public",
+        "anon_execute": true,
+        "definition_md5": "29001859ee9ecc2705fb475f6d21bb29",
+        "security_definer": false,
+        "authenticated_execute": true
+      },
+      {
+        "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+        "args": "target_network_id uuid, target_reset_request_id uuid, approving_member_id uuid",
+        "name": "phase5_reset_approval_matches_network",
+        "owner": "postgres",
+        "config": [
+          "search_path=public"
+        ],
+        "schema": "public",
+        "anon_execute": true,
+        "definition_md5": "8a3099f871e039726176ce1cb450059f",
+        "security_definer": true,
+        "authenticated_execute": true
+      },
+      {
+        "acl": "{postgres=X/postgres,service_role=X/postgres}",
+        "args": "target_network_id uuid, admin_member_id uuid, target_member_id uuid, new_password_hash text, new_password_salt text",
+        "name": "phase5_reset_member_password",
+        "owner": "postgres",
+        "config": [
+          "search_path=\"\""
+        ],
+        "schema": "public",
+        "anon_execute": false,
+        "definition_md5": "a3009cb03a928b4e290c912a9777a6a2",
+        "security_definer": true,
+        "authenticated_execute": false
+      },
+      {
+        "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+        "args": "target_network_id uuid, target_cycle_id uuid, requester_member_id uuid",
+        "name": "phase5_reset_request_matches_network",
+        "owner": "postgres",
+        "config": [
+          "search_path=public"
+        ],
+        "schema": "public",
+        "anon_execute": true,
+        "definition_md5": "37eebd254cf0b99c1681c21510910528",
+        "security_definer": true,
+        "authenticated_execute": true
+      }
+    ],
+    "extensions": [
+      [
+        "pg_stat_statements",
+        "1.11"
+      ],
+      [
+        "pgcrypto",
+        "1.3"
+      ],
+      [
+        "plpgsql",
+        "1.0"
+      ],
+      [
+        "supabase_vault",
+        "0.3.1"
+      ],
+      [
+        "uuid-ossp",
+        "1.1"
+      ]
+    ],
+    "migrations": [
+      [
+        "20260807000000",
+        "baseline_pre_phase1"
+      ],
+      [
+        "20260807000100",
+        "harden_auth_membership_rls"
+      ],
+      [
+        "20260820000000",
+        "migrate_password_security"
+      ],
+      [
+        "20260825000000",
+        "add_password_rate_limits"
+      ],
+      [
+        "20260826000000",
+        "add_account_deletion"
+      ]
+    ],
+    "constraints": [
+      [
+        "auth",
+        "audit_log_entries",
+        "audit_log_entries_pkey",
+        "p",
+        true,
+        "PRIMARY KEY (id)"
+      ],
+      [
+        "auth",
+        "custom_oauth_providers",
+        "custom_oauth_providers_authorization_url_https",
+        "c",
+        true,
+        "CHECK (((authorization_url IS NULL) OR (authorization_url ~~ 'https://%'::text)))"
+      ],
+      [
+        "auth",
+        "custom_oauth_providers",
+        "custom_oauth_providers_authorization_url_length",
+        "c",
+        true,
+        "CHECK (((authorization_url IS NULL) OR (char_length(authorization_url) <= 2048)))"
+      ],
+      [
+        "auth",
+        "custom_oauth_providers",
+        "custom_oauth_providers_client_id_length",
+        "c",
+        true,
+        "CHECK (((char_length(client_id) >= 1) AND (char_length(client_id) <= 512)))"
+      ],
+      [
+        "auth",
+        "custom_oauth_providers",
+        "custom_oauth_providers_discovery_url_length",
+        "c",
+        true,
+        "CHECK (((discovery_url IS NULL) OR (char_length(discovery_url) <= 2048)))"
+      ],
+      [
+        "auth",
+        "custom_oauth_providers",
+        "custom_oauth_providers_identifier_format",
+        "c",
+        true,
+        "CHECK ((identifier ~ '^[a-z0-9][a-z0-9:-]{0,48}[a-z0-9]$'::text))"
+      ],
+      [
+        "auth",
+        "custom_oauth_providers",
+        "custom_oauth_providers_identifier_key",
+        "u",
+        true,
+        "UNIQUE (identifier)"
+      ],
+      [
+        "auth",
+        "custom_oauth_providers",
+        "custom_oauth_providers_issuer_length",
+        "c",
+        true,
+        "CHECK (((issuer IS NULL) OR ((char_length(issuer) >= 1) AND (char_length(issuer) <= 2048))))"
+      ],
+      [
+        "auth",
+        "custom_oauth_providers",
+        "custom_oauth_providers_jwks_uri_https",
+        "c",
+        true,
+        "CHECK (((jwks_uri IS NULL) OR (jwks_uri ~~ 'https://%'::text)))"
+      ],
+      [
+        "auth",
+        "custom_oauth_providers",
+        "custom_oauth_providers_jwks_uri_length",
+        "c",
+        true,
+        "CHECK (((jwks_uri IS NULL) OR (char_length(jwks_uri) <= 2048)))"
+      ],
+      [
+        "auth",
+        "custom_oauth_providers",
+        "custom_oauth_providers_name_length",
+        "c",
+        true,
+        "CHECK (((char_length(name) >= 1) AND (char_length(name) <= 100)))"
+      ],
+      [
+        "auth",
+        "custom_oauth_providers",
+        "custom_oauth_providers_oauth2_requires_endpoints",
+        "c",
+        true,
+        "CHECK (((provider_type <> 'oauth2'::text) OR ((authorization_url IS NOT NULL) AND (token_url IS NOT NULL) AND (userinfo_url IS NOT NULL))))"
+      ],
+      [
+        "auth",
+        "custom_oauth_providers",
+        "custom_oauth_providers_oidc_discovery_url_https",
+        "c",
+        true,
+        "CHECK (((provider_type <> 'oidc'::text) OR (discovery_url IS NULL) OR (discovery_url ~~ 'https://%'::text)))"
+      ],
+      [
+        "auth",
+        "custom_oauth_providers",
+        "custom_oauth_providers_oidc_issuer_https",
+        "c",
+        true,
+        "CHECK (((provider_type <> 'oidc'::text) OR (issuer IS NULL) OR (issuer ~~ 'https://%'::text)))"
+      ],
+      [
+        "auth",
+        "custom_oauth_providers",
+        "custom_oauth_providers_oidc_requires_issuer",
+        "c",
+        true,
+        "CHECK (((provider_type <> 'oidc'::text) OR (issuer IS NOT NULL)))"
+      ],
+      [
+        "auth",
+        "custom_oauth_providers",
+        "custom_oauth_providers_pkey",
+        "p",
+        true,
+        "PRIMARY KEY (id)"
+      ],
+      [
+        "auth",
+        "custom_oauth_providers",
+        "custom_oauth_providers_provider_type_check",
+        "c",
+        true,
+        "CHECK ((provider_type = ANY (ARRAY['oauth2'::text, 'oidc'::text])))"
+      ],
+      [
+        "auth",
+        "custom_oauth_providers",
+        "custom_oauth_providers_token_url_https",
+        "c",
+        true,
+        "CHECK (((token_url IS NULL) OR (token_url ~~ 'https://%'::text)))"
+      ],
+      [
+        "auth",
+        "custom_oauth_providers",
+        "custom_oauth_providers_token_url_length",
+        "c",
+        true,
+        "CHECK (((token_url IS NULL) OR (char_length(token_url) <= 2048)))"
+      ],
+      [
+        "auth",
+        "custom_oauth_providers",
+        "custom_oauth_providers_userinfo_url_https",
+        "c",
+        true,
+        "CHECK (((userinfo_url IS NULL) OR (userinfo_url ~~ 'https://%'::text)))"
+      ],
+      [
+        "auth",
+        "custom_oauth_providers",
+        "custom_oauth_providers_userinfo_url_length",
+        "c",
+        true,
+        "CHECK (((userinfo_url IS NULL) OR (char_length(userinfo_url) <= 2048)))"
+      ],
+      [
+        "auth",
+        "flow_state",
+        "flow_state_pkey",
+        "p",
+        true,
+        "PRIMARY KEY (id)"
+      ],
+      [
+        "auth",
+        "identities",
+        "identities_pkey",
+        "p",
+        true,
+        "PRIMARY KEY (id)"
+      ],
+      [
+        "auth",
+        "identities",
+        "identities_provider_id_provider_unique",
+        "u",
+        true,
+        "UNIQUE (provider_id, provider)"
+      ],
+      [
+        "auth",
+        "identities",
+        "identities_user_id_fkey",
+        "f",
+        true,
+        "FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE"
+      ],
+      [
+        "auth",
+        "instances",
+        "instances_pkey",
+        "p",
+        true,
+        "PRIMARY KEY (id)"
+      ],
+      [
+        "auth",
+        "mfa_amr_claims",
+        "amr_id_pk",
+        "p",
+        true,
+        "PRIMARY KEY (id)"
+      ],
+      [
+        "auth",
+        "mfa_amr_claims",
+        "mfa_amr_claims_session_id_authentication_method_pkey",
+        "u",
+        true,
+        "UNIQUE (session_id, authentication_method)"
+      ],
+      [
+        "auth",
+        "mfa_amr_claims",
+        "mfa_amr_claims_session_id_fkey",
+        "f",
+        true,
+        "FOREIGN KEY (session_id) REFERENCES auth.sessions(id) ON DELETE CASCADE"
+      ],
+      [
+        "auth",
+        "mfa_challenges",
+        "mfa_challenges_auth_factor_id_fkey",
+        "f",
+        true,
+        "FOREIGN KEY (factor_id) REFERENCES auth.mfa_factors(id) ON DELETE CASCADE"
+      ],
+      [
+        "auth",
+        "mfa_challenges",
+        "mfa_challenges_pkey",
+        "p",
+        true,
+        "PRIMARY KEY (id)"
+      ],
+      [
+        "auth",
+        "mfa_factors",
+        "mfa_factors_last_challenged_at_key",
+        "u",
+        true,
+        "UNIQUE (last_challenged_at)"
+      ],
+      [
+        "auth",
+        "mfa_factors",
+        "mfa_factors_pkey",
+        "p",
+        true,
+        "PRIMARY KEY (id)"
+      ],
+      [
+        "auth",
+        "mfa_factors",
+        "mfa_factors_user_id_fkey",
+        "f",
+        true,
+        "FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE"
+      ],
+      [
+        "auth",
+        "mfa_recovery_code_sets",
+        "mfa_recovery_code_sets_failed_verification_count_check",
+        "c",
+        true,
+        "CHECK ((failed_verification_count >= 0))"
+      ],
+      [
+        "auth",
+        "mfa_recovery_code_sets",
+        "mfa_recovery_code_sets_mfa_factor_id_fkey",
+        "f",
+        true,
+        "FOREIGN KEY (mfa_factor_id) REFERENCES auth.mfa_factors(id) ON DELETE CASCADE"
+      ],
+      [
+        "auth",
+        "mfa_recovery_code_sets",
+        "mfa_recovery_code_sets_mfa_factor_id_key",
+        "u",
+        true,
+        "UNIQUE (mfa_factor_id)"
+      ],
+      [
+        "auth",
+        "mfa_recovery_code_sets",
+        "mfa_recovery_code_sets_pkey",
+        "p",
+        true,
+        "PRIMARY KEY (id)"
+      ],
+      [
+        "auth",
+        "mfa_recovery_code_sets",
+        "mfa_recovery_code_sets_user_id_fkey",
+        "f",
+        true,
+        "FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE"
+      ],
+      [
+        "auth",
+        "mfa_recovery_code_sets",
+        "mfa_recovery_code_sets_user_id_key",
+        "u",
+        true,
+        "UNIQUE (user_id)"
+      ],
+      [
+        "auth",
+        "mfa_recovery_codes",
+        "mfa_recovery_codes_mfa_recovery_code_set_id_fkey",
+        "f",
+        true,
+        "FOREIGN KEY (mfa_recovery_code_set_id) REFERENCES auth.mfa_recovery_code_sets(id) ON DELETE CASCADE"
+      ],
+      [
+        "auth",
+        "mfa_recovery_codes",
+        "mfa_recovery_codes_pkey",
+        "p",
+        true,
+        "PRIMARY KEY (id)"
+      ],
+      [
+        "auth",
+        "oauth_authorizations",
+        "oauth_authorizations_authorization_code_key",
+        "u",
+        true,
+        "UNIQUE (authorization_code)"
+      ],
+      [
+        "auth",
+        "oauth_authorizations",
+        "oauth_authorizations_authorization_code_length",
+        "c",
+        true,
+        "CHECK ((char_length(authorization_code) <= 255))"
+      ],
+      [
+        "auth",
+        "oauth_authorizations",
+        "oauth_authorizations_authorization_id_key",
+        "u",
+        true,
+        "UNIQUE (authorization_id)"
+      ],
+      [
+        "auth",
+        "oauth_authorizations",
+        "oauth_authorizations_client_id_fkey",
+        "f",
+        true,
+        "FOREIGN KEY (client_id) REFERENCES auth.oauth_clients(id) ON DELETE CASCADE"
+      ],
+      [
+        "auth",
+        "oauth_authorizations",
+        "oauth_authorizations_code_challenge_length",
+        "c",
+        true,
+        "CHECK ((char_length(code_challenge) <= 128))"
+      ],
+      [
+        "auth",
+        "oauth_authorizations",
+        "oauth_authorizations_expires_at_future",
+        "c",
+        true,
+        "CHECK ((expires_at > created_at))"
+      ],
+      [
+        "auth",
+        "oauth_authorizations",
+        "oauth_authorizations_nonce_length",
+        "c",
+        true,
+        "CHECK ((char_length(nonce) <= 255))"
+      ],
+      [
+        "auth",
+        "oauth_authorizations",
+        "oauth_authorizations_pkey",
+        "p",
+        true,
+        "PRIMARY KEY (id)"
+      ],
+      [
+        "auth",
+        "oauth_authorizations",
+        "oauth_authorizations_redirect_uri_length",
+        "c",
+        true,
+        "CHECK ((char_length(redirect_uri) <= 2048))"
+      ],
+      [
+        "auth",
+        "oauth_authorizations",
+        "oauth_authorizations_resource_length",
+        "c",
+        true,
+        "CHECK ((char_length(resource) <= 2048))"
+      ],
+      [
+        "auth",
+        "oauth_authorizations",
+        "oauth_authorizations_scope_length",
+        "c",
+        true,
+        "CHECK ((char_length(scope) <= 4096))"
+      ],
+      [
+        "auth",
+        "oauth_authorizations",
+        "oauth_authorizations_state_length",
+        "c",
+        true,
+        "CHECK ((char_length(state) <= 4096))"
+      ],
+      [
+        "auth",
+        "oauth_authorizations",
+        "oauth_authorizations_user_id_fkey",
+        "f",
+        true,
+        "FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE"
+      ],
+      [
+        "auth",
+        "oauth_client_states",
+        "oauth_client_states_pkey",
+        "p",
+        true,
+        "PRIMARY KEY (id)"
+      ],
+      [
+        "auth",
+        "oauth_clients",
+        "oauth_clients_client_name_length",
+        "c",
+        true,
+        "CHECK ((char_length(client_name) <= 1024))"
+      ],
+      [
+        "auth",
+        "oauth_clients",
+        "oauth_clients_client_uri_length",
+        "c",
+        true,
+        "CHECK ((char_length(client_uri) <= 2048))"
+      ],
+      [
+        "auth",
+        "oauth_clients",
+        "oauth_clients_logo_uri_length",
+        "c",
+        true,
+        "CHECK ((char_length(logo_uri) <= 2048))"
+      ],
+      [
+        "auth",
+        "oauth_clients",
+        "oauth_clients_pkey",
+        "p",
+        true,
+        "PRIMARY KEY (id)"
+      ],
+      [
+        "auth",
+        "oauth_clients",
+        "oauth_clients_token_endpoint_auth_method_check",
+        "c",
+        true,
+        "CHECK ((token_endpoint_auth_method = ANY (ARRAY['client_secret_basic'::text, 'client_secret_post'::text, 'none'::text])))"
+      ],
+      [
+        "auth",
+        "oauth_consents",
+        "oauth_consents_client_id_fkey",
+        "f",
+        true,
+        "FOREIGN KEY (client_id) REFERENCES auth.oauth_clients(id) ON DELETE CASCADE"
+      ],
+      [
+        "auth",
+        "oauth_consents",
+        "oauth_consents_pkey",
+        "p",
+        true,
+        "PRIMARY KEY (id)"
+      ],
+      [
+        "auth",
+        "oauth_consents",
+        "oauth_consents_revoked_after_granted",
+        "c",
+        true,
+        "CHECK (((revoked_at IS NULL) OR (revoked_at >= granted_at)))"
+      ],
+      [
+        "auth",
+        "oauth_consents",
+        "oauth_consents_scopes_length",
+        "c",
+        true,
+        "CHECK ((char_length(scopes) <= 2048))"
+      ],
+      [
+        "auth",
+        "oauth_consents",
+        "oauth_consents_scopes_not_empty",
+        "c",
+        true,
+        "CHECK ((char_length(TRIM(BOTH FROM scopes)) > 0))"
+      ],
+      [
+        "auth",
+        "oauth_consents",
+        "oauth_consents_user_client_unique",
+        "u",
+        true,
+        "UNIQUE (user_id, client_id)"
+      ],
+      [
+        "auth",
+        "oauth_consents",
+        "oauth_consents_user_id_fkey",
+        "f",
+        true,
+        "FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE"
+      ],
+      [
+        "auth",
+        "one_time_tokens",
+        "one_time_tokens_pkey",
+        "p",
+        true,
+        "PRIMARY KEY (id)"
+      ],
+      [
+        "auth",
+        "one_time_tokens",
+        "one_time_tokens_token_hash_check",
+        "c",
+        true,
+        "CHECK ((char_length(token_hash) > 0))"
+      ],
+      [
+        "auth",
+        "one_time_tokens",
+        "one_time_tokens_user_id_fkey",
+        "f",
+        true,
+        "FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE"
+      ],
+      [
+        "auth",
+        "refresh_tokens",
+        "refresh_tokens_pkey",
+        "p",
+        true,
+        "PRIMARY KEY (id)"
+      ],
+      [
+        "auth",
+        "refresh_tokens",
+        "refresh_tokens_session_id_fkey",
+        "f",
+        true,
+        "FOREIGN KEY (session_id) REFERENCES auth.sessions(id) ON DELETE CASCADE"
+      ],
+      [
+        "auth",
+        "refresh_tokens",
+        "refresh_tokens_token_unique",
+        "u",
+        true,
+        "UNIQUE (token)"
+      ],
+      [
+        "auth",
+        "saml_providers",
+        "entity_id not empty",
+        "c",
+        true,
+        "CHECK ((char_length(entity_id) > 0))"
+      ],
+      [
+        "auth",
+        "saml_providers",
+        "metadata_url not empty",
+        "c",
+        true,
+        "CHECK (((metadata_url = NULL::text) OR (char_length(metadata_url) > 0)))"
+      ],
+      [
+        "auth",
+        "saml_providers",
+        "metadata_xml not empty",
+        "c",
+        true,
+        "CHECK ((char_length(metadata_xml) > 0))"
+      ],
+      [
+        "auth",
+        "saml_providers",
+        "saml_providers_entity_id_key",
+        "u",
+        true,
+        "UNIQUE (entity_id)"
+      ],
+      [
+        "auth",
+        "saml_providers",
+        "saml_providers_pkey",
+        "p",
+        true,
+        "PRIMARY KEY (id)"
+      ],
+      [
+        "auth",
+        "saml_providers",
+        "saml_providers_sso_provider_id_fkey",
+        "f",
+        true,
+        "FOREIGN KEY (sso_provider_id) REFERENCES auth.sso_providers(id) ON DELETE CASCADE"
+      ],
+      [
+        "auth",
+        "saml_relay_states",
+        "request_id not empty",
+        "c",
+        true,
+        "CHECK ((char_length(request_id) > 0))"
+      ],
+      [
+        "auth",
+        "saml_relay_states",
+        "saml_relay_states_flow_state_id_fkey",
+        "f",
+        true,
+        "FOREIGN KEY (flow_state_id) REFERENCES auth.flow_state(id) ON DELETE CASCADE"
+      ],
+      [
+        "auth",
+        "saml_relay_states",
+        "saml_relay_states_pkey",
+        "p",
+        true,
+        "PRIMARY KEY (id)"
+      ],
+      [
+        "auth",
+        "saml_relay_states",
+        "saml_relay_states_sso_provider_id_fkey",
+        "f",
+        true,
+        "FOREIGN KEY (sso_provider_id) REFERENCES auth.sso_providers(id) ON DELETE CASCADE"
+      ],
+      [
+        "auth",
+        "schema_migrations",
+        "schema_migrations_pkey",
+        "p",
+        true,
+        "PRIMARY KEY (version)"
+      ],
+      [
+        "auth",
+        "scim_tokens",
+        "scim_tokens_expires_at_future",
+        "c",
+        true,
+        "CHECK (((expires_at IS NULL) OR (expires_at > created_at)))"
+      ],
+      [
+        "auth",
+        "scim_tokens",
+        "scim_tokens_pkey",
+        "p",
+        true,
+        "PRIMARY KEY (id)"
+      ],
+      [
+        "auth",
+        "scim_tokens",
+        "scim_tokens_revoked_after_created",
+        "c",
+        true,
+        "CHECK (((revoked_at IS NULL) OR (revoked_at >= created_at)))"
+      ],
+      [
+        "auth",
+        "scim_tokens",
+        "scim_tokens_sso_provider_id_fkey",
+        "f",
+        true,
+        "FOREIGN KEY (sso_provider_id) REFERENCES auth.sso_providers(id) ON DELETE CASCADE"
+      ],
+      [
+        "auth",
+        "scim_tokens",
+        "scim_tokens_token_hash_check",
+        "c",
+        true,
+        "CHECK ((token_hash ~ '^[0-9a-f]{64}$'::text))"
+      ],
+      [
+        "auth",
+        "scim_users",
+        "scim_users_pkey",
+        "p",
+        true,
+        "PRIMARY KEY (id)"
+      ],
+      [
+        "auth",
+        "scim_users",
+        "scim_users_sso_provider_id_fkey",
+        "f",
+        true,
+        "FOREIGN KEY (sso_provider_id) REFERENCES auth.sso_providers(id) ON DELETE CASCADE"
+      ],
+      [
+        "auth",
+        "scim_users",
+        "scim_users_user_id_fkey",
+        "f",
+        true,
+        "FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE SET NULL"
+      ],
+      [
+        "auth",
+        "sessions",
+        "sessions_oauth_client_id_fkey",
+        "f",
+        true,
+        "FOREIGN KEY (oauth_client_id) REFERENCES auth.oauth_clients(id) ON DELETE CASCADE"
+      ],
+      [
+        "auth",
+        "sessions",
+        "sessions_pkey",
+        "p",
+        true,
+        "PRIMARY KEY (id)"
+      ],
+      [
+        "auth",
+        "sessions",
+        "sessions_scopes_length",
+        "c",
+        true,
+        "CHECK ((char_length(scopes) <= 4096))"
+      ],
+      [
+        "auth",
+        "sessions",
+        "sessions_user_id_fkey",
+        "f",
+        true,
+        "FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE"
+      ],
+      [
+        "auth",
+        "sso_domains",
+        "domain not empty",
+        "c",
+        true,
+        "CHECK ((char_length(domain) > 0))"
+      ],
+      [
+        "auth",
+        "sso_domains",
+        "sso_domains_pkey",
+        "p",
+        true,
+        "PRIMARY KEY (id)"
+      ],
+      [
+        "auth",
+        "sso_domains",
+        "sso_domains_sso_provider_id_fkey",
+        "f",
+        true,
+        "FOREIGN KEY (sso_provider_id) REFERENCES auth.sso_providers(id) ON DELETE CASCADE"
+      ],
+      [
+        "auth",
+        "sso_providers",
+        "resource_id not empty",
+        "c",
+        true,
+        "CHECK (((resource_id = NULL::text) OR (char_length(resource_id) > 0)))"
+      ],
+      [
+        "auth",
+        "sso_providers",
+        "sso_providers_pkey",
+        "p",
+        true,
+        "PRIMARY KEY (id)"
+      ],
+      [
+        "auth",
+        "users",
+        "users_email_change_confirm_status_check",
+        "c",
+        true,
+        "CHECK (((email_change_confirm_status >= 0) AND (email_change_confirm_status <= 2)))"
+      ],
+      [
+        "auth",
+        "users",
+        "users_phone_key",
+        "u",
+        true,
+        "UNIQUE (phone)"
+      ],
+      [
+        "auth",
+        "users",
+        "users_pkey",
+        "p",
+        true,
+        "PRIMARY KEY (id)"
+      ],
+      [
+        "auth",
+        "webauthn_challenges",
+        "webauthn_challenges_challenge_type_check",
+        "c",
+        true,
+        "CHECK ((challenge_type = ANY (ARRAY['signup'::text, 'registration'::text, 'authentication'::text])))"
+      ],
+      [
+        "auth",
+        "webauthn_challenges",
+        "webauthn_challenges_pkey",
+        "p",
+        true,
+        "PRIMARY KEY (id)"
+      ],
+      [
+        "auth",
+        "webauthn_challenges",
+        "webauthn_challenges_user_id_fkey",
+        "f",
+        true,
+        "FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE"
+      ],
+      [
+        "auth",
+        "webauthn_credentials",
+        "webauthn_credentials_pkey",
+        "p",
+        true,
+        "PRIMARY KEY (id)"
+      ],
+      [
+        "auth",
+        "webauthn_credentials",
+        "webauthn_credentials_user_id_fkey",
+        "f",
+        true,
+        "FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE"
+      ],
+      [
+        "private",
+        "account_deletion_authorizations",
+        "account_deletion_authorizations_auth_user_id_fkey",
+        "f",
+        true,
+        "FOREIGN KEY (auth_user_id) REFERENCES auth.users(id) ON DELETE CASCADE"
+      ],
+      [
+        "private",
+        "account_deletion_authorizations",
+        "account_deletion_authorizations_pkey",
+        "p",
+        true,
+        "PRIMARY KEY (auth_user_id)"
+      ],
+      [
+        "private",
+        "account_deletion_authorizations",
+        "account_deletion_authorizations_token_hash_check",
+        "c",
+        true,
+        "CHECK ((token_hash ~ '^[0-9a-f]{64}$'::text))"
+      ],
+      [
+        "private",
+        "account_deletion_rate_limits",
+        "account_deletion_rate_limits_auth_user_id_fkey",
+        "f",
+        true,
+        "FOREIGN KEY (auth_user_id) REFERENCES auth.users(id) ON DELETE CASCADE"
+      ],
+      [
+        "private",
+        "account_deletion_rate_limits",
+        "account_deletion_rate_limits_counts_check",
+        "c",
+        true,
+        "CHECK (((failed_attempts >= 0) AND (total_attempts >= 0)))"
+      ],
+      [
+        "private",
+        "account_deletion_rate_limits",
+        "account_deletion_rate_limits_pkey",
+        "p",
+        true,
+        "PRIMARY KEY (auth_user_id)"
+      ],
+      [
+        "private",
+        "member_claim_tokens",
+        "member_claim_tokens_auth_user_id_fkey",
+        "f",
+        true,
+        "FOREIGN KEY (auth_user_id) REFERENCES auth.users(id) ON DELETE CASCADE"
+      ],
+      [
+        "private",
+        "member_claim_tokens",
+        "member_claim_tokens_member_id_fkey",
+        "f",
+        true,
+        "FOREIGN KEY (member_id) REFERENCES network_members(id) ON DELETE CASCADE"
+      ],
+      [
+        "private",
+        "member_claim_tokens",
+        "member_claim_tokens_pkey",
+        "p",
+        true,
+        "PRIMARY KEY (member_id)"
+      ],
+      [
+        "private",
+        "member_claim_tokens",
+        "member_claim_tokens_token_hash_check",
+        "c",
+        true,
+        "CHECK ((token_hash ~ '^[0-9a-f]{64}$'::text))"
+      ],
+      [
+        "private",
+        "member_credentials",
+        "member_credentials_auth_sync_version_check",
+        "c",
+        true,
+        "CHECK (((auth_password_version >= 0) AND (auth_password_version <= credential_version)))"
+      ],
+      [
+        "private",
+        "member_credentials",
+        "member_credentials_member_id_fkey",
+        "f",
+        true,
+        "FOREIGN KEY (member_id) REFERENCES network_members(id) ON DELETE CASCADE"
+      ],
+      [
+        "private",
+        "member_credentials",
+        "member_credentials_password_hash_check",
+        "c",
+        true,
+        "CHECK ((length(legacy_password_hash) > 0))"
+      ],
+      [
+        "private",
+        "member_credentials",
+        "member_credentials_password_salt_check",
+        "c",
+        true,
+        "CHECK ((length(legacy_password_salt) > 0))"
+      ],
+      [
+        "private",
+        "member_credentials",
+        "member_credentials_phase2_state_check",
+        "c",
+        true,
+        "CHECK ((((credential_version = 1) AND (algorithm = 'legacy-fnv1a-64-v1'::text) AND (legacy_password_hash IS NOT NULL) AND (legacy_password_salt IS NOT NULL) AND (password_digest IS NULL) AND (modernized_at IS NULL)) OR ((credential_version >= 2) AND (algorithm = 'pbkdf2-hmac-sha256-v1'::text) AND (legacy_password_hash IS NULL) AND (legacy_password_salt IS NULL) AND (password_digest ~~ '$maskan$pbkdf2-sha256$v=1$i=600000$l=32$%'::text) AND (modernized_at IS NOT NULL))))"
+      ],
+      [
+        "private",
+        "member_credentials",
+        "member_credentials_pkey",
+        "p",
+        true,
+        "PRIMARY KEY (member_id)"
+      ],
+      [
+        "private",
+        "network_credentials",
+        "network_credentials_network_id_fkey",
+        "f",
+        true,
+        "FOREIGN KEY (network_id) REFERENCES networks(id) ON DELETE CASCADE"
+      ],
+      [
+        "private",
+        "network_credentials",
+        "network_credentials_password_hash_check",
+        "c",
+        true,
+        "CHECK ((length(legacy_password_hash) > 0))"
+      ],
+      [
+        "private",
+        "network_credentials",
+        "network_credentials_password_salt_check",
+        "c",
+        true,
+        "CHECK ((length(legacy_password_salt) > 0))"
+      ],
+      [
+        "private",
+        "network_credentials",
+        "network_credentials_phase2_state_check",
+        "c",
+        true,
+        "CHECK ((((credential_version = 1) AND (algorithm = 'legacy-fnv1a-64-v1'::text) AND (legacy_password_hash IS NOT NULL) AND (legacy_password_salt IS NOT NULL) AND (password_digest IS NULL) AND (modernized_at IS NULL)) OR ((credential_version >= 2) AND (algorithm = 'pbkdf2-hmac-sha256-v1'::text) AND (legacy_password_hash IS NULL) AND (legacy_password_salt IS NULL) AND (password_digest ~~ '$maskan$pbkdf2-sha256$v=1$i=600000$l=32$%'::text) AND (modernized_at IS NOT NULL))))"
+      ],
+      [
+        "private",
+        "network_credentials",
+        "network_credentials_pkey",
+        "p",
+        true,
+        "PRIMARY KEY (network_id)"
+      ],
+      [
+        "private",
+        "password_rate_limits",
+        "password_rate_limits_counts_check",
+        "c",
+        true,
+        "CHECK (((failed_attempts >= 0) AND (total_attempts >= 0)))"
+      ],
+      [
+        "private",
+        "password_rate_limits",
+        "password_rate_limits_key_hash_check",
+        "c",
+        true,
+        "CHECK ((key_hash ~ '^[0-9a-f]{64}$'::text))"
+      ],
+      [
+        "private",
+        "password_rate_limits",
+        "password_rate_limits_pkey",
+        "p",
+        true,
+        "PRIMARY KEY (key_hash)"
+      ],
+      [
+        "private",
+        "password_rate_limits",
+        "password_rate_limits_scope_check",
+        "c",
+        true,
+        "CHECK ((scope = ANY (ARRAY['member_verify'::text, 'network_join'::text, 'member_reset'::text])))"
+      ],
+      [
+        "public",
+        "expense_cycles",
+        "expense_cycles_network_id_cycle_number_key",
+        "u",
+        true,
+        "UNIQUE (network_id, cycle_number)"
+      ],
+      [
+        "public",
+        "expense_cycles",
+        "expense_cycles_network_id_fkey",
+        "f",
+        true,
+        "FOREIGN KEY (network_id) REFERENCES networks(id) ON DELETE CASCADE"
+      ],
+      [
+        "public",
+        "expense_cycles",
+        "expense_cycles_pkey",
+        "p",
+        true,
+        "PRIMARY KEY (id)"
+      ],
+      [
+        "public",
+        "expense_cycles",
+        "expense_cycles_requested_by_member_id_fkey",
+        "f",
+        true,
+        "FOREIGN KEY (requested_by_member_id) REFERENCES network_members(id) ON DELETE SET NULL"
+      ],
+      [
+        "public",
+        "expense_cycles",
+        "expense_cycles_status_valid",
+        "c",
+        false,
+        "CHECK ((status = ANY (ARRAY['active'::text, 'pending_reset'::text, 'closed'::text]))) NOT VALID"
+      ],
+      [
+        "public",
+        "expense_reset_approvals",
+        "expense_reset_approvals_member_id_fkey",
+        "f",
+        true,
+        "FOREIGN KEY (member_id) REFERENCES network_members(id) ON DELETE CASCADE"
+      ],
+      [
+        "public",
+        "expense_reset_approvals",
+        "expense_reset_approvals_network_id_fkey",
+        "f",
+        true,
+        "FOREIGN KEY (network_id) REFERENCES networks(id) ON DELETE CASCADE"
+      ],
+      [
+        "public",
+        "expense_reset_approvals",
+        "expense_reset_approvals_pkey",
+        "p",
+        true,
+        "PRIMARY KEY (id)"
+      ],
+      [
+        "public",
+        "expense_reset_approvals",
+        "expense_reset_approvals_reset_request_id_fkey",
+        "f",
+        true,
+        "FOREIGN KEY (reset_request_id) REFERENCES expense_reset_requests(id) ON DELETE CASCADE"
+      ],
+      [
+        "public",
+        "expense_reset_approvals",
+        "expense_reset_approvals_reset_request_id_member_id_key",
+        "u",
+        true,
+        "UNIQUE (reset_request_id, member_id)"
+      ],
+      [
+        "public",
+        "expense_reset_requests",
+        "expense_reset_requests_cycle_id_fkey",
+        "f",
+        true,
+        "FOREIGN KEY (cycle_id) REFERENCES expense_cycles(id) ON DELETE CASCADE"
+      ],
+      [
+        "public",
+        "expense_reset_requests",
+        "expense_reset_requests_network_id_fkey",
+        "f",
+        true,
+        "FOREIGN KEY (network_id) REFERENCES networks(id) ON DELETE CASCADE"
+      ],
+      [
+        "public",
+        "expense_reset_requests",
+        "expense_reset_requests_pkey",
+        "p",
+        true,
+        "PRIMARY KEY (id)"
+      ],
+      [
+        "public",
+        "expense_reset_requests",
+        "expense_reset_requests_requested_by_member_id_fkey",
+        "f",
+        false,
+        "FOREIGN KEY (requested_by_member_id) REFERENCES network_members(id) ON DELETE SET NULL NOT VALID"
+      ],
+      [
+        "public",
+        "expense_reset_requests",
+        "expense_reset_requests_status_valid",
+        "c",
+        false,
+        "CHECK ((status = ANY (ARRAY['pending'::text, 'completed'::text, 'cancelled'::text]))) NOT VALID"
+      ],
+      [
+        "public",
+        "expenses",
+        "expenses_added_by_member_id_fkey",
+        "f",
+        false,
+        "FOREIGN KEY (added_by_member_id) REFERENCES network_members(id) ON DELETE SET NULL NOT VALID"
+      ],
+      [
+        "public",
+        "expenses",
+        "expenses_amount_cents_positive",
+        "c",
+        false,
+        "CHECK ((amount_cents > 0)) NOT VALID"
+      ],
+      [
+        "public",
+        "expenses",
+        "expenses_cycle_id_fkey",
+        "f",
+        true,
+        "FOREIGN KEY (cycle_id) REFERENCES expense_cycles(id) ON DELETE SET NULL"
+      ],
+      [
+        "public",
+        "expenses",
+        "expenses_network_id_fkey",
+        "f",
+        true,
+        "FOREIGN KEY (network_id) REFERENCES networks(id) ON DELETE CASCADE"
+      ],
+      [
+        "public",
+        "expenses",
+        "expenses_note_length",
+        "c",
+        false,
+        "CHECK (((note IS NULL) OR (char_length(note) <= 200))) NOT VALID"
+      ],
+      [
+        "public",
+        "expenses",
+        "expenses_paid_by_member_id_fkey",
+        "f",
+        false,
+        "FOREIGN KEY (paid_by_member_id) REFERENCES network_members(id) ON DELETE SET NULL NOT VALID"
+      ],
+      [
+        "public",
+        "expenses",
+        "expenses_pkey",
+        "p",
+        true,
+        "PRIMARY KEY (id)"
+      ],
+      [
+        "public",
+        "network_members",
+        "network_members_auth_user_id_fkey",
+        "f",
+        true,
+        "FOREIGN KEY (auth_user_id) REFERENCES auth.users(id) ON DELETE SET NULL"
+      ],
+      [
+        "public",
+        "network_members",
+        "network_members_network_id_fkey",
+        "f",
+        true,
+        "FOREIGN KEY (network_id) REFERENCES networks(id) ON DELETE CASCADE"
+      ],
+      [
+        "public",
+        "network_members",
+        "network_members_network_id_normalized_name_key",
+        "u",
+        true,
+        "UNIQUE (network_id, normalized_name)"
+      ],
+      [
+        "public",
+        "network_members",
+        "network_members_pkey",
+        "p",
+        true,
+        "PRIMARY KEY (id)"
+      ],
+      [
+        "public",
+        "network_notifications",
+        "network_notifications_actor_member_id_fkey",
+        "f",
+        true,
+        "FOREIGN KEY (actor_member_id) REFERENCES network_members(id)"
+      ],
+      [
+        "public",
+        "network_notifications",
+        "network_notifications_expense_id_fkey",
+        "f",
+        true,
+        "FOREIGN KEY (expense_id) REFERENCES expenses(id) ON DELETE CASCADE"
+      ],
+      [
+        "public",
+        "network_notifications",
+        "network_notifications_kind_valid",
+        "c",
+        false,
+        "CHECK ((kind = ANY (ARRAY['expense'::text, 'expenseUpdated'::text, 'resetRequest'::text, 'cycleStarted'::text]))) NOT VALID"
+      ],
+      [
+        "public",
+        "network_notifications",
+        "network_notifications_network_id_fkey",
+        "f",
+        true,
+        "FOREIGN KEY (network_id) REFERENCES networks(id) ON DELETE CASCADE"
+      ],
+      [
+        "public",
+        "network_notifications",
+        "network_notifications_note_snippet_length",
+        "c",
+        false,
+        "CHECK (((note_snippet IS NULL) OR (char_length(note_snippet) <= 80))) NOT VALID"
+      ],
+      [
+        "public",
+        "network_notifications",
+        "network_notifications_pkey",
+        "p",
+        true,
+        "PRIMARY KEY (id)"
+      ],
+      [
+        "public",
+        "network_notifications",
+        "network_notifications_recipient_member_id_fkey",
+        "f",
+        true,
+        "FOREIGN KEY (recipient_member_id) REFERENCES network_members(id) ON DELETE CASCADE"
+      ],
+      [
+        "public",
+        "network_notifications",
+        "network_notifications_reset_request_id_fkey",
+        "f",
+        true,
+        "FOREIGN KEY (reset_request_id) REFERENCES expense_reset_requests(id) ON DELETE CASCADE"
+      ],
+      [
+        "public",
+        "networks",
+        "networks_created_by_member_id_fkey",
+        "f",
+        true,
+        "FOREIGN KEY (created_by_member_id) REFERENCES network_members(id) ON DELETE SET NULL"
+      ],
+      [
+        "public",
+        "networks",
+        "networks_normalized_name_key",
+        "u",
+        true,
+        "UNIQUE (normalized_name)"
+      ],
+      [
+        "public",
+        "networks",
+        "networks_pkey",
+        "p",
+        true,
+        "PRIMARY KEY (id)"
+      ],
+      [
+        "storage",
+        "buckets",
+        "buckets_lifecycle_configuration_pair_check",
+        "c",
+        true,
+        "CHECK (((lifecycle_configuration IS NULL) = (lifecycle_configuration_generation IS NULL)))"
+      ],
+      [
+        "storage",
+        "buckets",
+        "buckets_lifecycle_configuration_shape_check",
+        "c",
+        true,
+        "CHECK (((lifecycle_configuration IS NULL) OR ((jsonb_typeof(lifecycle_configuration) = 'object'::text) AND (lifecycle_configuration ? 'rules'::text) AND\nCASE\n    WHEN (jsonb_typeof((lifecycle_configuration -> 'rules'::text)) = 'array'::text) THEN ((jsonb_array_length((lifecycle_configuration -> 'rules'::text)) >= 1) AND (jsonb_array_length((lifecycle_configuration -> 'rules'::text)) <= 1000))\n    ELSE false\nEND)))"
+      ],
+      [
+        "storage",
+        "buckets",
+        "buckets_lifecycle_configuration_standard_only_check",
+        "c",
+        true,
+        "CHECK (((type = 'STANDARD'::storage.buckettype) OR ((lifecycle_configuration IS NULL) AND (lifecycle_configuration_generation IS NULL))))"
+      ],
+      [
+        "storage",
+        "buckets",
+        "buckets_pkey",
+        "p",
+        true,
+        "PRIMARY KEY (id)"
+      ],
+      [
+        "storage",
+        "buckets",
+        "buckets_versioning_dark_check",
+        "c",
+        true,
+        "CHECK ((versioning_status = 'DISABLED'::text))"
+      ],
+      [
+        "storage",
+        "buckets",
+        "buckets_versioning_standard_only_check",
+        "c",
+        true,
+        "CHECK (((type = 'STANDARD'::storage.buckettype) OR (versioning_status = 'DISABLED'::text)))"
+      ],
+      [
+        "storage",
+        "buckets",
+        "buckets_versioning_status_check",
+        "c",
+        true,
+        "CHECK ((versioning_status = ANY (ARRAY['DISABLED'::text, 'ENABLED'::text, 'SUSPENDED'::text])))"
+      ],
+      [
+        "storage",
+        "buckets_analytics",
+        "buckets_analytics_pkey",
+        "p",
+        true,
+        "PRIMARY KEY (id)"
+      ],
+      [
+        "storage",
+        "buckets_vectors",
+        "buckets_vectors_pkey",
+        "p",
+        true,
+        "PRIMARY KEY (id)"
+      ],
+      [
+        "storage",
+        "migrations",
+        "migrations_name_key",
+        "u",
+        true,
+        "UNIQUE (name)"
+      ],
+      [
+        "storage",
+        "migrations",
+        "migrations_pkey",
+        "p",
+        true,
+        "PRIMARY KEY (id)"
+      ],
+      [
+        "storage",
+        "objects",
+        "objects_bucketId_fkey",
+        "f",
+        true,
+        "FOREIGN KEY (bucket_id) REFERENCES storage.buckets(id)"
+      ],
+      [
+        "storage",
+        "objects",
+        "objects_pkey",
+        "p",
+        true,
+        "PRIMARY KEY (id)"
+      ],
+      [
+        "storage",
+        "s3_multipart_uploads",
+        "s3_multipart_uploads_bucket_id_fkey",
+        "f",
+        true,
+        "FOREIGN KEY (bucket_id) REFERENCES storage.buckets(id)"
+      ],
+      [
+        "storage",
+        "s3_multipart_uploads",
+        "s3_multipart_uploads_pkey",
+        "p",
+        true,
+        "PRIMARY KEY (id)"
+      ],
+      [
+        "storage",
+        "s3_multipart_uploads_parts",
+        "s3_multipart_uploads_parts_bucket_id_fkey",
+        "f",
+        true,
+        "FOREIGN KEY (bucket_id) REFERENCES storage.buckets(id)"
+      ],
+      [
+        "storage",
+        "s3_multipart_uploads_parts",
+        "s3_multipart_uploads_parts_pkey",
+        "p",
+        true,
+        "PRIMARY KEY (id)"
+      ],
+      [
+        "storage",
+        "s3_multipart_uploads_parts",
+        "s3_multipart_uploads_parts_upload_id_fkey",
+        "f",
+        true,
+        "FOREIGN KEY (upload_id) REFERENCES storage.s3_multipart_uploads(id) ON DELETE CASCADE"
+      ],
+      [
+        "storage",
+        "vector_indexes",
+        "vector_indexes_bucket_id_fkey",
+        "f",
+        true,
+        "FOREIGN KEY (bucket_id) REFERENCES storage.buckets_vectors(id)"
+      ],
+      [
+        "storage",
+        "vector_indexes",
+        "vector_indexes_pkey",
+        "p",
+        true,
+        "PRIMARY KEY (id)"
+      ]
+    ],
+    "database_bytes": 14445715,
+    "server_version": "17.6"
+  },
+  "integrity": {
+    "approvals": 0,
+    "pending_requests": 0,
+    "cancelled_requests": 0,
+    "completed_requests": 0,
+    "long_expense_notes": 0,
+    "invalid_cycle_status": 0,
+    "nonpositive_expenses": 0,
+    "duplicate_open_cycles": 0,
+    "orphan_expense_cycles": 0,
+    "orphan_expense_payers": 0,
+    "invalid_request_status": 0,
+    "orphan_expense_authors": 0,
+    "orphan_request_authors": 0,
+    "pending_null_snapshots": 0,
+    "unsafe_pending_snapshots": 0,
+    "invalid_notification_kind": 0,
+    "long_notification_snippets": 0,
+    "invalid_active_cycle_assignments": 0
+  }
+}

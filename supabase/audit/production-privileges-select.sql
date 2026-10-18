@@ -1,0 +1,5 @@
+select jsonb_build_object(
+'views',(select jsonb_agg(jsonb_build_object('schema',n.nspname,'name',c.relname,'options',c.reloptions,'definition_md5',md5(pg_get_viewdef(c.oid))) order by c.relname) from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='public' and c.relkind='v'),
+'column_grants',(select jsonb_agg(jsonb_build_array(table_schema,table_name,column_name,grantee,privilege_type) order by table_name,column_name,grantee,privilege_type) from information_schema.column_privileges where table_schema='public' and grantee in ('anon','authenticated')),
+'triggers',(select jsonb_agg(jsonb_build_array(n.nspname,c.relname,t.tgname,pg_get_triggerdef(t.oid)) order by n.nspname,c.relname,t.tgname) from pg_trigger t join pg_class c on c.oid=t.tgrelid join pg_namespace n on n.oid=c.relnamespace where n.nspname in ('public','private') and not t.tgisinternal)
+) as audit;
